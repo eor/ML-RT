@@ -1,0 +1,112 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[latin1]{inputenc}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{calc}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+%% math packages
+\usepackage{amsmath} 
+\usepackage{amssymb}
+% \usepackage[amssymb]{SIunits}
+\usepackage{units}
+\usepackage{color}
+
+
+\usepackage{courier}
+%%%<
+\usepackage{verbatim}
+\usepackage[active,tightpage]{preview}
+\PreviewEnvironment{tikzpicture}
+\setlength\PreviewBorder{5pt}%
+%%%>
+\usetikzlibrary{shapes.geometric,shapes.arrows,decorations.pathmorphing}
+\usetikzlibrary{matrix,chains,scopes,positioning,arrows,fit}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{positioning,arrows}
+
+
+
+\definecolor{dark_blue}{HTML}{086565}
+\definecolor{light_blue}{HTML}{B5E8E8}
+
+\definecolor{light_green}{HTML}{C8F4C1}
+\definecolor{dark_green}{HTML}{0C5600}
+
+
+\definecolor{dark_orange}{HTML}{AB4F03}
+\definecolor{light_orange}{HTML}{FFD3AF}
+
+\begin{document}
+\pagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Block style definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\tikzstyle{NN1} = [ellipse, draw=dark_orange, fill=light_orange, text width=25mm, line width=0.2mm, text=black, text centered, minimum height=15mm]
+\tikzstyle{NN2} = [ellipse, draw=dark_green, fill=light_green, text width=25mm, line width=0.2mm, text=black, text centered,minimum height=15mm]
+
+
+\tikzstyle{bigBox} = [rectangle, draw=dark_blue, fill=light_blue, text width=35mm, line width=0.2mm, text=black, text centered, rounded corners, minimum height=15mm]
+
+\tikzstyle{redBox} = [rectangle, draw=red, fill=white, text width=4em, line width=0.2mm, text=red, text centered,  rounded corners, minimum height=1.5]
+
+\tikzstyle{blackBox} = [rectangle, draw=black, fill=white, text width=4em, line width=0.2mm, text=black, text centered,  rounded corners, minimum height=2.5]
+\tikzstyle{blackBoxLong} = [rectangle, draw=black, fill=white, text width=6em, line width=0.2mm, text=black, text centered,  rounded corners, minimum height=2.5]
+
+
+\begin{tikzpicture}[]
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Nodes
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    \node [bigBox](real_data) at (0,1.50) {Real data};
+    \node [NN1] (generator) at (0,-1.50) {Generator};
+
+
+    \node [blackBox] (real_sample) at (4,1.50) {Real sample};
+    \node [blackBox] (fake_sample) at (4,-1.50) {Fake sample};
+    \node [blackBox]  (random) at (-4,-1.50) {Random noise};
+
+
+    \node [NN2] (discriminator) at (8.5,0) {Discriminator};
+
+
+    \node [blackBoxLong] (d_loss) at (13.,1) {Discriminator loss};
+    \node [blackBoxLong] (g_loss) at (13.,-1) {Generator loss};
+
+    \node [redBox, below=0.0cm of real_sample] {$\vec{p}$};
+    \node [redBox, below=0.0cm of fake_sample] {$\vec{p}$};
+    \node [redBox, below=0.0cm of random] {$\vec{p}$};
+
+
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Arrows and edges
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    \tikzstyle{main_connector}=[-latex, draw={rgb,255: red,184; green,184; blue,184}]
+    \tikzstyle{secondary_concetor}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
+
+    \draw[main_connector, line width=0.4mm] (real_data) -- (real_sample);
+    \draw[main_connector, line width=0.4mm] (generator) -- (fake_sample);
+    \draw[main_connector, line width=0.4mm] (random) -- (generator);
+
+    \draw[main_connector, line width=0.4mm] (real_sample.east) -- (discriminator.west);
+    \draw[main_connector, line width=0.4mm] (fake_sample.east) -- (discriminator.west);
+    %\draw[main_connector, line width=0.4mm] (fake_sample.north east) -- (discriminator.west);
+
+
+    \draw[main_connector, line width=0.4mm] (discriminator.east) -- (d_loss.west);
+    \draw[main_connector, line width=0.4mm] (discriminator.east) -- (g_loss.west);
+
+\end{tikzpicture}
+
+\end{document}

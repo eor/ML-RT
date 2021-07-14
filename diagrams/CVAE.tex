@@ -1,0 +1,28 @@
+% \documentclass[a4paper,landscape]{article}
+
+\documentclass{standalone}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{shapes.geometric}
+
+
+\pgfdeclarelayer{edgelayer}
+\pgfdeclarelayer{nodelayer}
+\pgfsetlayers{edgelayer,nodelayer,main}
+
+\tikzstyle{none}=[inner sep=0pt]
+
+\input{CVAE.tikzstyles}
+
+
+\begin{document}
+
+\pagestyle{empty}
+
+\input{CVAE.tikz}
+
+
+\end{document}

@@ -1,0 +1,71 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style={conditional_vector}] (0) at (0, 0) {};
+		\node [style={conditional_vector}] (3) at (0, 3) {};
+		\node [style={conditional_vector}] (4) at (0, 4) {};
+		\node [style={empty_slot}, scale=0.5] (5) at (0, 2) {};
+		\node [style={empty_slot}, scale=0.5] (6) at (0, 1) {};
+		\node [style={hidden_layer_unit}] (7) at (2, 4.5) {};
+		\node [style={hidden_layer_unit}] (8) at (2, 3.5) {};
+		\node [style={hidden_layer_unit}] (9) at (2, -0.5) {};
+		\node [style={empty_slot}, scale=0.5] (11) at (2, 2.5) {};
+		\node [style={empty_slot}, scale=0.5] (12) at (2, 1.5) {};
+		\node [style={empty_slot}, scale=0.5] (13) at (2, 0.5) {};
+		\node [style={hidden_layer_unit}] (17) at (4, 5) {};
+		\node [style={hidden_layer_unit}] (18) at (4, 4) {};
+		\node [style={hidden_layer_unit}] (19) at (4, -1) {};
+		\node [style={empty_slot}, scale=0.5] (21) at (4, 3) {};
+		\node [style={empty_slot}, scale=0.5] (22) at (4, 2) {};
+		\node [style={empty_slot}, scale=0.5] (23) at (4, 1) {};
+		\node [style={empty_slot}, scale=0.5] (24) at (4, 0) {};
+		\node [style={empty_slot}, scale=0.5] (29) at (7, 3.5) {};
+		\node [style={empty_slot}, scale=0.5] (30) at (7, 2.5) {};
+		\node [style={empty_slot}, scale=0.5] (31) at (7, 1.5) {};
+		\node [style={empty_slot}, scale=0.5] (32) at (7, 0.5) {};
+		\node [style={empty_slot}, scale=0.5] (33) at (7, -0.5) {};
+		\node [style=ellipsis, scale=0.3] (34) at (5, 2) {};
+		\node [style=ellipsis, scale=0.3] (35) at (5.5, 2) {};
+		\node [style=ellipsis, scale=0.3] (36) at (6, 2) {};
+		\node [style={hidden_layer_unit}] (37) at (7, 4.5) {};
+		\node [style={hidden_layer_unit}] (38) at (7, 5.5) {};
+		\node [style={hidden_layer_unit}] (39) at (7, -1.5) {};
+		\node [style=Input-output layer] (40) at (9, 6) {};
+		\node [style=Input-output layer] (41) at (9, 5) {};
+		\node [style=Input-output layer] (42) at (9, -2) {};
+		\node [style={empty_slot}, scale=0.5] (43) at (9, 4) {};
+		\node [style={empty_slot}, scale=0.5] (44) at (9, 3) {};
+		\node [style={empty_slot}, scale=0.5] (45) at (9, 2) {};
+		\node [style={empty_slot}, scale=0.5] (46) at (9, 1) {};
+		\node [style={empty_slot}, scale=0.5] (47) at (9, 0) {};
+		\node [style={empty_slot}, scale=0.5] (48) at (9, -1) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style={main_connector}] (4) to (7);
+		\draw [style={main_connector}] (4) to (8);
+		\draw [style={main_connector}] (4) to (9);
+		\draw [style={main_connector}] (3) to (7);
+		\draw [style={main_connector}] (3) to (8);
+		\draw [style={main_connector}] (3) to (9);
+		\draw [style={main_connector}] (0) to (9);
+		\draw [style={main_connector}] (0) to (8);
+		\draw [style={main_connector}] (0) to (7);
+		\draw [style={main_connector}] (7) to (17);
+		\draw [style={main_connector}] (7) to (18);
+		\draw [style={main_connector}] (8) to (18);
+		\draw [style={main_connector}] (8) to (17);
+		\draw [style={main_connector}] (7) to (19);
+		\draw [style={main_connector}] (8) to (19);
+		\draw [style={main_connector}] (19) to (9);
+		\draw [style={main_connector}] (9) to (18);
+		\draw [style={main_connector}] (9) to (17);
+		\draw [style={main_connector}] (38) to (40);
+		\draw [style={main_connector}] (38) to (41);
+		\draw [style={main_connector}] (37) to (40);
+		\draw [style={main_connector}] (38) to (42);
+		\draw [style={main_connector}] (42) to (39);
+		\draw [style={main_connector}] (39) to (41);
+		\draw [style={main_connector}] (40) to (39);
+		\draw [style={main_connector}] (37) to (41);
+		\draw [style={main_connector}] (37) to (42);
+	\end{pgfonlayer}
+\end{tikzpicture}
