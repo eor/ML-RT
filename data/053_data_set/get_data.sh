@@ -1,7 +1,7 @@
 #! /bin/sh 
 
 
-# GitHub has a 100MB filesize limit at this time, so please download the data by hand
+# GitHub has a 100MB filesize limit at this time, so please download the data using this script.
 
 
 BASEURL="https://www.astro.rug.nl/~krause/static/ML-RT/053_data_set/"
