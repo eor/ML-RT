@@ -312,7 +312,7 @@ if __name__ == "__main__":
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
                         help='Select H for neutral hydrogen fraction or T for temperature profiles (default: H)')
     parser.add_argument("--profile_len", type=int, default=1500, help="number of profile grid points")
-    parser.add_argument("--n_parameters", type=int, default=5, help="number of RT parameters (5 or 8)")
+    parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
 
     parser.add_argument("--gen_parameter_mode", type=int, default=1, help="mode for generating fake parameters (0,1,2)")
 
