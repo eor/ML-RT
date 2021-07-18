@@ -202,7 +202,7 @@ def utils_filter_profiles(H_profiles, T_profiles, global_parameters ):
     # 1) find all profiles for which the min > threshold
     deletion_indices = np.where(profile_minima>threshold)[0]
 
-    for i in range(0,len(deletion_indices)):
+    for i in range(0, len(deletion_indices)):
         index = deletion_indices[i]
 
         #print("Deletions for index %d [%d]:"%(i, index))
@@ -210,12 +210,11 @@ def utils_filter_profiles(H_profiles, T_profiles, global_parameters ):
         #print("Hprofile:", H_profiles[index,:])
         #print("--------------------------------------------------------------------------------------")
 
-
     H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
     T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nBlow-outfilter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(H_profiles)))
+    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(H_profiles)))
 
     return H_profiles, T_profiles, global_parameters
 
