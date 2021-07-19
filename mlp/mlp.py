@@ -289,8 +289,6 @@ def main(config):
     print('\nAll done!')
 
 
-
-
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
@@ -357,7 +355,7 @@ if __name__ == "__main__":
         argparse.ArgumentParser().print_help()
         exit(1)
 
-    if my_config.n_parameters != 5 and my_config.n_parameters != 8:
+    if my_config.n_parameters not in [5, 8]:
         print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
         argparse.ArgumentParser().print_help()
         exit(1)
