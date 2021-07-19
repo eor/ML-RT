@@ -210,8 +210,7 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = MLP(config)
-
+    model = MLP1(config)
 
     if cuda:
         model.cuda()

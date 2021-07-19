@@ -3,7 +3,7 @@ from torch import nn
 import torch
 
 
-class MLP(nn.Module):
+class MLP1(nn.Module):
     def __init__(self, conf):
         super(MLP, self).__init__()
 
