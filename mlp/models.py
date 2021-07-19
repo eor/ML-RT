@@ -1,5 +1,4 @@
 from torch import nn
-#import torch.nn.functional as F
 import torch
 
 
@@ -38,3 +37,33 @@ class MLP1(nn.Module):
 
         return self.model(parameters)
 
+
+class MLP2(nn.Module):
+    def __init__(self, conf):
+        super(MLP2, self).__init__()
+
+        def block(features_in, features_out, normalise=conf.batch_norm, dropout=conf.dropout):
+
+            layers = [nn.Linear(features_in, features_out)]
+
+
+            if normalise:
+                layers.append(nn.BatchNorm1d(features_out))
+
+            if dropout:
+                layers.append(nn.Dropout(conf.dropout_value))
+
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+
+            return layers
+
+        self.model = nn.Sequential(
+            *block(conf.n_parameters, 256, normalise=False, dropout=False),
+            *block(256, 3000),
+            nn.Linear(3000, int(conf.profile_len)),
+
+        )
+
+    def forward(self, parameters):
+
+        return self.model(parameters)

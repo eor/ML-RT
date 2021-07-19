@@ -210,7 +210,10 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = MLP1(config)
+    if config.model == 'MLP2':
+         model = MLP2(config)
+    else:
+         model = MLP1(config)
 
     if cuda:
         model.cuda()
@@ -313,8 +316,12 @@ if __name__ == "__main__":
 
     parser.add_argument("--gen_parameter_mode", type=int, default=1, help="mode for generating fake parameters (0,1,2)")
 
+    # network model switch
+    parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
+                        help='Pick a model: MLP1 (default) or MLP2')
+
     # network optimisation
-    parser.add_argument("--n_epochs", type=int, default=5000, help="number of epochs of training")
+    parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")
 
     parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
@@ -362,6 +369,9 @@ if __name__ == "__main__":
 
     if my_config.n_parameters == 8:
         parameter_limits = ps.p8_limits
+
+    if my_config.model not in ['MLP1','MLP2']:
+        my_config.model = 'MLP1'
 
     # print summary
     print("\nUsed parameters:\n")
