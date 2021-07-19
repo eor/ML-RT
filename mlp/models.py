@@ -15,7 +15,7 @@ class MLP(nn.Module):
             # From the literature it seems like there is no canonical way of doing it.
 
             if normalise:
-                layers.append(nn.BatchNorm1d(features_out, 0.8))
+                layers.append(nn.BatchNorm1d(features_out))
 
             if dropout:
                 layers.append(nn.Dropout(conf.dropout_value))
