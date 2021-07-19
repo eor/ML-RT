@@ -76,7 +76,7 @@ def mlp_run_test(epoch, data_loader, model, path, config):
 
     Args:
         epoch: current epoch
-        data_loader: data loader used for the iference, most likely the test set
+        data_loader: data loader used for the inference, most likely the test set
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
@@ -209,9 +209,9 @@ def main(config):
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
     if config.model == 'MLP2':
-         model = MLP2(config)
+        model = MLP2(config)
     else:
-         model = MLP1(config)
+        model = MLP1(config)
 
     if cuda:
         model.cuda()
@@ -260,7 +260,6 @@ def main(config):
             optimizer.step()
 
             epoch_loss += loss.item()
-
 
         # end-of-epoch book keeping
         average_loss = epoch_loss / len(train_loader.dataset)
