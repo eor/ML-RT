@@ -4,21 +4,18 @@ import os
 # import math
 
 
-
 from torch.utils.data import DataLoader
-from torchvision import datasets
+#from torchvision import datasets
 from torch.autograd import Variable
 
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-
 from models import *
 from dataset import RTdata
 from utils import *
 import parameter_settings as ps
-
 
 
 # -----------------------------------------------------------------
@@ -44,13 +41,15 @@ PLOT_DIR = 'plots'
 # -----------------------------------------------------------------
 parameter_limits = list()
 
+
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
 def mlp_loss_function(gen_x, real_x):
-    MSE = F.mse_loss(input=gen_x, target=real_x.view(-1, 1500), reduction='mean')
+    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, 1500), reduction='mean')
 
-    return MSE
+    return mse
+
 
 # -----------------------------------------------------------------
 #  CUDA available?
@@ -186,7 +185,6 @@ def main(config):
         H_profiles = H_profiles[indices]
         T_profiles = T_profiles[indices]
         global_parameters = global_parameters[indices]
-
 
     # -----------------------------------------------------------------
     # we are doing one profile at a time

@@ -46,7 +46,6 @@ class MLP2(nn.Module):
 
             layers = [nn.Linear(features_in, features_out)]
 
-
             if normalise:
                 layers.append(nn.BatchNorm1d(features_out))
 
