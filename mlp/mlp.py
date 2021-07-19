@@ -221,7 +221,6 @@ def main(config):
     # -----------------------------------------------------------------
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, betas=(config.b1, config.b2))
 
-
     # -----------------------------------------------------------------
     # book keeping arrays
     # -----------------------------------------------------------------
@@ -239,6 +238,7 @@ def main(config):
         # set model modes
         model.train()
 
+        # TODO: add validation again
         for i, (profiles, parameters) in enumerate(train_loader):
 
             batch_size = profiles.shape[0]      # in case one batch is smaller (most likely last batch)
@@ -264,9 +264,7 @@ def main(config):
         # end-of-epoch book keeping
         average_loss = epoch_loss / len(train_loader.dataset)
 
-
         train_loss_array = np.append(train_loss_array, average_loss)
-
 
         print(
             "[Epoch %d/%d] [Average model loss: %e]"
