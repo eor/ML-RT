@@ -5,7 +5,7 @@ import torch
 
 class MLP1(nn.Module):
     def __init__(self, conf):
-        super(MLP, self).__init__()
+        super(MLP1, self).__init__()
 
         def block(features_in, features_out, normalise=conf.batch_norm, dropout=conf.dropout):
 
