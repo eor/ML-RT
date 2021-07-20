@@ -282,10 +282,9 @@ def main(config):
 
         epoch_loss = 0
 
-        # set model modes
+        # set model mode
         model.train()
 
-        # TODO: add validation again
         for i, (profiles, parameters) in enumerate(train_loader):
 
             batch_size = profiles.shape[0]      # in case one batch is smaller (most likely last batch)
@@ -309,19 +308,16 @@ def main(config):
 
         # end-of-epoch book keeping
         train_loss = epoch_loss / len(train_loader.dataset)
-
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
-        val_loss = mlp_run_validation(epoch, val_loader,model, config)
+        val_loss = mlp_run_validation(epoch, val_loader, model, config)
         val_loss_array = np.append(val_loss_array, val_loss)
 
         if val_loss < best_loss:
             best_loss = val_loss
             best_model = copy.deepcopy(model)
             best_epoch = epoch
-
-
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
@@ -333,20 +329,16 @@ def main(config):
 
             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
-            # TODO: write model here (optional)??
-
-
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
     # Save best model and loss functions
     # -----------------------------------------------------------------
-
     best_model_state = {
         'epoch': config.n_epochs,
         'state_dict': best_model.state_dict(),
         'bestLoss': best_loss,
-        'optimizer' : optimizer.state_dict(),
+        'optimizer': optimizer.state_dict(),
         }
 
     utils_save_model(best_model_state, data_products_path, config.profile_type, config.n_epochs)
@@ -435,7 +427,7 @@ if __name__ == "__main__":
     if my_config.n_parameters == 8:
         parameter_limits = ps.p8_limits
 
-    if my_config.model not in ['MLP1','MLP2']:
+    if my_config.model not in ['MLP1', 'MLP2']:
         my_config.model = 'MLP1'
 
     # print summary
