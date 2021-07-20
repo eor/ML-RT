@@ -26,7 +26,7 @@ H_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
-SPLIT_FRACTION = (0.98, 0.005, 0.015) # train, val, test.
+SPLIT_FRACTION = (0.90, 0.09, 0.01) # train, val, test.
 SHUFFLE = True
 SHUFFLE_SEED = 42
 
@@ -324,7 +324,7 @@ def main(config):
 
 
         print(
-            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [BEst epoch: %d]"
+            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
             % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch)
         )
 
