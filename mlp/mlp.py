@@ -341,7 +341,7 @@ def main(config):
         'optimizer': optimizer.state_dict(),
         }
 
-    utils_save_model(best_model_state, data_products_path, config.profile_type, config.n_epochs)
+    utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
