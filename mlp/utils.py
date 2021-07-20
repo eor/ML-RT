@@ -140,7 +140,7 @@ def utils_derivative_2(array, norm=None):
 def utils_save_model(state, path, profile_choice, n_epoch, best_model=True, file_name=None):
 
     # if no file name is provided, construct one here
-    if file_name == None:
+    if file_name is None:
         file_name = 'model_%s_%d_epochs.pth.tar'%(profile_choice, n_epoch)
 
         if best_model:

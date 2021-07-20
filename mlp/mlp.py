@@ -11,6 +11,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import copy
 
 from models import *
 from dataset import RTdata
@@ -68,9 +69,9 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 
 # -----------------------------------------------------------------
-#   use generator with test set
+#   use mlp with test set
 # -----------------------------------------------------------------
-def mlp_run_test(epoch, data_loader, model, path, config):
+def mlp_run_testing(epoch, data_loader, model, path, config):
     """
     function runs the test data set through the mlp, saves results as well as ground truth to file
 
@@ -128,6 +129,44 @@ def mlp_run_test(epoch, data_loader, model, path, config):
         epoch=epoch,
         prefix='test'
     )
+
+
+# -----------------------------------------------------------------
+#   run validation
+# -----------------------------------------------------------------
+def mlp_run_validation(epoch, data_loader, model, config):
+    """
+    function runs validation data set to prevent overfitting of the model.
+    Returns averaged validation loss.
+
+    Args:
+        epoch: current epoch
+        data_loader: data loader used for the inference, here, validation set
+        model: current model state
+        config: config object with user supplied parameters
+    """
+
+    if cuda:
+        model.cuda()
+
+    val_loss = 0.0
+
+    with torch.no_grad():
+        for i, (profiles, parameters) in enumerate(data_loader):
+            batch_size = profiles.shape[0]
+
+            # configure input
+            val_profiles_true = Variable(profiles.type(FloatTensor))
+            val_parameters = Variable(parameters.type(FloatTensor))
+
+            # inference
+            val_profiles_gen = model(val_parameters)
+
+            loss = mlp_loss_function(val_profiles_gen, val_profiles_true)
+
+            val_loss += loss.item()
+
+    return val_loss/len(data_loader)
 
 
 # -----------------------------------------------------------------
@@ -226,7 +265,14 @@ def main(config):
     # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
-    test_loss_array = np.empty(0)
+    val_loss_array = np.empty(0)
+
+    # -----------------------------------------------------------------
+    # keep the model with min validation loss
+    # -----------------------------------------------------------------
+    best_model = copy.deepcopy(model)
+    best_loss = np.inf
+    best_epoch = 0
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -262,27 +308,51 @@ def main(config):
             epoch_loss += loss.item()
 
         # end-of-epoch book keeping
-        average_loss = epoch_loss / len(train_loader.dataset)
+        train_loss = epoch_loss / len(train_loader.dataset)
 
-        train_loss_array = np.append(train_loss_array, average_loss)
+        train_loss_array = np.append(train_loss_array, train_loss)
+
+        # validation & save the best performing model
+        val_loss = mlp_run_validation(epoch, val_loader,model, config)
+        val_loss_array = np.append(val_loss_array, val_loss)
+
+        if val_loss < best_loss:
+            best_loss = val_loss
+            best_model = copy.deepcopy(model)
+            best_epoch = epoch
+
+
 
         print(
-            "[Epoch %d/%d] [Average model loss: %e]"
-            % (epoch+1, config.n_epochs,  average_loss)
+            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [BEst epoch: %d]"
+            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch)
         )
 
         # check for testing criterion
         if (epoch+1) % config.testing_interval == 0 or epoch+1 == config.n_epochs:
 
-           mlp_run_test(epoch, test_loader, model, data_products_path, config)
+            mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
-           # TODO: write model here (optional)??
+            # TODO: write model here (optional)??
 
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
-    # save training stats
+    # -----------------------------------------------------------------
+    # Save best model and loss functions
+    # -----------------------------------------------------------------
+
+    best_model_state = {
+        'epoch': config.n_epochs,
+        'state_dict': best_model.state_dict(),
+        'bestLoss': best_loss,
+        'optimizer' : optimizer.state_dict(),
+        }
+
+    utils_save_model(best_model_state, data_products_path, config.profile_type, config.n_epochs)
+
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
+    utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # finished
     print('\nAll done!')
