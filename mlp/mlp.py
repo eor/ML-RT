@@ -1,21 +1,22 @@
 import argparse
-import os
+
+# import os
 # import numpy as np
 # import math
-
+# from torchvision import datasets
+# import torch.nn as nn
+# import torch
 
 from torch.utils.data import DataLoader
-#from torchvision import datasets
 from torch.autograd import Variable
 
-import torch.nn as nn
 import torch.nn.functional as F
-import torch
 import copy
 
 from models import *
 from dataset import RTdata
 from utils import *
+from analysis import *
 import parameter_settings as ps
 
 
@@ -26,7 +27,7 @@ H_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
-SPLIT_FRACTION = (0.90, 0.09, 0.01) # train, val, test.
+SPLIT_FRACTION = (0.90, 0.09, 0.01)  # train, val, test.
 SHUFFLE = True
 SHUFFLE_SEED = 42
 
@@ -254,7 +255,6 @@ def main(config):
 
     if cuda:
         model.cuda()
-        #adversarial_loss.cuda()
 
     # -----------------------------------------------------------------
     # Optimizers
@@ -321,7 +321,7 @@ def main(config):
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch)
+            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch+1)
         )
 
         # check for testing criterion
@@ -348,6 +348,18 @@ def main(config):
 
     # finished
     print('\nAll done!')
+
+    # optional: analysis
+    if config.analysis:
+        print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
+
+        base = config.out_dir
+        lr = config.lr
+        epoch = config.n_epochs
+        profile = config.profile_type
+        analysis_loss_plot(base, epoch, lr, profile)
+
+
 
 
 # -----------------------------------------------------------------
