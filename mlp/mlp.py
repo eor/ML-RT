@@ -346,6 +346,8 @@ def main(config):
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
+    # TODO: run testing again here with best model
+
     # finished
     print('\nAll done!')
 
