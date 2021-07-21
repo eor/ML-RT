@@ -353,13 +353,8 @@ def main(config):
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
-        base = config.out_dir
-        lr = config.lr
-        epoch = config.n_epochs
-        profile = config.profile_type
-        analysis_loss_plot(base, epoch, lr, profile)
 
-
+        analysis_loss_plot(config)
 
 
 # -----------------------------------------------------------------

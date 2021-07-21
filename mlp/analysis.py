@@ -21,23 +21,22 @@ PLOT_FILE_TYPE = 'pdf'  # or 'png'
 # -----------------------------------------------------------------
 #  setup for the loss function plots
 # -----------------------------------------------------------------
-def analysis_loss_plot(base_dir, epoch, lr, profile_choice='T'):
+def analysis_loss_plot(config):
 
     """
     function to load and plot the training and validation loss data
 
     Args:
-        base_dir: run directory
-        epoch:
-        lr: learning rate
-        profile_choice: type of profiles used
+
+        config object that is generated from user arguments when
+        the main script is run
     """
 
-    data_dir_path = osp.join(base_dir, DATA_PRODUCTS_DIR)
-    plot_dir_path = osp.join(base_dir, PLOT_DIR)
+    data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+    plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
-    train_loss_file = 'train_loss_%s_%d_epochs.npy'%(profile_choice, epoch)
-    val_loss_file = 'val_loss_%s_%d_epochs.npy'%(profile_choice, epoch)
+    train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+    val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
 
     train_loss = np.load(osp.join(data_dir_path, train_loss_file))
     val_loss = np.load(osp.join(data_dir_path, val_loss_file))
@@ -45,10 +44,10 @@ def analysis_loss_plot(base_dir, epoch, lr, profile_choice='T'):
     plot_loss_function(
         lf1=train_loss,
         lf2=val_loss,
-        epoch=epoch,
-        lr=lr,
+        epoch=config.n_epochs,
+        lr=config.lr,
         output_dir=plot_dir_path,
-        profile_type=profile_choice,
+        profile_type=config.profile_type,
         file_type=PLOT_FILE_TYPE
     )
 

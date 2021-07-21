@@ -45,7 +45,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
     # ax.legend(loc='upper right', frameon=False)
     ax.legend(loc='best', frameon=False)
 
-    path = os.path.join(output_dir, '%s_loss_functions_%d_epochs_%e_lr.%s'%(profile_type, epoch, lr, file_type))
+    path = os.path.join(output_dir, '%s_loss_functions_%d_epochs_lr_%5f.%s'%(profile_type, epoch, lr, file_type))
 
     fig.savefig(path)
 
