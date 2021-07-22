@@ -17,7 +17,7 @@ def utils_scale_parameters(limits, parameters):
         a = limits[i][0]
         b = limits[i][1]
 
-        parameters[:,i] = (parameters[:,i] - a)/(b - a)
+        parameters[:, i] = (parameters[:, i] - a)/(b - a)
 
     return parameters
 
@@ -30,7 +30,7 @@ def utils_rescale_parameters(limits, parameters):
         a = limits[i][0]
         b = limits[i][1]
 
-        parameters[:, i] =  parameters[:, i] * (b - a) + a
+        parameters[:, i] = parameters[:, i] * (b - a) + a
 
     return parameters
 

@@ -61,11 +61,11 @@ def analysis_loss_plot(config):
 # -----------------------------------------------------------------
 # Automatically plot test profiles
 # -----------------------------------------------------------------
-def analysis_auto_plot_profiles(base_dir, k, epoch, profile_choice='T', prefix='test'):
+def analysis_auto_plot_profiles(config, k, epoch, profile_choice='T', prefix='test'):
 
     # 1. read data
-    data_dir_path = osp.join(base_dir, DATA_PRODUCTS_DIR)
-    plot_dir_path = osp.join(base_dir, PLOT_DIR)
+    data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+    plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
     parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
     profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)

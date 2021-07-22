@@ -337,20 +337,22 @@ def main(config):
     # -----------------------------------------------------------------
     # Save best model and loss functions
     # -----------------------------------------------------------------
-    best_model_state = {
-        'epoch': config.n_epochs,
-        'state_dict': best_model.state_dict(),
-        'bestLoss': best_loss,
-        'optimizer': optimizer.state_dict(),
-        }
 
-    utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
+
+    # best_model_state = {
+    #     'epoch': config.n_epochs,
+    #     'state_dict': best_model.state_dict(),
+    #     'bestLoss': best_loss,
+    #     'optimizer': optimizer.state_dict(),
+    #     }
+
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
+    # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # TODO: run testing again here with best model
-    # TODO: save config object so that it can be reused later (e.g. analysis or inference)
 
     # finished
     print('\nAll done!')
