@@ -1,1 +1,0 @@
-CGAN placeholder directory
