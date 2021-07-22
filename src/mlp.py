@@ -178,13 +178,14 @@ def mlp_run_validation(epoch, data_loader, model, config):
 def main(config):
 
     # -----------------------------------------------------------------
-    # create unique output path and run directories
+    # create unique output path and run directories, save config
     # -----------------------------------------------------------------
     run_id = 'run_' + utils_get_current_timestamp()
     config.out_dir = os.path.join(config.out_dir, run_id)
 
     utils_create_run_directories(config.out_dir, DATA_PRODUCTS_DIR, PLOT_DIR)
-    utils_write_config_to_file(config)
+    utils_save_config_to_log(config)
+    utils_save_config_to_file(config)
 
     data_products_path = os.path.join(config.out_dir, DATA_PRODUCTS_DIR)
     plot_path = os.path.join(config.out_dir, PLOT_DIR)
@@ -349,6 +350,7 @@ def main(config):
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # TODO: run testing again here with best model
+    # TODO: save config object so that it can be reused later (e.g. analysis or inference)
 
     # finished
     print('\nAll done!')
@@ -356,7 +358,6 @@ def main(config):
     # optional: analysis
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
-
 
         analysis_loss_plot(config)
 

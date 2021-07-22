@@ -59,53 +59,53 @@ def analysis_loss_plot(config):
 
 
 # -----------------------------------------------------------------
-#  Automatically plot test profiles
+# Automatically plot test profiles
 # -----------------------------------------------------------------
-# def analysis_auto_plot_profiles(base_dir, k, epoch, profile_choice='T', prefix='test'):
-#
-#     # 1. read data ... same as for the parameter-MSE plot
-#     data_dir_path = osp.join(base_dir, DATA_PRODUCTS_DIR)
-#     plot_dir_path = osp.join(base_dir, PLOT_DIR)
-#
-#     parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
-#     profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)
-#     profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(profile_choice, epoch)
-#
-#     parameters = np.load(osp.join(data_dir_path, parameter_true_file))
-#     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
-#     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
-#
-#     # 2. compute MSE
-#     mseArray = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
-#     mseArray = np.log10(mseArray + 1e-11)
-#
-#     # 3. find k lowest and largest MSE values and their respective indexes
-#     kLargeList = heapq.nlargest(k, range(len(mseArray)), mseArray.take)
-#     kSmallList = heapq.nsmallest(k, range(len(mseArray)), mseArray.take)
-#
-#     # 4.  plot profiles for largest MSE
-#     print('Producing profile plot(s) for profiles with %d largest MSE'%k)
-#     for i in range(len(kLargeList)):
-#         index = kLargeList[i]
-#         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mseArray[index], parameters[index]))
-#
-#         tmp_parameters = parameters[index]
-#         tmp_profile_true = profiles_true[index]
-#         tmp_profile_gen = profiles_gen[index]
-#
-#         plot_test_profiles(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
-#
-#     # 4.  plot profiles for smallest MSE
-#     print('Producing profile plot(s) for profiles with %d smallest MSE'%k)
-#     for i in range(len(kSmallList)):
-#         index = kSmallList[i]
-#         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mseArray[index], parameters[index]))
-#
-#         tmp_parameters = parameters[index]
-#         tmp_profile_true = profiles_true[index]
-#         tmp_profile_gen = profiles_gen[index]
-#
-#         plot_test_profiles(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
+def analysis_auto_plot_profiles(base_dir, k, epoch, profile_choice='T', prefix='test'):
+
+    # 1. read data
+    data_dir_path = osp.join(base_dir, DATA_PRODUCTS_DIR)
+    plot_dir_path = osp.join(base_dir, PLOT_DIR)
+
+    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
+    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)
+    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(profile_choice, epoch)
+
+    parameters = np.load(osp.join(data_dir_path, parameter_true_file))
+    profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
+    profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
+
+    # 2. compute MSE
+    mseArray = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+    mseArray = np.log10(mseArray + 1e-11)
+
+    # 3. find k lowest and largest MSE values and their respective indexes
+    kLargeList = heapq.nlargest(k, range(len(mseArray)), mseArray.take)
+    kSmallList = heapq.nsmallest(k, range(len(mseArray)), mseArray.take)
+
+    # 4.  plot profiles for largest MSE
+    print('Producing profile plot(s) for profiles with %d largest MSE'%k)
+    for i in range(len(kLargeList)):
+        index = kLargeList[i]
+        print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mseArray[index], parameters[index]))
+
+        tmp_parameters = parameters[index]
+        tmp_profile_true = profiles_true[index]
+        tmp_profile_gen = profiles_gen[index]
+
+        plot_test_profiles(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
+
+    # 4.  plot profiles for smallest MSE
+    print('Producing profile plot(s) for profiles with %d smallest MSE'%k)
+    for i in range(len(kSmallList)):
+        index = kSmallList[i]
+        print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mseArray[index], parameters[index]))
+
+        tmp_parameters = parameters[index]
+        tmp_profile_true = profiles_true[index]
+        tmp_profile_gen = profiles_gen[index]
+
+        plot_test_profiles(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
 
 
 # -----------------------------------------------------------------

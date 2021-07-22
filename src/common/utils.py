@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 import torch
 import os.path as osp
 from datetime import datetime
@@ -213,24 +214,58 @@ def utils_create_run_directories(main_dir, data_products_dir='data_products', pl
 
 
 # -----------------------------------------------------------------
-# Write config to file
+# Write argparse config to ascii file
 # -----------------------------------------------------------------
-def utils_write_config_to_file(config, filename='log_config'):
+def utils_save_config_to_log(config, file_name='log'):
 
-    dir = config.out_dir
+    p = osp.join(config.out_dir, file_name)
 
-    p = osp.join(dir, filename)
-
-    print('\nWriting config to file:\n')
+    print('\nWriting config to ascii file:\n')
     print('\t' + p)
 
     with open(p, 'w') as f:
         for arg in vars(config):
-            line = str(arg) +'\t' + str(getattr(config, arg)) + '\n'
+            line = str(arg) + '\t' + str(getattr(config, arg)) + '\n'
             f.write(line)
 
         time = utils_get_current_timestamp()
         f.write('\ncurrent time stamp\t'+ time + '\n')
+
+
+# -----------------------------------------------------------------
+# Write argparse config to binary file (to re-use later)
+# -----------------------------------------------------------------
+def utils_save_config_to_file(config, file_name='config.dict'):
+
+    p = osp.join(config.out_dir, file_name)
+
+    print('\nWriting config to binary file:\n')
+    print('\t' + p)
+
+    with open(p, 'wb') as f:
+        pickle.dump(config, f)
+
+
+# -----------------------------------------------------------------
+# Write argparse config to binary file (to re-use later)
+# -----------------------------------------------------------------
+def utils_load_config(path, file_name='config.dict'):
+
+    if path.endswith(file_name):
+        p = path
+    else:
+        p = osp.join(path, file_name)
+
+    print('\nLoading config object from file:\n')
+    print('\t' + p)
+
+    with open(p, 'rb') as f:
+        config = pickle.load(f)
+
+    return config
+
+
+
 
 
 
