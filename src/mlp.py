@@ -15,6 +15,7 @@ import copy
 
 from models.mlp import *
 from common.dataset import RTdata
+from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
@@ -203,7 +204,7 @@ def main(config):
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if USE_BLOWOUT_FILTER:
-        H_profiles, T_profiles, global_parameters = utils_filter_profiles(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
 
     # -----------------------------------------------------------------
     # log space?

@@ -25,7 +25,7 @@ mpl.rc('text', usetex=True)
 # -----------------------------------------------------------------
 def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', file_type='png'):
 
-    print('Producing loss function plot')
+    print('Producing loss function plot:')
 
     fig, ax = plt.subplots(figsize=(7, 5))
     rc('font', **{'family':'serif'})
@@ -52,6 +52,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
     path = os.path.join(output_dir, '%s_loss_functions_%d_epochs_lr_%5f.%s'%(profile_type, epoch, lr, file_type))
 
     fig.savefig(path)
+    print('Saved plot to:\t%s'%(path))
 
 
 # -----------------------------------------------------------------

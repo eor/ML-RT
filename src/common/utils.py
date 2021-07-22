@@ -84,7 +84,7 @@ def utils_join_path(directory, dataFile):
 
 
 # -----------------------------------------------------------------
-# create output directorie(s)
+# create output directories
 # -----------------------------------------------------------------
 def utils_create_output_dirs(list_of_dirs):
 
@@ -186,46 +186,12 @@ def utils_save_test_data(parameters, profiles_true, profiles_gen, path, profile_
 
 
 # -----------------------------------------------------------------
-# Filter blow-out profiles, i.e. filter ionisation profiles whose
-# ionisation front is beyond the edge of the computing grid and
-# their corresponding temperature counterparts
-# -----------------------------------------------------------------
-def utils_filter_profiles(H_profiles, T_profiles, global_parameters ):
-
-    threshold = 0.9
-    # identify all blow-outs
-    # blow out is a x_{H_{II}} profile for which all array values are above a certain threshold (e.g. < 0.9)
-
-    # 0) for each profile find the min value
-    profile_minima = np.min(H_profiles, axis=1)
-
-    # 1) find all profiles for which the min > threshold
-    deletion_indices = np.where(profile_minima>threshold)[0]
-
-    for i in range(0, len(deletion_indices)):
-        index = deletion_indices[i]
-
-        #print("Deletions for index %d [%d]:"%(i, index))
-        #print("Parameters:", global_parameters[index,:])
-        #print("Hprofile:", H_profiles[index,:])
-        #print("--------------------------------------------------------------------------------------")
-
-    H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
-    T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
-    global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
-
-    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(H_profiles)))
-
-    return H_profiles, T_profiles, global_parameters
-
-
-# -----------------------------------------------------------------
 # Current time stamp as a string
 # -----------------------------------------------------------------
 def utils_get_current_timestamp():
 
     # return datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
-    return datetime.now().strftime('%Y%m%d_%H%M%S')
+    return datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
 
 # -----------------------------------------------------------------
