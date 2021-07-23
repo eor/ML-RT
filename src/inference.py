@@ -15,7 +15,7 @@ from torch.autograd import Variable
 # hard-coded parameters (for now)
 # -----------------------------------------------------------------
 DATA_PRODUCTS_DIR = 'data_products'
-
+SCALE_PARAMETERS = True
 
 # -----------------------------------------------------------------
 #  global  variables :-|
@@ -37,35 +37,48 @@ else:
 # -----------------------------------------------------------------
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
-
-
 # -----------------------------------------------------------------
 #  GAN
 # -----------------------------------------------------------------
-def inference_gan():
+def inference_cgan():
 
-    print('Hello there')
+    print('Running inference for the CGAN')
+
+
+# -----------------------------------------------------------------
+#  CVAE
+# -----------------------------------------------------------------
+def inference_cvae():
+
+    print('Running inference for the CVAE')
 
 
 # -----------------------------------------------------------------
 #  MLP
 # -----------------------------------------------------------------
-def inference_mlp(run_dir, model_file_name, input_data):
+def inference_mlp(run_dir, model_file_name, parameters):
 
-    print('Hello there')
+    print('Running inference for the MLP')
 
     config = utils_load_config(run_dir)
 
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
-
+    # set up parameters
     if config.n_parameters == 5:
         parameter_limits = ps.p5_limits
 
     if config.n_parameters == 8:
         parameter_limits = ps.p8_limits
 
-    # TODO: don't forget to normalise parameters
+    if SCALE_PARAMETERS:
+        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
 
+    # convert
+    parameters = torch.from_numpy(parameters)
+    parameters = Variable(parameters.type(FloatTensor))
+
+
+
+    # prepare model
 
     if config.model == 'MLP1':
         model = MLP1(config)
@@ -75,30 +88,39 @@ def inference_mlp(run_dir, model_file_name, input_data):
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
+    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
 
     model.eval()
-    x = Variable(torch.from_numpy(input_data))
 
-    x = x.double()
-
-    test_parameters = Variable(x.type(FloatTensor))
-
-
-    # model = model   # import pdb; pdb.set_trace()
-
-
+    # run inference
     with torch.no_grad():
 
-        output = model(test_parameters)
+        output = model(parameters)
 
-    # print(type(x))
-    # print(type(input_data))
-
+    return output
 
 
+# -----------------------------------------------------------------
+#  functions for test runs
+# -----------------------------------------------------------------
+def inference_test_run_mlp():
 
-    # for each input parameter vector, get results, save as *.npy files
+    # MLP test
+    run_dir = './output_mlp/run_2021_07_22__22_51_22/'
+    model_file_name = 'best_model_T_8_epochs.pth.tar'
+
+    p = np.zeros((1, 5))  # has to be 2D array because of BatchNorm
+
+    p[0][0] = 12.0  # M_halo
+    p[0][1] = 9.0  # redshift
+    p[0][2] = 10.0  # source Age
+    p[0][3] = 1.0  # qsoAlpha
+    p[0][4] = 0.2  # starsEscFrac
+
+    profile = inference_mlp(run_dir, model_file_name, p)
+
+    # save, plot etc
 
 
 # -----------------------------------------------------------------
@@ -106,13 +128,4 @@ def inference_mlp(run_dir, model_file_name, input_data):
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-    # MLP test
-    run_dir = './output_mlp/run_2021_07_22__22_51_22/'
-    input_data = np.random.random(5)
-
-    model_file_name = 'best_model_T_8_epochs.pth.tar'
-
-    inference_mlp(run_dir, model_file_name, input_data)
-
-
-
+    inference_test_run_mlp()
