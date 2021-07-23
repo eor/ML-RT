@@ -338,8 +338,8 @@ def main(config):
     # Save best model and loss functions
     # -----------------------------------------------------------------
 
-
-    # best_model_state = {
+    # TODO: save checkpoint for further training?
+    # checkpoint = {
     #     'epoch': config.n_epochs,
     #     'state_dict': best_model.state_dict(),
     #     'bestLoss': best_loss,
