@@ -49,8 +49,9 @@ parameter_names_latex = list()
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-def mlp_loss_function(gen_x, real_x):
-    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, 1500), reduction='mean')
+def mlp_loss_function(gen_x, real_x, config):
+
+    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
 
     return mse
 
@@ -165,7 +166,7 @@ def mlp_run_validation(epoch, data_loader, model, config):
             # inference
             val_profiles_gen = model(val_parameters)
 
-            loss = mlp_loss_function(val_profiles_gen, val_profiles_true)
+            loss = mlp_loss_function(val_profiles_gen, val_profiles_true, config)
 
             val_loss += loss.item()
 
@@ -302,7 +303,7 @@ def main(config):
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
 
-            loss = mlp_loss_function(gen_profiles, real_profiles)
+            loss = mlp_loss_function(gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
