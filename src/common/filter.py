@@ -2,7 +2,26 @@ import numpy as np
 
 
 # -----------------------------------------------------------------
-# file for all filter functions
+# Cuts in the parameter space
+# -----------------------------------------------------------------
+def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters):
+    """
+     This function makes cuts to the parameter space according to some user-specified limits.
+     The limits could be provided as an argument (2D numpy array) in the same format as the ones
+     in parameter_settings.py. They could be either come from a user_settings.py or we could use the hard
+     coded parameter section in the script files (e.g. mlp.py). I thing the latter might be a bit cleaner.
+
+
+     Args:
+         numpy objects containing the hydrogen, temperature profiles, and parameters
+
+     """
+
+    print("\nParameter space filter: Deleting a total of __ samples. __ remaining.")
+
+
+# -----------------------------------------------------------------
+# Blow out filter
 # -----------------------------------------------------------------
 def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, threshold=0.9):
     """
