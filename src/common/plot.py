@@ -59,30 +59,32 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
     print('Saved plot to:\t%s'%(path))
 
 
-# -----------------------------------------------------------------
-#  Plot profile comparison (ground truth vs inferred)
-# -----------------------------------------------------------------
-# def plot_test_profiles(profileTrue, profileInferred, nEpoch, output_dir, profileChoice, parameters=None):
-#
-#     # -----------------------------------------------------------------
-#     # figure setup
-#     # -----------------------------------------------------------------
-#     # fig, (ax1, axArray[1]) = plt.subplots(2,1, figsize=(10,6))
-#     #fig = plt.figure( figsize=(10,7))
-#
-#     fig, axArray = plt.subplots(5, 1, sharex=True, figsize=(10,10))
-#
-#     fig.subplots_adjust(hspace=0)
-#
-#     #ax1 = fig.add_subplot(3,1,1)
-#     #ax2 = fig.add_subplot(3,1,2)
-#     #ax3 = fig.add_subplot(3,1,3)
-#
-#     #plt.subplots_adjust(wspace=0, hspace=0)
-#     # plt.subplots_adjust(wspace=0, hspace=-0.4)
-#
-#     rc('font',**{'family':'serif'})
-#     rc('text', usetex=True)
+#-----------------------------------------------------------------
+# Plot a single profile comparison (ground truth vs inferred)
+#-----------------------------------------------------------------
+def plot_profile_single(profileTrue, profileInferred, nEpoch, output_dir, profileChoice, parameters=None):
+
+    # TODO: fix this function, change variables to conform with naming scheme (no more camel casing).
+
+    # -----------------------------------------------------------------
+    # figure setup
+    # -----------------------------------------------------------------
+    # fig, (ax1, axArray[1]) = plt.subplots(2,1, figsize=(10,6))
+    #fig = plt.figure( figsize=(10,7))
+
+    fig, axArray = plt.subplots(5, 1, sharex=True, figsize=(10,10))
+
+    fig.subplots_adjust(hspace=0)
+
+    #ax1 = fig.add_subplot(3,1,1)
+    #ax2 = fig.add_subplot(3,1,2)
+    #ax3 = fig.add_subplot(3,1,3)
+
+    #plt.subplots_adjust(wspace=0, hspace=0)
+    # plt.subplots_adjust(wspace=0, hspace=-0.4)
+
+    rc('font',**{'family':'serif'})
+    rc('text', usetex=True)
 #
 #     # -----------------------------------------------------------------
 #     # add parameters as title
