@@ -47,16 +47,6 @@ parameter_names_latex = list()
 
 
 # -----------------------------------------------------------------
-#  loss function
-# -----------------------------------------------------------------
-def mlp_loss_function(gen_x, real_x, config):
-
-    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
-
-    return mse
-
-
-# -----------------------------------------------------------------
 #  CUDA available?
 # -----------------------------------------------------------------
 if torch.cuda.is_available():
@@ -70,6 +60,16 @@ else:
 #  global FloatTensor instance
 # -----------------------------------------------------------------
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+
+
+# -----------------------------------------------------------------
+#  loss function
+# -----------------------------------------------------------------
+def mlp_loss_function(gen_x, real_x, config):
+
+    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
+
+    return mse
 
 
 # -----------------------------------------------------------------
@@ -371,7 +371,7 @@ def main(config):
 if __name__ == "__main__":
 
     # parse arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks')
 
     # arguments for data handling
     parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
