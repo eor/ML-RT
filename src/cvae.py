@@ -13,7 +13,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import copy
 
-from models.mlp import *
+from models.cvae import *
 from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
@@ -95,89 +95,161 @@ def cvae_loss_function(gen_x, real_x, mu, log_var, config):
 # -----------------------------------------------------------------
 #  Training
 # -----------------------------------------------------------------
-# def cvae_train(model, optimizer, trainLoader, device):
-#
-#     model.train()
-#     trainLoss = 0
-#
-#     for batch_idx, (profiles, parameters) in enumerate(trainLoader):
-#
-#         profiles = profiles.to(device)
-#         parameters = parameters.to(device)
-#         optimizer.zero_grad()
-#
-#         recoveredData, mu, logVar = model(profiles, parameters)
-#
-#         loss = cvae_loss_function(recoveredData, profiles, mu, logVar, device)
-#         loss.backward()
-#
-#         trainLoss += loss.item()
-#         optimizer.step()
-#
-#         # debug logging
-#         #if batch_idx % log_interval == 0:
-#         #    print('Train Epoch: {} [{}/{} ({:.0f}%)]   \tLoss: {:.6f}'.format(
-#         #        epoch, batch_idx * len(profiles), len(trainLoader.dataset),
-#         #        100. * batch_idx / len(trainLoader),
-#         #        loss.item() / len(profiles)))
-#
-#     averageLoss = trainLoss / len(trainLoader.dataset)
-#
-#     return averageLoss  # float
+def cvae_train(model, optimizer, train_loader, config):
+    """
+    This function trains the network for one epoch.
+    Returns: averaged training loss. No need to return the model as the optimizer modifies it inplace.
+
+    Args:
+        model: current model state
+        optimizer: optimizer object to perform the back-propagation
+        train_loader: data loader used for the inference, most likely the test set
+        config: config object with user supplied parameters
+    """
+
+    if cuda:
+        model.cuda()
+
+    model.train()
+    train_loss = 0
+
+    for batch_idx, (profiles, parameters) in enumerate(train_loader):
+
+        # configure input
+        real_profiles = Variable(profiles.type(FloatTensor))
+        real_parameters = Variable(parameters.type(FloatTensor))
+
+        # zero the gradients on each iteration
+        optimizer.zero_grad()
+
+        # generate a batch of profiles
+        gen_profiles, mu, log_var = model(real_profiles, real_parameters)
+
+        # estimate loss
+        loss = cvae_loss_function(gen_profiles, real_profiles, mu, log_var, config)
+
+        train_loss += loss.item()
+
+        # back propagation
+        loss.backward()
+        optimizer.step()
+
+    average_loss = train_loss / len(train_loader.dataset)
+
+    return average_loss  # float
+
 
 # -----------------------------------------------------------------
 #  Validation
 # -----------------------------------------------------------------
-# def cvae_validate(model, valLoader, device):
-#
-#     model.eval()
-#     valLoss = 0
-#
-#     with torch.no_grad():
-#         for i, (profiles, parameters) in enumerate(valLoader):
-#
-#             profiles = profiles.to(device)
-#             parameters = parameters.to(device)
-#
-#             recoveredData, mu, logvar = model(profiles, parameters)
-#             valLoss += cvae_loss_function(recoveredData, profiles, mu, logvar, device).item()
-#
-#
-#     averageLoss = valLoss / len(valLoader.dataset)
-#
-#     return averageLoss  # float
+def cvae_validate(model, val_loader, config):
+    """
+    This function runs validation data set through the model to prevent over-fitting.
+    Returns: averaged validation loss.
+
+    Args:
+        model: current model state
+        val_loader: data loader used for the inference, here, validation set
+        config: config object with user supplied parameters
+    """
+
+    if cuda:
+        model.cuda()
+
+    model.eval()
+    val_loss = 0
+
+    with torch.no_grad():
+        for i, (profiles, parameters) in enumerate(val_loader):
+
+            # configure input
+            real_profiles = Variable(profiles.type(FloatTensor))
+            real_parameters = Variable(parameters.type(FloatTensor))
+
+            # inference
+            gen_profiles, mu, logvar = model(real_profiles, real_parameters)
+
+            loss = cvae_loss_function(gen_profiles, real_profiles, mu, logvar, config)
+
+            val_loss += loss.item()
+
+    average_loss = val_loss / len(val_loader.dataset)
+
+    return average_loss  # float
+
 
 # -----------------------------------------------------------------
 #  Testing
 # -----------------------------------------------------------------
-# def cvae_test(model, testLoader, device):
-#
-#     model.eval()
-#     test_loss = 0
-#
-#     with torch.no_grad():
-#         for i, (profiles, parameters) in enumerate(testLoader):
-#
-#             profiles = profiles.to(device)
-#             parameters = parameters.to(device)
-#
-#             inferredData, mu, logvar = model(profiles, parameters)
-#             test_loss += cvae_loss_function(inferredData, profiles, mu, logvar, device).item()
-#
-#
-#     averageLoss = test_loss / len(testLoader.dataset)
-#     print('\nAverage test loss:\t{:.4e}\n'.format(averageLoss))
-#
-#     # export data
-#     profilesTrue = profiles.cpu().numpy()
-#     profilesInfer = inferredData.cpu().numpy()
-#     parametersTmp = parameters.cpu().numpy()
-#
-#     p = parametersTmp.copy()
-#     p = utils_rescale_parameters(p)
-#
-#
-#     return p, profilesTrue, profilesInfer
+def cvae_test(epoch, test_loader, model, path, config, best_model=False):
+    """
+    This function runs the test data set through the auto-encoder, saves results as well as ground truth to file
+
+    Args:
+        epoch: current epoch
+        test_loader: data loader used for the inference, most likely the test set
+        path: path to output directory
+        model: current model state
+        config: config object with user supplied parameters
+        best_model: flag for testing on best model
+    """
+
+    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%(epoch+1))
+
+    if cuda:
+        model.cuda()
+
+    model.eval()
+
+    # arrays to store collated results
+    test_profiles_gen_all = torch.tensor([], device=device)
+    test_profiles_true_all = torch.tensor([], device=device)
+    test_parameters_true_all = torch.tensor([], device=device)
+
+    test_loss = 0
+
+    with torch.no_grad():
+        for i, (profiles, parameters) in enumerate(test_loader):
+
+            # configure input
+            real_profiles = Variable(profiles.type(FloatTensor))
+            real_parameters = Variable(parameters.type(FloatTensor))
+
+            gen_profiles, mu, log_var = model(real_profiles, real_parameters)
+
+            loss = cvae_loss_function(gen_profiles, real_profiles, mu, log_var, config)
+
+            test_loss += loss.item()
+
+            # collate data
+            test_profiles_gen_all = torch.cat((test_profiles_gen_all, gen_profiles), 0)
+            test_profiles_true_all = torch.cat((test_profiles_true_all, real_profiles), 0)
+            test_parameters_true_all = torch.cat((test_parameters_true_all, real_parameters), 0)
+
+    average_loss = test_loss / len(test_loader.dataset)
+    print("[Epoch %d/%d] [Test loss: %e]" % (epoch + 1, config.n_epochs, average_loss))
+
+    # move data to CPU, re-scale parameters, and write everything to file
+    test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
+    test_profiles_true_all = test_profiles_true_all.cpu().numpy()
+    test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+
+    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
+
+    if best_model:
+        prefix = 'best'
+    else:
+        prefix = 'test'
+
+    utils_save_test_data(
+        parameters=test_parameters_true_all,
+        profiles_true=test_profiles_true_all,
+        profiles_gen=test_profiles_gen_all,
+        path=path,
+        profile_choice=config.profile_type,
+        epoch=epoch,
+        prefix=prefix
+    )
 
 
 # -----------------------------------------------------------------
@@ -259,14 +331,13 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    if config.model == 'MLP2':
-        model = MLP2(config)
+    if config.model == 'VAE1':
+        model = VAE1(config)
     else:
-        model = MLP1(config)
+        model = CVAE1(config)
 
     if cuda:
         model.cuda()
-
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
@@ -285,10 +356,62 @@ def main(config):
     best_loss = np.inf
     best_epoch = 0
 
+    # -----------------------------------------------------------------
+    #  Main training loop
+    # -----------------------------------------------------------------
+    print("\033[96m\033[1m\nTraining starts now\033[0m")
+    for epoch in range(config.n_epochs):
 
+        train_loss = cvae_train(model, optimizer, train_loader, config)
+        val_loss = cvae_validate(model, val_loader, config)
 
+        train_loss_array = np.append(train_loss_array, train_loss)
+        val_loss_array = np.append(val_loss_array, val_loss)
 
-    # TODO: finish this!
+        if val_loss < best_loss:
+            best_loss = val_loss
+            best_model = copy.deepcopy(model)
+            best_epoch = epoch
+
+        print(
+            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
+            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch+1)
+        )
+
+        # check for testing criterion
+        if (epoch+1) % config.testing_interval == 0 or epoch+1 == config.n_epochs:
+
+            cvae_test(epoch, test_loader, model, data_products_path, config)
+
+    print("\033[96m\033[1m\nTraining complete\033[0m\n")
+
+    # -----------------------------------------------------------------
+    # Save best model and loss functions
+    # -----------------------------------------------------------------
+
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
+
+    utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
+    utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
+
+    # -----------------------------------------------------------------
+    # Evaluate best model by using test set
+    # -----------------------------------------------------------------
+    cvae_test(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
+
+    # -----------------------------------------------------------------
+    # Fin
+    # -----------------------------------------------------------------
+    print('All done!')
+
+    # -----------------------------------------------------------------
+    # Optional: analysis
+    # -----------------------------------------------------------------
+    if config.analysis:
+        print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
+
+        analysis_loss_plot(config)
+
 
 
 # -----------------------------------------------------------------
@@ -297,7 +420,7 @@ def main(config):
 if __name__ == "__main__":
 
     # parse arguments
-    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks')
+    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (CVAE)')
 
     # arguments for data handling
     parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
@@ -315,8 +438,8 @@ if __name__ == "__main__":
     parser.add_argument("--gen_parameter_mode", type=int, default=1, help="mode for generating fake parameters (0,1,2)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
-                        help='Pick a model: MLP1 (default) or MLP2')
+    parser.add_argument('--model', type=str, default='cvae1', metavar='(string)',
+                        help='Pick a model: CVAE1 (default) or VAE1')
 
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
@@ -370,8 +493,8 @@ if __name__ == "__main__":
         parameter_limits = ps.p8_limits
         parameter_names_latex = ps.p8_names_latex
 
-    if my_config.model not in ['MLP1', 'MLP2']:
-        my_config.model = 'MLP1'
+    if my_config.model not in ['CVAE1', 'VAE1']:
+        my_config.model = 'CVAE1'
 
     # print summary
     print("\nUsed parameters:\n")

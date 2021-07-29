@@ -29,7 +29,7 @@ class VAE1(nn.Module):
         h2 = F.leaky_relu(self.fc2(h1))
         return self.fc31(h2), self.fc32(h2)
 
-    def reparameterize(self, mu, log_variance):
+    def reparametrise(self, mu, log_variance):
 
         std = torch.exp(0.5*log_variance)
         eps = torch.randn_like(std)
@@ -44,7 +44,7 @@ class VAE1(nn.Module):
     def forward(self, x):
 
         mu, log_variance = self.encode(x.view(-1, 1500))
-        z = self.reparameterize(mu, log_variance)
+        z = self.reparametrise(mu, log_variance)
         return self.decode(z), mu, log_variance
 
 
