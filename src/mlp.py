@@ -346,7 +346,6 @@ def main(config):
     # -----------------------------------------------------------------
     # Save best model and loss functions
     # -----------------------------------------------------------------
-
     # TODO: save checkpoint for further training?
     # checkpoint = {
     #     'epoch': config.n_epochs,
@@ -362,7 +361,7 @@ def main(config):
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # -----------------------------------------------------------------
-    # Evaluate best model by using test set
+    # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
 
