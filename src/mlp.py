@@ -75,7 +75,7 @@ def mlp_loss_function(gen_x, real_x, config):
 # -----------------------------------------------------------------
 #   use mlp with test set
 # -----------------------------------------------------------------
-def mlp_run_testing(epoch, data_loader, model, path, config):
+def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
     """
     function runs the test data set through the mlp, saves results as well as ground truth to file
 
@@ -85,6 +85,7 @@ def mlp_run_testing(epoch, data_loader, model, path, config):
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
+        best_model: flag for testing on best model
     """
 
     print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch+1))
@@ -103,7 +104,6 @@ def mlp_run_testing(epoch, data_loader, model, path, config):
 
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
-            batch_size = profiles.shape[0]
 
             # configure input
             test_profiles_true = Variable(profiles.type(FloatTensor))
@@ -124,6 +124,11 @@ def mlp_run_testing(epoch, data_loader, model, path, config):
 
     test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
 
+    if best_model:
+        prefix = 'best'
+    else:
+        prefix = 'test'
+
     utils_save_test_data(
         parameters=test_parameters_true_all,
         profiles_true=test_profiles_true_all,
@@ -131,20 +136,19 @@ def mlp_run_testing(epoch, data_loader, model, path, config):
         path=path,
         profile_choice=config.profile_type,
         epoch=epoch,
-        prefix='test'
+        prefix=prefix
     )
 
 
 # -----------------------------------------------------------------
 #   run validation
 # -----------------------------------------------------------------
-def mlp_run_validation(epoch, data_loader, model, config):
+def mlp_run_validation(data_loader, model, config):
     """
-    function runs validation data set to prevent overfitting of the model.
+    function runs validation data set to prevent over-fitting of the model.
     Returns averaged validation loss.
 
     Args:
-        epoch: current epoch
         data_loader: data loader used for the inference, here, validation set
         model: current model state
         config: config object with user supplied parameters
@@ -263,7 +267,11 @@ def main(config):
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, betas=(config.b1, config.b2))
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=config.lr,
+        betas=(config.b1, config.b2)
+    )
 
     # -----------------------------------------------------------------
     # book keeping arrays
@@ -315,7 +323,7 @@ def main(config):
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
-        val_loss = mlp_run_validation(epoch, val_loader, model, config)
+        val_loss = mlp_run_validation(val_loader, model, config)
         val_loss_array = np.append(val_loss_array, val_loss)
 
         if val_loss < best_loss:
@@ -353,12 +361,17 @@ def main(config):
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
-    # TODO: run testing again here with best model
+    # -----------------------------------------------------------------
+    # Evaluate best model by using test set
+    # -----------------------------------------------------------------
+    mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
 
     # finished
     print('\nAll done!')
 
-    # optional: analysis
+    # -----------------------------------------------------------------
+    # Optional: analysis
+    # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
@@ -371,7 +384,7 @@ def main(config):
 if __name__ == "__main__":
 
     # parse arguments
-    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks')
+    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (MLP)')
 
     # arguments for data handling
     parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
