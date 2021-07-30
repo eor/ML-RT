@@ -338,6 +338,7 @@ def main(config):
 
     if cuda:
         model.cuda()
+
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
@@ -388,7 +389,6 @@ def main(config):
     # -----------------------------------------------------------------
     # Save best model and loss functions
     # -----------------------------------------------------------------
-
     utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch, best_model=True)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
