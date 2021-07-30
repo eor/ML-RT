@@ -194,7 +194,7 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%(epoch+1))
+    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%(epoch))
 
     if cuda:
         model.cuda()
@@ -227,7 +227,7 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
             test_parameters_true_all = torch.cat((test_parameters_true_all, real_parameters), 0)
 
     average_loss = test_loss / len(test_loader.dataset)
-    print("[Epoch %d/%d] [Test loss: %e]" % (epoch + 1, config.n_epochs, average_loss))
+    print("[Epoch %d/%d] [Test loss: %e]" % (epoch, config.n_epochs - 1, average_loss))
 
     # move data to CPU, re-scale parameters, and write everything to file
     test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
@@ -375,7 +375,7 @@ def main(config):
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch+1)
+            % (epoch, config.n_epochs-1,  train_loss, val_loss, best_epoch)
         )
 
         # check for testing criterion
@@ -389,7 +389,7 @@ def main(config):
     # Save best model and loss functions
     # -----------------------------------------------------------------
 
-    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch, best_model=True)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
@@ -413,7 +413,6 @@ def main(config):
         analysis_loss_plot(config)
 
 
-
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
@@ -434,8 +433,6 @@ if __name__ == "__main__":
                         help='Select H for neutral hydrogen fraction or T for temperature profiles (default: H)')
     parser.add_argument("--profile_len", type=int, default=1500, help="number of profile grid points")
     parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
-
-    parser.add_argument("--gen_parameter_mode", type=int, default=1, help="mode for generating fake parameters (0,1,2)")
 
     # network model switch
     parser.add_argument('--model', type=str, default='cvae1', metavar='(string)',
@@ -459,7 +456,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
+    parser.add_argument("--latent_dim", type=int, default=20, help="dimensionality of the latent space")
+
     parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate, default=0.0002 ")
+
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
