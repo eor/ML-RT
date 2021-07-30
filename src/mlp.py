@@ -88,7 +88,7 @@ def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch+1))
+    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch))
 
     if cuda:
         model.cuda()
@@ -333,7 +333,7 @@ def main(config):
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch+1, config.n_epochs,  train_loss, val_loss, best_epoch+1)
+            % (epoch, config.n_epochs-1,  train_loss, val_loss, best_epoch)
         )
 
         # check for testing criterion

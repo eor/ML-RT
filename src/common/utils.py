@@ -138,7 +138,7 @@ def utils_derivative_2(array, norm=None):
 # -----------------------------------------------------------------
 # save state of model
 # -----------------------------------------------------------------
-def utils_save_model(state, path, profile_choice, n_epoch, best_model=True, file_name=None):
+def utils_save_model(state, path, profile_choice, n_epoch, best_model=False, file_name=None):
 
     # if no file name is provided, construct one here
     if file_name is None:
@@ -168,9 +168,9 @@ def utils_save_loss(loss_array, path, profile_choice, n_epoch, prefix='train'):
 # -----------------------------------------------------------------
 def utils_save_test_data(parameters, profiles_true, profiles_gen, path, profile_choice, epoch, prefix='test'):
 
-    parameter_filename = prefix + '_parameters_%s_%d_epochs.npy'%(profile_choice, epoch+1)
-    profiles_true_filename = prefix + '_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch+1)
-    profiles_gen_filename = prefix + '_profiles_gen_%s_%d_epochs.npy' % (profile_choice, epoch+1)
+    parameter_filename = prefix + '_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
+    profiles_true_filename = prefix + '_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)
+    profiles_gen_filename = prefix + '_profiles_gen_%s_%d_epochs.npy' % (profile_choice, epoch)
 
     parameter_path = osp.join(path, parameter_filename)
     profiles_true_path = osp.join(path, profiles_true_filename)
