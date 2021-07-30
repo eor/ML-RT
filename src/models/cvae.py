@@ -8,6 +8,8 @@ import torch
 # -----------------------------------------------------------------
 class VAE1(nn.Module):
 
+    # TODO: test this method
+
     def __init__(self, conf):
         super(VAE1, self).__init__()
 
@@ -37,8 +39,9 @@ class VAE1(nn.Module):
         h5 = F.leaky_relu(self.fc5(h4))
         return self.fc6(h5)
 
-    def forward(self, x):
-        mu, log_variance = self.encode(x.view(-1, 1500))
+    def forward(self, x, y=None):
+        # mu, log_variance = self.encode(x.view(-1, 1500))
+        mu, log_variance = self.encode(x)
         z = self.reparametrise(mu, log_variance)
         return self.decode(z), mu, log_variance
 
@@ -140,7 +143,7 @@ class CVAE1(nn.Module):
 
         # concatenate input data:
         # profiles + parameter vectors (along dimension 1, the profile length,
-        # dimension 0 is the batchsize)
+        # dimension 0 is the batch size)
         cond_profiles = torch.cat((profiles, parameters), 1)
 
         # pass conditioned input through encoder
