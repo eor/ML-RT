@@ -387,6 +387,7 @@ if __name__ == "__main__":
 
     # arguments for data handling
     parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
+
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
@@ -395,10 +396,10 @@ if __name__ == "__main__":
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
                         help='Select H for neutral hydrogen fraction or T for temperature profiles (default: H)')
-    parser.add_argument("--profile_len", type=int, default=1500, help="number of profile grid points")
-    parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
 
-    parser.add_argument("--gen_parameter_mode", type=int, default=1, help="mode for generating fake parameters (0,1,2)")
+    parser.add_argument("--profile_len", type=int, default=1500, help="number of profile grid points")
+
+    parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
 
     # network model switch
     parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
@@ -422,7 +423,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
-    parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate, default=0.0002 ")
+    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate, default=0.0002 ")
+
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
