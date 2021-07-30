@@ -6,20 +6,22 @@ class Generator(nn.Module):
     def __init__(self, conf):
         super(Generator, self).__init__()
 
-        def block(features_in, features_out, normalise=conf.batch_norm):
+        def block(features_in, features_out, use_batch_norm=conf.batch_norm):
             layers = [nn.Linear(features_in, features_out)]
-            if normalise:
+
+            if use_batch_norm:
                 layers.append(nn.BatchNorm1d(features_out))
+
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
         self.model = nn.Sequential(
-            *block(conf.latent_dim + conf.n_parameters, 128, normalise=False),
+            *block(conf.latent_dim + conf.n_parameters, 128, use_batch_norm=False),
             *block(128, 256),
             *block(256, 512),
             *block(512, 1024),
             nn.Linear(1024, int(conf.profile_len)),
-            # nn.Tanh()
+            # nn.Tanh()  <--- NOPE!!!!!!!!!
         )
 
     def forward(self, noise, parameters):
@@ -36,15 +38,17 @@ class Discriminator(nn.Module):
     def __init__(self, conf):
         super(Discriminator, self).__init__()
 
-        def block(features_in, features_out, dropout=conf.dropout):
+        def block(features_in, features_out, use_dropout=conf.dropout):
             layers = [nn.Linear(features_in, features_out)]
-            if dropout:
+
+            if use_dropout:
                 layers.append(nn.Dropout(conf.dropout_value))
+
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
         self.model = nn.Sequential(
-            *block(conf.profile_len + conf.n_parameters, 1024, dropout=False),
+            *block(conf.profile_len + conf.n_parameters, 1024, use_dropout=False),
             *block(1024, 512),
             *block(512, 256),
             *block(256, 128),
@@ -53,15 +57,15 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward(self, profile, parameters):
+    def forward(self, profiles, parameters):
 
         # concatenate profile and parameter vector to produce conditioned input
         # Inputs: profile.shape -  [batch_size, profile_len]
         #         parameters.shape - [batch_size, n_parameters]
 
-        discriminator_input = torch.cat((profile, parameters), 1)
+        discriminator_input = torch.cat((profiles, parameters), 1)
 
         validity = self.model(discriminator_input)
 
         return validity
-    
+
