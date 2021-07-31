@@ -202,6 +202,8 @@ def main(config):
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
     global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
+
+
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
@@ -274,7 +276,7 @@ def main(config):
     )
 
     # -----------------------------------------------------------------
-    # book keeping arrays
+    # book keeping arraysSCALE_PARAMETERS
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
     val_loss_array = np.empty(0)
@@ -290,7 +292,7 @@ def main(config):
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(config.n_epochs):
+    for epoch in range(1,config.n_epochs+1):
 
         epoch_loss = 0
 
@@ -333,11 +335,11 @@ def main(config):
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs-1,  train_loss, val_loss, best_epoch)
+            % (epoch, config.n_epochs,  train_loss, val_loss, best_epoch)
         )
 
         # check for testing criterion
-        if (epoch+1) % config.testing_interval == 0 or epoch+1 == config.n_epochs:
+        if (epoch) % config.testing_interval == 0 or epoch == config.n_epochs:
 
             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
@@ -364,6 +366,8 @@ def main(config):
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
+    
+    # [TODO]: save best epoch to a new config
 
     # finished
     print('\nAll done!')
@@ -375,6 +379,9 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
+        analysis_auto_plot_profiles(config, k=5, prefix='test')
+        # analysis_auto_plot_profiles(post_train_config, k=5, prefix='best')
+
 
 
 # -----------------------------------------------------------------

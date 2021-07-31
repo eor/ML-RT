@@ -1,6 +1,10 @@
 import numpy as np
 import os.path as osp
 import heapq
+try:
+    from common.utils import utils_load_config
+except ImportError:
+    from utils import utils_load_config
 
 try:
     from plot import *
@@ -22,7 +26,6 @@ except ImportError:
 DATA_PRODUCTS_DIR = 'data_products'
 PLOT_DIR = 'plots'
 PLOT_FILE_TYPE = 'pdf'  # or 'png'
-
 
 # -----------------------------------------------------------------
 #  setup for the loss function plots
@@ -61,15 +64,20 @@ def analysis_loss_plot(config):
 # -----------------------------------------------------------------
 # Automatically plot test profiles
 # -----------------------------------------------------------------
-def analysis_auto_plot_profiles(config, k, epoch, profile_choice='T', prefix='test'):
+def analysis_auto_plot_profiles(config, k=5, prefix='test'):
 
     # 1. read data
     data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
     plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
-    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
-    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)
-    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(profile_choice, epoch)
+    if prefix == 'test':
+        epoch = config.n_epochs
+    elif prefix == 'best':
+        epoch = config.best_epoch
+
+    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(config.profile_type, epoch)
 
     parameters = np.load(osp.join(data_dir_path, parameter_true_file))
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
@@ -84,7 +92,7 @@ def analysis_auto_plot_profiles(config, k, epoch, profile_choice='T', prefix='te
     k_small_list = heapq.nsmallest(k, range(len(mse_array)), mse_array.take)
 
     # 4.  plot profiles for largest MSE
-    print('Producing profile plot(s) for profiles with %d largest MSE'%k)
+    print('Producing profile plot(s) for profiles with %d largest MSE'%(k))
     for i in range(len(k_large_list)):
         index = k_large_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -93,10 +101,18 @@ def analysis_auto_plot_profiles(config, k, epoch, profile_choice='T', prefix='te
         tmp_profile_true = profiles_true[index]
         tmp_profile_gen = profiles_gen[index]
 
-        plot_profile_single(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
+        plot_profile_single(
+            profile_true = tmp_profile_true, 
+            profile_inferred = tmp_profile_gen, 
+            n_epoch = epoch,
+            output_dir =  plot_dir_path, 
+            profile_type = config.profile_type,
+            prefix = prefix,  
+            parameters = tmp_parameters
+        )
 
-    # 4.  plot profiles for smallest MSE
-    print('Producing profile plot(s) for profiles with %d smallest MSE'%k)
+    # 5.  plot profiles for smallest MSE
+    print('Producing profile plot(s) for profiles with %d smallest MSE'%(k))
     for i in range(len(k_small_list)):
         index = k_small_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -105,8 +121,15 @@ def analysis_auto_plot_profiles(config, k, epoch, profile_choice='T', prefix='te
         tmp_profile_true = profiles_true[index]
         tmp_profile_gen = profiles_gen[index]
 
-        plot_profile_single(tmp_profile_true, tmp_profile_gen, epoch, plot_dir_path, profile_choice, tmp_parameters)
-
+        plot_profile_single(
+            profile_true = tmp_profile_true, 
+            profile_inferred = tmp_profile_gen, 
+            n_epoch = epoch,
+            output_dir =  plot_dir_path, 
+            profile_type = config.profile_type,
+            prefix = prefix, 
+            parameters = tmp_parameters
+        )
 
 # -----------------------------------------------------------------
 #  run the following if this file is called directly
@@ -115,11 +138,13 @@ if __name__ == '__main__':
 
     print('Hello there! Let\'s analyse some results\n')
 
-
-    # base = './output/run_20210520_224447'
+    
+    base = '../test/run_2021_08_01__17_39_48'
+    config = utils_load_config(base)
     # lr = 0.001
-    # epoch = 2000
-    # k = 4
-    # profile = 'T'
-    # analysis_loss_plot(base, epoch, lr, profile)
-    # analysis_auto_plot_profiles(base, k, epoch, profile_choice=profile, prefix='test')
+    k = 5
+    profile = config.profile_type
+    analysis_auto_plot_profiles(config, k=k, prefix='test')
+
+    print('\n Completed! \n')
+    
