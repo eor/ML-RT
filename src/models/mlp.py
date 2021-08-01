@@ -29,7 +29,7 @@ class MLP1(nn.Module):
             *block(128, 256),
             *block(256, 512),
             *block(512, 1024),
-            nn.Linear(1024, int(conf.profile_len)),
+            nn.Linear(1024, int(conf.profile_len))
 
         )
 
