@@ -361,7 +361,7 @@ def main(config):
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(config.n_epochs):
+    for epoch in range(1, config.n_epochs+1):
 
         train_loss = cvae_train(model, optimizer, train_loader, config)
         val_loss = cvae_validate(model, val_loader, config)
@@ -376,11 +376,11 @@ def main(config):
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs-1,  train_loss, val_loss, best_epoch)
+            % (epoch, config.n_epochs,  train_loss, val_loss, best_epoch)
         )
 
         # check for testing criterion
-        if (epoch+1) % config.testing_interval == 0 or epoch+1 == config.n_epochs:
+        if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
             cvae_test(epoch, test_loader, model, data_products_path, config)
 
@@ -411,6 +411,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
+        analysis_auto_plot_profiles(config, k=5, prefix='test')
 
 
 # -----------------------------------------------------------------
