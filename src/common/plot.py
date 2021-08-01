@@ -63,21 +63,20 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
     print('Saved plot to:\t%s'%(path))
 
 
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 # Plot a single profile comparison (ground truth vs inferred)
-#-----------------------------------------------------------------
-def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, profile_type, prefix ,parameters=None):
+# -----------------------------------------------------------------
+def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, profile_type, prefix, parameters=None):
 
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
     
     fig = plt.figure(figsize=(10,7))
-    gs = fig.add_gridspec(nrows = 2,ncols= 1, hspace=0,height_ratios= [3,1])
+    gs = fig.add_gridspec(nrows=2, ncols=1, hspace=0, height_ratios=[3,1])
     ax_array = gs.subplots(sharex=True, sharey=False)
 
-
-    rc('font',**{'family':'serif'})
+    rc('font', **{'family':'serif'})
     rc('text', usetex=True) 
     
     # -----------------------------------------------------------------
@@ -88,7 +87,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, pro
         param_names = p5_names_latex
     else:
         param_names = p8_names_latex
-
     
     if parameters is not None and len(parameters)>0:
         a = ''
@@ -103,7 +101,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, pro
             if j==2:
                 a += '$\mathrm{Myr}$'
             a +=  '\, \, \, '
-            
 
     fig.suptitle(a, fontsize=12)
 
@@ -113,6 +110,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, pro
     
     ax_array[0].plot((profile_true), c='green', label='Truth')
     ax_array[0].plot((profile_inferred), c='orange', label='Reconstruction')
+
     if profile_type == 'H':
         ax_array[0].set_ylabel(r'$\log_{10}(x_{H_{II}}) $', fontsize=14)
     elif profile_type == 'T':
@@ -122,32 +120,32 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, pro
 
     ax_array[0].legend(loc='upper right', frameon=False)
     ax_array[0].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-    ax_array[0].set_xticks(np.arange(0, len(profile_true), step=50),minor = True)
-    ax_array[0].tick_params(axis='both', which='both',right= True, top = True)
+    ax_array[0].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
+    ax_array[0].tick_params(axis='both', which='both', right=True, top=True)
     
     # -----------------------------------------------------------------
     # second plot (diff / relative error)
     # -----------------------------------------------------------------
 
-    # addition of small number to denominator to avoid divsion by zero
+    # addition of small number to denominator to avoid division by zero
     relative_error = (profile_true - profile_inferred)/ (np.fabs(profile_true)+1.0e-6)
     ax_array[1].plot(relative_error, c='black', label='Relative error', linewidth=0.6)
     ax_array[1].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
     ax_array[1].set_ylabel(r'Rel error', fontsize=14)
     ax_array[1].set_xlabel(r'Radius $\mathrm{[kpc]}$',fontsize=14)
-    ax_array[1].set_xticks(np.arange(0, len(profile_true), step=50),minor = True)
-    ax_array[1].tick_params(axis='both', which='both',right= True, top = True)
+    ax_array[1].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
+    ax_array[1].tick_params(axis='both', which='both', right=True, top=True)
 
     # -----------------------------------------------------------------
     # get MSE and construct file name
     # -----------------------------------------------------------------
     mse = (np.square(profile_true - profile_inferred)).mean()
     mse = np.log10(mse+1.0e-11)
-    fileName = '{:s}_{:s}_profile_epoch_{:d}_logMSE_{:.4e}'.format(profile_type, prefix, n_epoch, mse)
-    fileName = fileName.replace('.', '_')
-    fileName += '.png'
+    file_name = '{:s}_{:s}_profile_epoch_{:d}_logMSE_{:.4e}'.format(profile_type, prefix, n_epoch, mse)
+    file_name = file_name.replace('.', '_')
+    file_name += '.png'
 
-    plt.savefig(os.path.join(output_dir,fileName))
+    plt.savefig(os.path.join(output_dir, file_name))
 
     # -----------------------------------------------------------------
     # clean up, necessary when making lots of plots

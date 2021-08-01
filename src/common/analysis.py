@@ -12,7 +12,6 @@ except ImportError:
     from common.plot import *
 
 
-
 # -----------------------------------------------------------------
 # Purpose of the functions below is to automatically run the data
 # products through the plotting routines (after a training run) and
@@ -26,6 +25,7 @@ except ImportError:
 DATA_PRODUCTS_DIR = 'data_products'
 PLOT_DIR = 'plots'
 PLOT_FILE_TYPE = 'pdf'  # or 'png'
+
 
 # -----------------------------------------------------------------
 #  setup for the loss function plots
@@ -131,6 +131,7 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
             parameters = tmp_parameters
         )
 
+
 # -----------------------------------------------------------------
 #  run the following if this file is called directly
 # -----------------------------------------------------------------
@@ -138,7 +139,7 @@ if __name__ == '__main__':
 
     print('Hello there! Let\'s analyse some results\n')
 
-    
+    # F: local example
     base = '../test/run_2021_08_01__17_39_48'
     config = utils_load_config(base)
     # lr = 0.001
@@ -147,4 +148,3 @@ if __name__ == '__main__':
     analysis_auto_plot_profiles(config, k=k, prefix='test')
 
     print('\n Completed! \n')
-    

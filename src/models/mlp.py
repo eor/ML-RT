@@ -30,7 +30,6 @@ class MLP1(nn.Module):
             *block(256, 512),
             *block(512, 1024),
             nn.Linear(1024, int(conf.profile_len))
-
         )
 
     def forward(self, parameters):
@@ -59,8 +58,7 @@ class MLP2(nn.Module):
         self.model = nn.Sequential(
             *block(conf.n_parameters, 256, normalise=False, dropout=False),
             *block(256, 3000),
-            nn.Linear(3000, int(conf.profile_len)),
-
+            nn.Linear(3000, int(conf.profile_len))
         )
 
     def forward(self, parameters):
