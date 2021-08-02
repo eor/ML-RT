@@ -384,7 +384,7 @@ def main(config):
             cgan_run_test(epoch, test_loader, generator, data_products_path, config)
 
         # TODO: move discriminator and generator training to separate functions.
-        #  Be mindful when each should be in train and eval mode
+        #  Be mindful when each model should be in train and eval mode
         #
         # TODO: find good condition for finding the best generator model (no validation available)
         #
