@@ -292,7 +292,7 @@ def main(config):
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(1,config.n_epochs+1):
+    for epoch in range(1, config.n_epochs+1):
 
         epoch_loss = 0
 
@@ -339,7 +339,7 @@ def main(config):
         )
 
         # check for testing criterion
-        if (epoch) % config.testing_interval == 0 or epoch == config.n_epochs:
+        if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
@@ -367,7 +367,7 @@ def main(config):
     # -----------------------------------------------------------------
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
     
-    # [TODO]: save best epoch to a new config
+    # TODO: save best epoch to a new config
 
     # finished
     print('\nAll done!')
@@ -381,7 +381,6 @@ def main(config):
         analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=5, prefix='test')
         # analysis_auto_plot_profiles(post_train_config, k=5, prefix='best')
-
 
 
 # -----------------------------------------------------------------
