@@ -1,4 +1,5 @@
 import numpy as np
+from common.parameter_settings import p5_limits, p8_limits
 
 
 # -----------------------------------------------------------------
@@ -16,8 +17,31 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters):
          numpy objects containing the hydrogen, temperature profiles, and parameters
 
      """
+    
+    # choose limits to use based on number of parameters
+    original_len, n_parameters = global_parameters.shape
+    limits = p5_limits if n_parameters == 5 else p8_limits
+    
+    deletion_indices = []
+    for i in range(len(limits)):
+        lower_limit = limits[i][0]
+        upper_limit = limits[i][1]
 
-    print("\nParameter space filter: Deleting a total of __ samples. __ remaining.")
+        original_parameters = global_parameters[:,i]
+        # find all indices where parameters don't lie between required range for all parameters
+        deletion_indices += (np.where((original_parameters < lower_limit) | (original_parameters > upper_limit))[0]).tolist()
+
+    # delete the repeating indices from the list
+    deletion_indices = list(set(deletion_indices))
+
+    # delete the entries from dataset corresponding to the deletion_indices
+    H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
+    T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
+    global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
+
+    print("\nParameter space filter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(global_parameters)))
+    return H_profiles, T_profiles, global_parameters
+
 
 
 # -----------------------------------------------------------------

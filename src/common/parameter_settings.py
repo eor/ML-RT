@@ -12,7 +12,7 @@
 p5_limits = list()
 p5_limits.append([8.0, 15.0])
 p5_limits.append([6.0, 13.0])
-p5_limits.append([1.0, 20.0])
+p5_limits.append([0.1, 20.0])
 p5_limits.append([1.0, 2.0])
 p5_limits.append([0.0, 1.0])
 
