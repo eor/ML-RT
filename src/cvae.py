@@ -6,11 +6,12 @@ import argparse
 # from torchvision import datasets
 # import torch.nn as nn
 # import torch
+import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
-import torch.nn.functional as F
+
 import copy
 
 from models.cvae import *
@@ -436,7 +437,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='cvae1', metavar='(string)',
+    parser.add_argument('--model', type=str, default='CVAE1', metavar='(string)',
                         help='Pick a model: CVAE1 (default) or VAE1')
 
     # network optimisation
