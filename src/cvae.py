@@ -194,7 +194,7 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%(epoch))
+    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%epoch)
 
     if cuda:
         model.cuda()
@@ -227,7 +227,7 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
             test_parameters_true_all = torch.cat((test_parameters_true_all, real_parameters), 0)
 
     average_loss = test_loss / len(test_loader.dataset)
-    print("[Epoch %d/%d] [Test loss: %e]" % (epoch, config.n_epochs - 1, average_loss))
+    print("[Epoch %d/%d] [Test loss: %e]" % (epoch, config.n_epochs, average_loss))
 
     # move data to CPU, re-scale parameters, and write everything to file
     test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
