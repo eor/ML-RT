@@ -384,11 +384,11 @@ def main(config):
             cgan_run_test(epoch, test_loader, generator, data_products_path, config)
 
         # TODO: move discriminator and generator training to separate functions.
-        #  Be mindful when each model should be in train and eval mode
+        #  Be mindful when each model should be in train and eval mode.
         #
-        # TODO: find good condition for finding the best generator model (no validation available)
+        # TODO: find a good criterion for choosing the best generator model (no validation available)
         #
-        # TODO: write model here
+        # TODO: write best generator model here
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
