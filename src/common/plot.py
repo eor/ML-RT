@@ -152,7 +152,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir, pro
     # -----------------------------------------------------------------
     for ax in ax_array:
         ax.clear()
-        plt.close('all')
+    plt.close('all')
 
 
 # -----------------------------------------------------------------

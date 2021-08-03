@@ -1,11 +1,10 @@
 import numpy as np
-from common.parameter_settings import p5_limits, p8_limits
-
+from common.utils import utils_get_user_param_limits
 
 # -----------------------------------------------------------------
 # Cuts in the parameter space
 # -----------------------------------------------------------------
-def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters):
+def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_config_path = ''):
     """
      This function makes cuts to the parameter space according to some user-specified limits.
      The limits could be provided as an argument (2D numpy array) in the same format as the ones
@@ -20,7 +19,8 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters):
     
     # choose limits to use based on number of parameters
     original_len, n_parameters = global_parameters.shape
-    limits = p5_limits if n_parameters == 5 else p8_limits
+    param_limits = utils_get_user_param_limits(user_config_path)
+    limits = param_limits['p5_limits'] if n_parameters == 5 else param_limits['p8_limits']
     
     deletion_indices = []
     for i in range(len(limits)):
