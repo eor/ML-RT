@@ -184,7 +184,8 @@ def cvae_validate(model, val_loader, config):
 # -----------------------------------------------------------------
 def cvae_test(epoch, test_loader, model, path, config, best_model=False):
     """
-    This function runs the test data set through the auto-encoder, saves results as well as ground truth to file
+    This function runs the test data set through the auto-encoder, saves
+    results as well as ground truth to file
 
     Args:
         epoch: current epoch
