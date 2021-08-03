@@ -4,7 +4,7 @@ import pickle
 import torch
 import os.path as osp
 from datetime import datetime
-
+from configparser import ConfigParser
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
 # -----------------------------------------------------------------
@@ -266,6 +266,36 @@ def utils_load_config(path, file_name='config.dict'):
 
 
 
+# -----------------------------------------------------------------
+# Read user-defined parameter space limits from user_config..ini and retrun as a dictionary
+# -----------------------------------------------------------------
+def utils_get_user_param_limits(path_user_config = '', file_name='user_config.ini'):
+    if path_user_config.endswith(file_name):
+        p = path_user_config
+    else:
+        p = osp.join(path_user_config, file_name)
+
+    print('\nLoading config object from file:\n')
+    print('\t' + p)
 
 
+    config = ConfigParser()        
+    config.read(p)
+    # retrieve parameter_limits from conifg file as a dictionary
+    param_limits = config._sections['PARAMETER_LIMITS']
+    
+    # for every key in parameter_limits, convert the corresponding string to list
+    for key in param_limits.keys():
+        param_string = param_limits[key]
 
+        # use '\n' as delimiter to separate limits for different parameters
+        param_list = param_string[1:].split('\n')
+
+        # use ',' as delimiter to separate lower and upper limit for every paramter
+        for i in range(len(param_list)):
+            param_list[i] = param_list[i].split(',')
+
+        # convert string array to float array and assign it back to it's key in dictionary
+        param_limits[key] = np.array(param_list).astype(np.float)
+
+    return param_limits
