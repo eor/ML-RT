@@ -457,7 +457,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
-    parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
+    parser.add_argument("--latent_dim", type=int, default=10, help="dimensionality of the latent space (default=10)")
     parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate, default=0.0002 ")
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
