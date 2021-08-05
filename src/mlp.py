@@ -28,7 +28,7 @@ H_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
-SPLIT_FRACTION = (0.90, 0.09, 0.01)  # train, val, test.
+SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
 SHUFFLE = True
 SHUFFLE_SEED = 42
 
