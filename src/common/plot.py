@@ -198,6 +198,12 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     limits = [(7.5, 15.5), (5.5, 13.5), (0.5, 21.2), (0.94, 2.07), (-0.075, 1.075)]
 
 
+    # TODO: test for 8 parameters
+    # TODO: change the hard coded padding limits (case 5 & 8)
+    # TODO: save as png or pdf
+    # TODO: ability to fix color range (to make different plots comparable)
+
+
     # 2. compute MSE
     mse_array = (np.square( (profiles_true) - (profiles_gen))).mean(axis=1)
     #mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
@@ -263,7 +269,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     f.subplots_adjust(hspace=0, wspace=0, left=0.07, bottom=0.07, right=0.95, top=0.98)
 
     # 5. build file name & save file
-    file_name = 'parameter_space_MSE_%s_%d_Epochs.pdf'%(profile_type, n_epoch)
+    file_name = 'parameter_space_MSE_%s_%d_epochs.pdf'%(profile_type, n_epoch)
     if prefix:
         file_name = prefix + '_' + file_name
 
