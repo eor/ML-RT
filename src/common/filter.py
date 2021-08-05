@@ -1,10 +1,11 @@
 import numpy as np
 from common.utils import utils_get_user_param_limits
 
+
 # -----------------------------------------------------------------
 # Cuts in the parameter space
 # -----------------------------------------------------------------
-def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_config_path = ''):
+def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_config_path=''):
     """
      This function makes cuts to the parameter space according to some user-specified limits.
      The limits could be provided as an argument (2D numpy array) in the same format as the ones
@@ -15,6 +16,7 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_c
      Args:
          numpy objects containing the hydrogen, temperature profiles, and parameters
 
+     Returns: modified numpy objects
      """
     
     # choose limits to use based on number of parameters
@@ -27,7 +29,7 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_c
         lower_limit = limits[i][0]
         upper_limit = limits[i][1]
 
-        original_parameters = global_parameters[:,i]
+        original_parameters = global_parameters[:, i]
         # find all indices where parameters don't lie between required range for all parameters
         deletion_indices += (np.where((original_parameters < lower_limit) | (original_parameters > upper_limit))[0]).tolist()
 
@@ -39,9 +41,9 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_c
     T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nParameter space filter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(global_parameters)))
+    print("\nParameter space filter: Deleting a total of %d samples. %d remaining." %
+          (len(deletion_indices), len(global_parameters)))
     return H_profiles, T_profiles, global_parameters
-
 
 
 # -----------------------------------------------------------------
