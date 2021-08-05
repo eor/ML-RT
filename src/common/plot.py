@@ -182,7 +182,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     else:
         p_labels = p8_names_latex
 
-    for i, l in p_labels:
+    for i, l in enumerate(p_labels):
         p_labels[i] = '$' + l + '$'
 
 
