@@ -201,10 +201,12 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
 
 
-    # TODO: test for 8 parameters
-    # TODO: change the hard coded padding padding (case 5 & 8)
+
+
+
     # TODO: save as png or pdf
     # TODO: ability to fix color range (to make different plots comparable)
+
 
 
     # 2. compute MSE
@@ -213,7 +215,13 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     mse_array = np.log10(mse_array + 1e-11)
 
     # 3. set up main plot
-    #f, ax_array = plt.subplots(N - 1, N - 1, sharex='col', sharey='row', figsize=(12, 12))
+    # marker size
+    if N == 5:
+        marker_size = 150
+    else:
+        marker_size = 75
+
+
     f, ax_array = plt.subplots(N - 1, N - 1, figsize=(12, 12))
     for i in range(0, N - 1):
         for j in range(1, N):
@@ -222,7 +230,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
                 ax = ax_array[N - 2 - i, j - 1].scatter(x=parameters[:, j],
                                                         y=parameters[:, i],
                                                         c=mse_array[:],
-                                                        marker='h', s=150,
+                                                        marker='h',
+                                                        s=marker_size,
                                                         alpha=0.75,
                                                         edgecolors='none',
                                                         cmap=mpl.cm.inferno_r
