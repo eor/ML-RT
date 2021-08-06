@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import rc
 try:
-    from parameter_settings import p5_names_latex, p8_names_latex
+    from parameter_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 except ImportError:
-    from common.parameter_settings import p5_names_latex, p8_names_latex
+    from common.parameter_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 
 try:
     from utils import *
@@ -162,14 +162,6 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
     print('Making parameter-MSE plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
 
-    # Reminder: we are using the following parameters
-    # 1. haloMassLog        interval=[8.0, 15.0]
-    # 2. redshift           interval=[6.0, 13.0]
-    # 3. sourceAge          interval=[0.1, 20.0]
-    # 4. qsoAlpha           interval=[1.0, 2.0]
-    # 5. starsEscFrac       interval=[0.0, 1.0]
-
-    # parameter labels
     # -----------------------------------------------------------------
     # get parameters labels
     # -----------------------------------------------------------------
@@ -182,24 +174,35 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     else:
         p_labels = p8_names_latex
 
-    for i, l in enumerate(p_labels):
-        p_labels[i] = '$' + l + '$'
+    for i, label in enumerate(p_labels):
+        p_labels[i] = '$' + label + '$'
 
 
-    # old:
-    # p_labels = ['$\log(\mathrm{M}_{\mathrm{halo}})$',
-    #            '$z$',
-    #            '$t_{\mathrm{Age}}$',
-    #            '$-\\alpha_{\mathrm{QSO}}$',
-    #            '$f_{\mathrm{esc}}$']
-
+    # -----------------------------------------------------------------
+    # add padding to limits
+    # -----------------------------------------------------------------
     # parameter intervals (with some padding)
     # limits = [(8.0, 15.0), (6.0, 13.0), (0.1, 20.0), (1.0, 2.0), (0.0, 1.0)]
-    limits = [(7.5, 15.5), (5.5, 13.5), (0.5, 21.2), (0.94, 2.07), (-0.075, 1.075)]
+    padding_5 = [(7.5, 15.5), (5.5, 13.5), (0.5, 21.2), (0.94, 2.07), (-0.075, 1.075)]
+
+    padding_8 = [(8.0, 15.0),
+                 (6.0, 13.0),
+                 (0.1, 20.0),
+                 (0.0, 2.0),
+                 (0.0, 1.0),
+                 (0.0, 1.0),
+                 (0.0, 2.5),
+                 (0.6989700043360189, 2.6989700043360187)]
+
+    if N == 5:
+        padding = padding_5
+    else:
+        padding = padding_8
+
 
 
     # TODO: test for 8 parameters
-    # TODO: change the hard coded padding limits (case 5 & 8)
+    # TODO: change the hard coded padding padding (case 5 & 8)
     # TODO: save as png or pdf
     # TODO: ability to fix color range (to make different plots comparable)
 
@@ -225,8 +228,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
                                                         cmap=mpl.cm.inferno_r
                                                         )
 
-                ax_array[N - 2 - i, j - 1].set_ylim(limits[i])
-                ax_array[N - 2 - i, j - 1].set_xlim(limits[j])
+                ax_array[N - 2 - i, j - 1].set_ylim(padding[i])
+                ax_array[N - 2 - i, j - 1].set_xlim(padding[j])
 
                 if i == 0:
                     # bottom row
