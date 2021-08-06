@@ -35,7 +35,7 @@ SHUFFLE_SEED = 42
 SCALE_PARAMETERS = True
 USE_LOG_PROFILES = True
 USE_BLOWOUT_FILTER = True
-CUT_PARAMTER_SPACE = True
+CUT_PARAMETER_SPACE = True
 
 DATA_PRODUCTS_DIR = 'data_products'
 PLOT_DIR = 'plots'
@@ -215,7 +215,7 @@ def main(config):
     if USE_BLOWOUT_FILTER:
         H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
 
-    if CUT_PARAMTER_SPACE:
+    if CUT_PARAMETER_SPACE:
         H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles, global_parameters)
 
     # -----------------------------------------------------------------
