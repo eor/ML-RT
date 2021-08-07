@@ -67,9 +67,7 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 #  loss function
 # -----------------------------------------------------------------
 def mlp_loss_function(gen_x, real_x, config):
-
-    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
-
+    mse = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
     return mse
 
 
@@ -259,29 +257,29 @@ def main(config):
     val_loader = DataLoader(validation_data, batch_size=config.batch_size)
     test_loader = DataLoader(testing_data, batch_size=config.batch_size)
 
-    print(train_loader)
-    print(val_loader)
-    
     
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
     # if config.model == 'MLP2':
-    model = LSTM(config)
+    model = LSTM2(config)
     # else:
     #     model = MLP1(config)
     # if True:
     #     return
     if cuda:
         model.cuda()
-    print(model)
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
+    # for name, param in model.named_parameters():
+    #     if param.requires_grad:
+    #         print(name, param.data)
+    # return 
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=config.lr,
-        betas=(config.b1, config.b2)
+        lr=config.lr
+        # betas=(config.b1, config.b2)
     )
 
     # -----------------------------------------------------------------
@@ -322,7 +320,6 @@ def main(config):
 
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
-
             loss = mlp_loss_function(gen_profiles, real_profiles, config)
 
             loss.backward()
