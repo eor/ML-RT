@@ -196,11 +196,11 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
     padding_8 = [(8.0 - 0.2, 15.0 + 0.2),
                  (6.0 - 0.2, 13.0 + 0.2),
-                 (0.1 + 0.2, 21.0 + 0.2),
-                 (0.0 - 0.05, 2.0 + 0.05),
-                 (0.0 - 0.05, 1.0 + 0.05),
-                 (0.0- 0.05, 1.0 + 0.05),
-                 (0.0- 0.05, 2.0 + 0.05),
+                 (0.1 + 0.2, 21.0 + 0.1),
+                 (0.0 - 0.07, 2.0 + 0.07),
+                 (0.0 - 0.07, 1.0 + 0.07),
+                 (0.0 - 0.07, 1.0 + 0.07),
+                 (0.0 - 0.07, 2.0 + 0.07),
                  (0.6989700043360189 - 0.07, 2.6989700043360187 + 0.07)]
 
 
@@ -229,7 +229,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     if N == 5:
         marker_size = 150
     else:
-        marker_size = 25
+        marker_size = 15
 
     f, ax_array = plt.subplots(N - 1, N - 1, figsize=(12, 12))
     for i in range(0, N - 1):
