@@ -219,8 +219,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     if N == 5:
         marker_size = 150
     else:
-        marker_size = 75
-
+        marker_size = 25
 
     f, ax_array = plt.subplots(N - 1, N - 1, figsize=(12, 12))
     for i in range(0, N - 1):
