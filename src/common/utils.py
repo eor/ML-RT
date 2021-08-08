@@ -299,3 +299,29 @@ def utils_get_user_param_limits(path_user_config = '', file_name='user_config.in
         param_limits[key] = np.array(param_list).astype(np.float)
 
     return param_limits
+
+
+# -----------------------------------------------------------------
+# Return RMSE of the predications and the actual data
+# Input: original data and the predicted data of the shape (X,Y)
+# where, X is the number of samples in dataset and Y is the sequence length of each sample
+# -----------------------------------------------------------------
+def utils_compute_dtw(original_series, predicted_series):
+    pass
+
+# -----------------------------------------------------------------
+# Return RMSE and DTW on the dataset using the given model
+# -----------------------------------------------------------------
+def utils_compute_rmse(original_series, predicted_series):
+    pass
+
+# -----------------------------------------------------------------
+# Return RMSE and DTW on the dataset using the given model
+# -----------------------------------------------------------------
+def utils_eval_model_on_data(data_loader, model):
+    # 
+    x_dataset = next(iter(train_loader))[0].numpy()
+    y_actual_dataset = next(iter(train_loader))[1].numpy()
+    print(x_dataset.shape())
+    print(y_actual_dataset.shape())
+    pass
