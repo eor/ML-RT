@@ -13,7 +13,7 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.utils import utils_eval_model_on_data
+from common.utils import utils_compute_dtw, utils_compute_rmse
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
@@ -185,6 +185,44 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
     )
 
 # -----------------------------------------------------------------
+# Evaluate generator on Validation set
+# -----------------------------------------------------------------
+def cgan_eval_generator_on_validation(generator, data_loader, config):
+
+    # set generator to evaluation mode (!Important)
+    generator.eval()
+    
+    # Empty tensors to hold real and generated profiles-
+    real_profiles = torch.empty((0 ,config.profile_len))
+    gen_profiles = torch.empty((0 ,config.profile_len))
+    
+    for i, (profiles, parameters) in enumerate(data_loader):        
+        # obtain batch size
+        batch_size = profiles.size()[0]    
+        
+        # configure input
+        latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+        real_parameters = Variable(parameters.type(FloatTensor))
+        
+        # obtain predictions from generator using real_parameters
+        g_profiles = generator(latent_vector, real_parameters)
+        print(g_profiles.size())
+
+        # append real and generated profiles to our tensor list
+        real_profiles = torch.cat((real_profiles, profiles), dim = 0)
+        gen_profiles = torch.cat((gen_profiles, g_profiles), dim = 0)
+
+    # convert tensors to numpy arrays
+    real_profiles = real_profiles.numpy()
+    gen_profiles = gen_profiles.detach().numpy()
+
+    # compute rmse and dtw on numpy profiles
+    rmse = utils_compute_rmse(real_profiles, gen_profiles)
+    dtw = utils_compute_dtw(real_profiles, gen_profiles)
+    
+    return (rmse, dtw)
+
+# -----------------------------------------------------------------
 #  Train Generator on a batch of dataset
 # -----------------------------------------------------------------
 def cgan_train_generator(generator, discriminator, optimizer, loss, global_parameters, batch_size, config):
@@ -216,7 +254,6 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
     latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
     p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
     gen_parameters = Variable(FloatTensor(p))
-
     # generate a batch of profiles
     gen_profiles = generator(latent_vector, gen_parameters)
 
@@ -436,6 +473,8 @@ def main(config):
 
             cgan_run_test(epoch, test_loader, generator, data_products_path, config)
 
+        rmse, dtw = cgan_eval_generator_on_validation(generator, val_loader, config)
+        print("RMSE: ",rmse, "DTW:",dtw)
         # TODO: find a good criterion for choosing the best generator model (no validation available)
         #
         # TODO: write best generator model here
