@@ -121,7 +121,7 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 
     Args:
         epoch: current epoch
-        data_loader: data loader used for the iference, most likely the test set
+        data_loader: data loader used for the inference, most likely the test set
         path: path to output directory
         model: generator model
         config: config object with user supplied parameters
@@ -194,7 +194,7 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
 
     Args:
         generator: model that generates data and needs to be evaluated
-        data_loader: data loader used for the iference, most likely the validation set
+        data_loader: data loader used for the inference, most likely the validation set
         config: config object with user supplied parameters
     """
 
@@ -260,9 +260,12 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
 
     # sample noise and parameters as generator input
     latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-    p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size,
-                                       global_parameters, mode=config.gen_parameter_mode)
+    p = cgan_fake_parameters_gen_input(config.n_parameters,
+                                       batch_size,
+                                       global_parameters,
+                                       mode=config.gen_parameter_mode)
     gen_parameters = Variable(FloatTensor(p))
+
     # generate a batch of profiles
     gen_profiles = generator(latent_vector, gen_parameters)
 

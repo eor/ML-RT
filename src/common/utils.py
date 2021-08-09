@@ -304,8 +304,9 @@ def utils_get_user_param_limits(path_user_config='', file_name='user_config.ini'
 
 # -----------------------------------------------------------------
 # Return MSE of the predications and the actual data
-# Input: original data and the predicted data of the shape (X,Y)
-# where, X is the number of samples in dataset and Y is the sequence length of each sample
+# Input: original data and the predicted data are of the shape (X,Y)
+# where, X is the number of samples in a batch and Y is the sequence
+# length of each sample, in our case the profile length.
 # -----------------------------------------------------------------
 def utils_compute_mse(original_series, predicted_series):
 
@@ -316,8 +317,8 @@ def utils_compute_mse(original_series, predicted_series):
 # -----------------------------------------------------------------
 # Return DTW of the predications and the actual data
 # Input: original data and the predicted data of the shape (X,Y)
-# where, X is the number of samples in dataset and Y is the sequence length of each sample
-# Input must be numpy array with Doubles
+# where, X is the number of samples in a batch and Y is the sequence length of each sample
+# Input must be numpy array with doubles
 # -----------------------------------------------------------------
 def utils_compute_dtw(original_series, predicted_series):
 
