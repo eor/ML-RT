@@ -5,6 +5,7 @@ import torch
 import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
+from dtaidistance import dtw
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
 # -----------------------------------------------------------------
@@ -299,3 +300,34 @@ def utils_get_user_param_limits(path_user_config = '', file_name='user_config.in
         param_limits[key] = np.array(param_list).astype(np.float)
 
     return param_limits
+
+
+# -----------------------------------------------------------------
+# Return MSE of the predications and the actual data
+# Input: original data and the predicted data of the shape (X,Y)
+# where, X is the number of samples in dataset and Y is the sequence length of each sample
+# -----------------------------------------------------------------
+def utils_compute_mse(original_series, predicted_series):
+    mse = np.mean((original_series-predicted_series)**2, axis = 1)
+    return np.mean(mse)
+
+
+# -----------------------------------------------------------------
+# Return DTW of the predications and the actual data
+# Input: original data and the predicted data of the shape (X,Y)
+# where, X is the number of samples in dataset and Y is the sequence length of each sample
+# Input must be numpy array with Doubles
+# -----------------------------------------------------------------
+def utils_compute_dtw(original_series, predicted_series):
+    dtw_distances = []
+
+    if original_series.dtype != np.double:
+        original_series = original_series.astype(np.double)
+    if predicted_series.dtype != np.double:
+        predicted_series = predicted_series.astype(np.double)
+
+    for i in range(len(original_series)):
+        dtw_distances.append(dtw.distance_fast(original_series[i], predicted_series[i]))
+
+    dtw_distances = np.array(dtw_distances)
+    return np.mean(dtw_distances)
