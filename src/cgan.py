@@ -489,24 +489,27 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
-        mse_val, dtw_val = cgan_evaluate_generator(generator, val_loader, config)
-
-        if mse_val < best_mse:
-            best_mse = mse_val
-            best_epoch_mse = epoch
-            best_generator = copy.deepcopy(generator)
-
-        if dtw_val < best_dtw:
-            best_dtw = dtw_val
-            best_epoch_dtw = epoch
-
+        # mse_val, dtw_val = cgan_evaluate_generator(generator, val_loader, config)
+        #
+        # if mse_val < best_mse:
+        #     best_mse = mse_val
+        #     best_epoch_mse = epoch
+        #     best_generator = copy.deepcopy(generator)
+        #
+        # if dtw_val < best_dtw:
+        #     best_dtw = dtw_val
+        #     best_epoch_dtw = epoch
+        #
+        # print(
+        #     "[Epoch %d/%d] [Avg_disc_loss: %e] [Avg_gen_loss: %e] "
+        #     "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+        #     % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
+        #        mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
+        # )
         print(
             "[Epoch %d/%d] [Avg_disc_loss: %e] [Avg_gen_loss: %e] "
-            "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
-               mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
+            % (epoch, config.n_epochs, average_loss_dis, average_loss_gen)
         )
-
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
@@ -529,7 +532,7 @@ def main(config):
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
         # [TODO]: needs fixing to work with cgan.py
-        # analysis_loss_plot(config)
+        #analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=5, prefix='test')
 
 
