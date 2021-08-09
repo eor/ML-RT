@@ -13,7 +13,7 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.utils import utils_compute_dtw, utils_compute_rmse
+from common.utils import utils_compute_dtw, utils_compute_rmse, utils_save_model
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
@@ -188,6 +188,15 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 # Evaluate generator on Validation set
 # -----------------------------------------------------------------
 def cgan_eval_generator_on_validation(generator, data_loader, config):
+    """
+    This function runs the validation data set through the generator, 
+    and compute rmse and dtw on the predicted series and original series
+
+    Args:
+        generator: model that generates data and needs to be evaluated
+        data_loader: data loader used for the iference, most likely the validation set
+        config: config object with user supplied parameters
+    """
 
     # set generator to evaluation mode (!Important)
     generator.eval()
@@ -206,7 +215,6 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
         
         # obtain predictions from generator using real_parameters
         g_profiles = generator(latent_vector, real_parameters)
-        print(g_profiles.size())
 
         # append real and generated profiles to our tensor list
         real_profiles = torch.cat((real_profiles, profiles), dim = 0)
@@ -417,6 +425,11 @@ def main(config):
     train_loss_array_gen = np.empty(0)
     train_loss_array_dis = np.empty(0)
 
+    best_rmse = np.inf
+    best_generator = None
+    best_epoch = 0 
+    best_dtw = 0
+
     # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
@@ -463,9 +476,17 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
+        rmse_val, dtw_val = cgan_eval_generator_on_validation(generator, val_loader, config)
+
+        if rmse_val < best_rmse:
+            best_rmse = rmse_val
+            best_dtw = dtw_val
+            best_epoch = epoch
+            best_generator = copy.deepcopy(generator)
+
         print(
-            "[Epoch %d/%d] [Average discriminator loss: %e] [Average generator loss: %e]"
-            % (epoch, config.n_epochs,  average_loss_dis, average_loss_gen)
+            "[Epoch %d/%d][Avg_disc_loss: %e][Avg_gen_loss: %e][Val_score: RMSE: %e DTW %e][Best_epoch: %d]"
+            % (epoch, config.n_epochs,  average_loss_dis, average_loss_gen, rmse_val, dtw_val, best_epoch)
         )
 
         # check for testing criterion
@@ -473,13 +494,10 @@ def main(config):
 
             cgan_run_test(epoch, test_loader, generator, data_products_path, config)
 
-        rmse, dtw = cgan_eval_generator_on_validation(generator, val_loader, config)
-        print("RMSE: ",rmse, "DTW:",dtw)
-        # TODO: find a good criterion for choosing the best generator model (no validation available)
-        #
-        # TODO: write best generator model here
-
+        
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
+
+    utils_save_model(best_generator.state_dict(), data_products_path, config.profile_type, best_epoch)
 
     # save training stats
     utils_save_loss(train_loss_array_gen, data_products_path, config.profile_type, config.n_epochs, prefix='G_train')
