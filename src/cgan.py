@@ -282,7 +282,7 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
 
             # compute loss via soft dtw
             if cuda:
-                loss_dtw = soft_dtw_loss(true_profiles, gen_profiles)
+                loss_dtw = soft_dtw_loss(true_profiles.unsqueeze(1), gen_profiles.unsqueeze(1))
                 val_loss_dtw += loss_dtw.item()
 
             # compute loss via MSE:
