@@ -205,23 +205,24 @@ def cgan_evaluate_generator(generator, data_loader, config):
     # Empty tensors to hold real and generated profiles
     true_profiles_all = torch.empty((0, config.profile_len), device=device)
     gen_profiles_all = torch.empty((0, config.profile_len), device=device)
-    
-    for i, (profiles, parameters) in enumerate(data_loader):
 
-        # obtain batch size
-        batch_size = profiles.size()[0]    
-        
-        # configure input
-        latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-        true_parameters = Variable(parameters.type(FloatTensor))
-        true_profiles = Variable(profiles.type(FloatTensor))
-        
-        # obtain predictions from generator using real_parameters
-        gen_profiles = generator(latent_vector, true_parameters)
+    with torch.no_grad():
+        for i, (profiles, parameters) in enumerate(data_loader):
 
-        # append real and generated profiles to our tensor list
-        true_profiles_all = torch.cat((true_profiles_all, true_profiles), dim=0)
-        gen_profiles_all = torch.cat((gen_profiles_all, gen_profiles), dim=0)
+            # obtain batch size
+            batch_size = profiles.size()[0]
+
+            # configure input
+            latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+            true_parameters = Variable(parameters.type(FloatTensor))
+            true_profiles = Variable(profiles.type(FloatTensor))
+
+            # obtain predictions from generator using real_parameters
+            gen_profiles = generator(latent_vector, true_parameters)
+
+            # append real and generated profiles to our tensor list
+            true_profiles_all = torch.cat((true_profiles_all, true_profiles), dim=0)
+            gen_profiles_all = torch.cat((gen_profiles_all, gen_profiles), dim=0)
 
     # convert tensors to numpy arrays
     real_profiles = true_profiles_all.cpu().numpy()
