@@ -202,8 +202,8 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
     generator.eval()
     
     # Empty tensors to hold real and generated profiles-
-    real_profiles = torch.empty((0 ,config.profile_len))
-    gen_profiles = torch.empty((0 ,config.profile_len))
+    real_profiles = torch.empty((0, config.profile_len))
+    gen_profiles = torch.empty((0, config.profile_len))
     
     for i, (profiles, parameters) in enumerate(data_loader):        
         # obtain batch size
@@ -217,8 +217,8 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
         g_profiles = generator(latent_vector, real_parameters)
 
         # append real and generated profiles to our tensor list
-        real_profiles = torch.cat((real_profiles, profiles), dim = 0)
-        gen_profiles = torch.cat((gen_profiles, g_profiles), dim = 0)
+        real_profiles = torch.cat((real_profiles, profiles), dim=0)
+        gen_profiles = torch.cat((gen_profiles, g_profiles), dim=0)
 
     # convert tensors to numpy arrays
     real_profiles = real_profiles.numpy()
@@ -260,7 +260,8 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
 
     # sample noise and parameters as generator input
     latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-    p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
+    p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size,
+                                       global_parameters, mode=config.gen_parameter_mode)
     gen_parameters = Variable(FloatTensor(p))
     # generate a batch of profiles
     gen_profiles = generator(latent_vector, gen_parameters)
@@ -356,7 +357,6 @@ def main(config):
     if USE_BLOWOUT_FILTER:
         H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
 
-
     # TODO: insert parameter space filter (see MLP)
 
     # -----------------------------------------------------------------
@@ -436,7 +436,6 @@ def main(config):
     best_epoch_mse = 0
     best_epoch_dtw = 0
 
-
     # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
@@ -495,13 +494,10 @@ def main(config):
             best_epoch_dtw = epoch
 
         print(
-            "[Epoch %d/%d]"
-            "[Avg_disc_loss: %e]"
-            "[Avg_gen_loss: %e]"
-            "[Val_score: MSE: %e DTW %e]"
-            "[Best_epoch (mse): %d]"
-            "[Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs,  average_loss_dis, average_loss_gen, mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
+            "[Epoch %d/%d] [Avg_disc_loss: %e] [Avg_gen_loss: %e] "
+            "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+            % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
+               mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
         )
 
         # check for testing criterion
@@ -598,7 +594,7 @@ if __name__ == "__main__":
         argparse.ArgumentParser().print_help()
         exit(1)
 
-    if my_config.n_parameters != 5 and  my_config.n_parameters != 8:
+    if my_config.n_parameters != 5 and my_config.n_parameters != 8:
         print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
         argparse.ArgumentParser().print_help()
         exit(1)
