@@ -132,14 +132,23 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
         tmp_profile_gen = profiles_gen[index]
 
         plot_profile_single(
-            profile_true = tmp_profile_true, 
-            profile_inferred = tmp_profile_gen, 
-            n_epoch = epoch,
-            output_dir =  plot_dir_path, 
-            profile_type = config.profile_type,
-            prefix = prefix, 
-            parameters = tmp_parameters
+            profile_true=tmp_profile_true,
+            profile_inferred=tmp_profile_gen,
+            n_epoch=epoch,
+            output_dir=plot_dir_path,
+            profile_type=config.profile_type,
+            prefix=prefix,
+            parameters=tmp_parameters
         )
+
+
+
+def analysis_parameter_space_plot(config, prefix='test'):
+
+    print('hello')
+    # plot function args:
+    # parameters, profiles_true, profiles_gen, profile_type,
+    # n_epoch, output_dir = './', prefix = 'test', file_type = 'png'
 
 
 # -----------------------------------------------------------------

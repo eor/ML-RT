@@ -32,7 +32,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
     print('Producing loss function plot:')
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    rc('font', **{'family':'serif'})
+    rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
 
     if gan:
@@ -67,7 +67,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 # Plot a single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
-                        profile_type, prefix, parameters=None):
+                        profile_type, prefix, file_type='png', parameters=None):
 
     # TODO: add file_type argument to enable pdf and png outputs
 
@@ -142,7 +142,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     mse = np.log10(mse+1.0e-11)
     file_name = '{:s}_{:s}_profile_epoch_{:d}_logMSE_{:.4e}'.format(profile_type, prefix, n_epoch, mse)
     file_name = file_name.replace('.', '_')
-    file_name += '.png'
+    file_name += '.' + file_type
 
     plt.savefig(os.path.join(output_dir, file_name))
 
@@ -155,15 +155,15 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
 
 # -----------------------------------------------------------------
-#  visualise MSE (truth vs inference) for whole parameter space
+#  visualise errors (truth vs inference) for whole parameter space
 # -----------------------------------------------------------------
 def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_type,
-                             n_epoch, output_dir='./', prefix='test'):
+                             n_epoch, output_dir='./', prefix='test', file_type='png'):
 
     print('Making parameter-MSE plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
 
     # -----------------------------------------------------------------
-    # get parameters labels
+    # set up parameters labels
     # -----------------------------------------------------------------
     n_profiles = np.shape(parameters)[0]
     n_parameters = np.shape(parameters)[1]
@@ -176,7 +176,6 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
     for i, label in enumerate(p_labels):
         p_labels[i] = '$' + label + '$'
-
 
     # -----------------------------------------------------------------
     # add padding to limits
@@ -203,33 +202,30 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
                  (0.0 - 0.09, 2.0 + 0.09),
                  (0.6989700043360189 - 0.09, 2.6989700043360187 + 0.09)]
 
-
     if N == 5:
         padding = padding_5
     else:
         padding = padding_8
 
-
-
-
-
-
-    # TODO: save as png or pdf
     # TODO: ability to fix color range (to make different plots comparable)
-
-
-
-    # 2. compute MSE
+    # -----------------------------------------------------------------
+    #  compute MSE for each sample
+    # -----------------------------------------------------------------
     mse_array = (np.square( (profiles_true) - (profiles_gen))).mean(axis=1)
     #mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
     mse_array = np.log10(mse_array + 1e-11)
 
-    # 3. set up main plot
-    # marker size
+    # -----------------------------------------------------------------
+    # set marker size
+    # -----------------------------------------------------------------
     if N == 5:
         marker_size = 150
     else:
         marker_size = 15
+
+    # -----------------------------------------------------------------
+    # set up main plot
+    # -----------------------------------------------------------------
 
     f, ax_array = plt.subplots(N - 1, N - 1, figsize=(12, 12))
     for i in range(0, N - 1):
@@ -290,7 +286,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     f.subplots_adjust(hspace=0, wspace=0, left=0.07, bottom=0.07, right=0.95, top=0.98)
 
     # 5. build file name & save file
-    file_name = 'parameter_space_MSE_%s_%d_epochs.pdf'%(profile_type, n_epoch)
+    file_name = 'parameter_space_MSE_%s_%d_epochs.%s'%(profile_type, n_epoch, file_type)
     if prefix:
         file_name = prefix + '_' + file_name
 

@@ -253,8 +253,8 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 def cgan_evaluate_generator_new(generator, data_loader, config):
     """
     This function runs the validation data set through the generator,
-    and computes mse and dtw (if cuda is present) on the predicted profiles
-    and true profiles.
+    and computes MSE and DTW (Dynamic Time Warping), the latter if CUDA is available,
+    on the predicted profiles and true profiles.
 
     Args:
         generator: model that generates data and needs to be evaluated
@@ -598,7 +598,7 @@ def main(config):
     # Optional: analysis
     # -----------------------------------------------------------------
     if config.analysis:
-        
+
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config, gan=True)
