@@ -6,10 +6,11 @@ import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
 from dtaidistance import dtw
+
+
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
 # -----------------------------------------------------------------
-
 # scale all parameters to [0,1]
 def utils_scale_parameters(limits, parameters):
 
@@ -74,9 +75,9 @@ def utils_normalise_profiles(profiles):
 # -----------------------------------------------------------------
 # join path and check if file exists
 # -----------------------------------------------------------------
-def utils_join_path(directory, dataFile):
+def utils_join_path(directory, data_file):
 
-    a = osp.join(directory, dataFile)
+    a = osp.join(directory, data_file)
 
     if not osp.exists(a):
         print('Error: File not found:\n\n  %s\n\nExiting.'%a)
@@ -102,7 +103,7 @@ def utils_create_output_dirs(list_of_dirs):
 def utils_derivative_1(array, norm=None, absolute=False, mode='torch'):
 
     # assumes 1D array
-    if mode=='torch':
+    if mode == 'torch':
         derivatives = torch.zeros(array.shape)
 
         # 2d version  (batch x profiles)
@@ -122,9 +123,9 @@ def utils_derivative_1(array, norm=None, absolute=False, mode='torch'):
 
     # TODO: check if this still works
     if norm == 'max':
-        derMax = (derivatives.max(axis=1)).reshape((derivatives.shape[0], 1))
-        derMax[derMax == 0] = 1              # we should not divide by zero
-        derivatives = derivatives / derMax   # normalization of derivative using the maximum value
+        der_max = (derivatives.max(axis=1)).reshape((derivatives.shape[0], 1))
+        der_max[der_max == 0] = 1              # we should not divide by zero
+        derivatives = derivatives / der_max   # normalization of derivative using the maximum value
 
     return derivatives
 
@@ -266,11 +267,11 @@ def utils_load_config(path, file_name='config.dict'):
     return config
 
 
+# -----------------------------------------------------------------
+# Read user-defined parameter space limits from user_config..ini and return as a dictionary
+# -----------------------------------------------------------------
+def utils_get_user_param_limits(path_user_config='', file_name='user_config.ini'):
 
-# -----------------------------------------------------------------
-# Read user-defined parameter space limits from user_config..ini and retrun as a dictionary
-# -----------------------------------------------------------------
-def utils_get_user_param_limits(path_user_config = '', file_name='user_config.ini'):
     if path_user_config.endswith(file_name):
         p = path_user_config
     else:
@@ -279,10 +280,9 @@ def utils_get_user_param_limits(path_user_config = '', file_name='user_config.in
     print('\nLoading config object from file:\n')
     print('\t' + p)
 
-
-    config = ConfigParser()        
+    config = ConfigParser()
     config.read(p)
-    # retrieve parameter_limits from conifg file as a dictionary
+    # retrieve parameter_limits from config file as a dictionary
     param_limits = config._sections['PARAMETER_LIMITS']
     
     # for every key in parameter_limits, convert the corresponding string to list
@@ -308,7 +308,8 @@ def utils_get_user_param_limits(path_user_config = '', file_name='user_config.in
 # where, X is the number of samples in dataset and Y is the sequence length of each sample
 # -----------------------------------------------------------------
 def utils_compute_mse(original_series, predicted_series):
-    mse = np.mean((original_series-predicted_series)**2, axis = 1)
+
+    mse = np.mean((original_series-predicted_series)**2, axis=1)
     return np.mean(mse)
 
 
@@ -319,6 +320,7 @@ def utils_compute_mse(original_series, predicted_series):
 # Input must be numpy array with Doubles
 # -----------------------------------------------------------------
 def utils_compute_dtw(original_series, predicted_series):
+
     dtw_distances = []
 
     if original_series.dtype != np.double:
