@@ -6,6 +6,9 @@ from torch.autograd import Function
 from numba import cuda
 import math
 
+# credit for this file:
+# https://github.com/keonlee9420/Soft-DTW-Loss
+
 # ----------------------------------------------------------------------------------------------------------------------
 @cuda.jit
 def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R):

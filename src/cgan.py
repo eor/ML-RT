@@ -253,7 +253,8 @@ def cgan_evaluate_generator(generator, data_loader, config):
 def cgan_evaluate_generator_new(generator, data_loader, config):
     """
     This function runs the validation data set through the generator,
-    and computes mse and dtw on the predicted profiles and true profiles
+    and computes mse and dtw (if cuda is present) on the predicted profiles
+    and true profiles.
 
     Args:
         generator: model that generates data and needs to be evaluated
@@ -282,6 +283,10 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
 
             # compute loss via soft dtw
             if cuda:
+
+                # profile tensors are of shape [batch size, profile length]
+                # soft dtw wants input of shape [batch size, 1, profile length]
+
                 loss_dtw = soft_dtw_loss(true_profiles.unsqueeze(1), gen_profiles.unsqueeze(1))
                 val_loss_dtw += loss_dtw.mean()
 
@@ -292,13 +297,12 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
     val_loss_mse = val_loss_mse / len(data_loader)
 
     if not cuda:
-
+        
         return val_loss_mse, val_loss_mse
 
     else:
 
         val_loss_dtw = val_loss_dtw / len(data_loader)
-
         return val_loss_mse, val_loss_dtw
 
 
