@@ -14,7 +14,7 @@ from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
 from common.utils import utils_compute_dtw, utils_compute_mse, utils_save_model
-
+from common.sdtw_cuda_loss import SoftDTW
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
 # -----------------------------------------------------------------
@@ -61,6 +61,18 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 #  loss function(s)
 # -----------------------------------------------------------------
 adversarial_loss = torch.nn.MSELoss()
+
+if cuda:
+    soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
+else:
+    soft_dtw_loss = torch.nn.MSELoss()   # SoftDTW only works for cuda right now :-/
+
+
+def cvae_mse_loss_function(gen_x, real_x, config):
+
+    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
+
+    return mse
 
 
 # -----------------------------------------------------------------
@@ -233,6 +245,61 @@ def cgan_evaluate_generator(generator, data_loader, config):
     dtw = utils_compute_dtw(real_profiles, gen_profiles)
     
     return mse, dtw
+
+
+# -----------------------------------------------------------------
+# Evaluate generator on validation set - NEW version
+# -----------------------------------------------------------------
+def cgan_evaluate_generator_new(generator, data_loader, config):
+    """
+    This function runs the validation data set through the generator,
+    and computes mse and dtw on the predicted profiles and true profiles
+
+    Args:
+        generator: model that generates data and needs to be evaluated
+        data_loader: data loader used for the inference, most likely the validation set
+        config: config object with user supplied parameters
+    """
+
+    # set generator to evaluation mode (!Important)
+    generator.eval()
+
+    val_loss_dtw = 0.0
+    val_loss_mse = 0.0
+
+    with torch.no_grad():
+        for i, (profiles, parameters) in enumerate(data_loader):
+            # obtain batch size
+            batch_size = profiles.size()[0]
+
+            # configure generator input
+            latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+            true_parameters = Variable(parameters.type(FloatTensor))
+            true_profiles = Variable(profiles.type(FloatTensor))
+
+            # obtain predictions from generator using real_parameters
+            gen_profiles = generator(latent_vector, true_parameters)
+
+            # compute loss via soft dtw
+            if cuda:
+                loss_dtw = soft_dtw_loss(true_profiles, gen_profiles)
+                val_loss_dtw += loss_dtw.item()
+
+            # compute loss via MSE:
+            loss_mse = cvae_mse_loss_function(true_profiles, gen_profiles, config)
+            val_loss_mse += loss_mse.item()
+
+    val_loss_mse = val_loss_mse / len(data_loader)
+
+    if not cuda:
+
+        return val_loss_mse, val_loss_mse
+
+    else:
+
+        val_loss_dtw = val_loss_dtw / len(data_loader)
+
+        return val_loss_mse, val_loss_dtw
 
 
 # -----------------------------------------------------------------
@@ -489,27 +556,24 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
-        # mse_val, dtw_val = cgan_evaluate_generator(generator, val_loader, config)
-        #
-        # if mse_val < best_mse:
-        #     best_mse = mse_val
-        #     best_epoch_mse = epoch
-        #     best_generator = copy.deepcopy(generator)
-        #
-        # if dtw_val < best_dtw:
-        #     best_dtw = dtw_val
-        #     best_epoch_dtw = epoch
-        #
-        # print(
-        #     "[Epoch %d/%d] [Avg_disc_loss: %e] [Avg_gen_loss: %e] "
-        #     "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-        #     % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
-        #        mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
-        # )
+        mse_val, dtw_val = cgan_evaluate_generator_new(generator, val_loader, config)
+
+        if mse_val < best_mse:
+            best_mse = mse_val
+            best_epoch_mse = epoch
+            best_generator = copy.deepcopy(generator)
+
+        if dtw_val < best_dtw:
+            best_dtw = dtw_val
+            best_epoch_dtw = epoch
+
         print(
             "[Epoch %d/%d] [Avg_disc_loss: %e] [Avg_gen_loss: %e] "
-            % (epoch, config.n_epochs, average_loss_dis, average_loss_gen)
+            "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+            % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
+               mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
         )
+
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
