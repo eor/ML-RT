@@ -185,9 +185,9 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 
 
 # -----------------------------------------------------------------
-# Evaluate generator on Validation set
+# Evaluate generator on validation set
 # -----------------------------------------------------------------
-def cgan_eval_generator_on_validation(generator, data_loader, config):
+def cgan_evaluate_generator(generator, data_loader, config):
     """
     This function runs the validation data set through the generator, 
     and compute mse and dtw on the predicted series and original series
@@ -201,9 +201,9 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
     # set generator to evaluation mode (!Important)
     generator.eval()
     
-    # Empty tensors to hold real and generated profiles-
-    real_profiles = torch.empty((0, config.profile_len))
-    gen_profiles = torch.empty((0, config.profile_len))
+    # Empty tensors to hold real and generated profiles
+    real_profiles = torch.empty((0, config.profile_len), device=device)
+    gen_profiles = torch.empty((0, config.profile_len), device=device)
     
     for i, (profiles, parameters) in enumerate(data_loader):        
         # obtain batch size
@@ -485,7 +485,7 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
-        mse_val, dtw_val = cgan_eval_generator_on_validation(generator, val_loader, config)
+        mse_val, dtw_val = cgan_evaluate_generator(generator, val_loader, config)
 
         if mse_val < best_mse:
             best_mse = mse_val
