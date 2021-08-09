@@ -157,16 +157,17 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
             test_profiles_gen = model(latent_vector, test_parameters)
 
             # collate data
-            test_profiles_gen_all = torch.cat((test_profiles_gen_all, test_profiles_gen), 0)
-            test_profiles_true_all = torch.cat((test_profiles_true_all, test_profiles_true), 0)
-            test_parameters_true_all = torch.cat((test_parameters_true_all, test_parameters), 0)
+            test_profiles_gen_all = torch.cat((test_profiles_gen_all, test_profiles_gen), dim=0)
+            test_profiles_true_all = torch.cat((test_profiles_true_all, test_profiles_true), dim=0)
+            test_parameters_true_all = torch.cat((test_parameters_true_all, test_parameters), dim=0)
 
     # move data to CPU, re-scale parameters, and write everything to file
     test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
     test_profiles_true_all = test_profiles_true_all.cpu().numpy()
     test_parameters_true_all = test_parameters_true_all.cpu().numpy()
 
-    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
+    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits,
+                                                        parameters=test_parameters_true_all)
 
     if best_model:
         prefix = 'best'
@@ -190,7 +191,7 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 def cgan_evaluate_generator(generator, data_loader, config):
     """
     This function runs the validation data set through the generator, 
-    and compute mse and dtw on the predicted series and original series
+    and computes mse and dtw on the predicted profiles and true profiles
 
     Args:
         generator: model that generates data and needs to be evaluated
@@ -202,27 +203,29 @@ def cgan_evaluate_generator(generator, data_loader, config):
     generator.eval()
     
     # Empty tensors to hold real and generated profiles
-    real_profiles = torch.empty((0, config.profile_len), device=device)
-    gen_profiles = torch.empty((0, config.profile_len), device=device)
+    true_profiles_all = torch.empty((0, config.profile_len), device=device)
+    gen_profiles_all = torch.empty((0, config.profile_len), device=device)
     
-    for i, (profiles, parameters) in enumerate(data_loader):        
+    for i, (profiles, parameters) in enumerate(data_loader):
+
         # obtain batch size
         batch_size = profiles.size()[0]    
         
         # configure input
         latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-        real_parameters = Variable(parameters.type(FloatTensor))
+        true_parameters = Variable(parameters.type(FloatTensor))
+        true_profiles = Variable(profiles.type(FloatTensor))
         
         # obtain predictions from generator using real_parameters
-        g_profiles = generator(latent_vector, real_parameters)
+        gen_profiles = generator(latent_vector, true_parameters)
 
         # append real and generated profiles to our tensor list
-        real_profiles = torch.cat((real_profiles, profiles), dim=0)
-        gen_profiles = torch.cat((gen_profiles, g_profiles), dim=0)
+        true_profiles_all = torch.cat((true_profiles_all, true_profiles), dim=0)
+        gen_profiles_all = torch.cat((gen_profiles_all, gen_profiles), dim=0)
 
     # convert tensors to numpy arrays
-    real_profiles = real_profiles.numpy()
-    gen_profiles = gen_profiles.detach().numpy()
+    real_profiles = true_profiles_all.cpu().numpy()
+    gen_profiles = gen_profiles_all.cpu().numpy()
 
     # compute mse and dtw on numpy profiles
     mse = utils_compute_mse(real_profiles, gen_profiles)
