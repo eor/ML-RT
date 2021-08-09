@@ -303,14 +303,13 @@ def utils_get_user_param_limits(path_user_config = '', file_name='user_config.in
 
 
 # -----------------------------------------------------------------
-# Return RMSE of the predications and the actual data
+# Return MSE of the predications and the actual data
 # Input: original data and the predicted data of the shape (X,Y)
 # where, X is the number of samples in dataset and Y is the sequence length of each sample
 # -----------------------------------------------------------------
-def utils_compute_rmse(original_series, predicted_series):
+def utils_compute_mse(original_series, predicted_series):
     mse = np.mean((original_series-predicted_series)**2, axis = 1)
-    rmse = np.sqrt(mse)
-    return np.mean(rmse)
+    return np.mean(mse)
 
 
 # -----------------------------------------------------------------

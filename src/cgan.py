@@ -13,7 +13,7 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.utils import utils_compute_dtw, utils_compute_rmse, utils_save_model
+from common.utils import utils_compute_dtw, utils_compute_mse, utils_save_model
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
@@ -190,7 +190,7 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 def cgan_eval_generator_on_validation(generator, data_loader, config):
     """
     This function runs the validation data set through the generator, 
-    and compute rmse and dtw on the predicted series and original series
+    and compute mse and dtw on the predicted series and original series
 
     Args:
         generator: model that generates data and needs to be evaluated
@@ -224,11 +224,11 @@ def cgan_eval_generator_on_validation(generator, data_loader, config):
     real_profiles = real_profiles.numpy()
     gen_profiles = gen_profiles.detach().numpy()
 
-    # compute rmse and dtw on numpy profiles
-    rmse = utils_compute_rmse(real_profiles, gen_profiles)
+    # compute mse and dtw on numpy profiles
+    mse = utils_compute_mse(real_profiles, gen_profiles)
     dtw = utils_compute_dtw(real_profiles, gen_profiles)
     
-    return (rmse, dtw)
+    return (mse, dtw)
 
 # -----------------------------------------------------------------
 #  Train Generator on a batch of dataset
@@ -425,7 +425,7 @@ def main(config):
     train_loss_array_gen = np.empty(0)
     train_loss_array_dis = np.empty(0)
 
-    best_rmse = np.inf
+    best_mse = np.inf
     best_generator = None
     best_epoch = 0 
     best_dtw = 0
@@ -476,17 +476,17 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
-        rmse_val, dtw_val = cgan_eval_generator_on_validation(generator, val_loader, config)
+        mse_val, dtw_val = cgan_eval_generator_on_validation(generator, val_loader, config)
 
-        if rmse_val < best_rmse:
-            best_rmse = rmse_val
+        if mse_val < best_mse:
+            best_mse = mse_val
             best_dtw = dtw_val
             best_epoch = epoch
             best_generator = copy.deepcopy(generator)
 
         print(
-            "[Epoch %d/%d][Avg_disc_loss: %e][Avg_gen_loss: %e][Val_score: RMSE: %e DTW %e][Best_epoch: %d]"
-            % (epoch, config.n_epochs,  average_loss_dis, average_loss_gen, rmse_val, dtw_val, best_epoch)
+            "[Epoch %d/%d][Avg_disc_loss: %e][Avg_gen_loss: %e][Val_score: MSE: %e DTW %e][Best_epoch: %d]"
+            % (epoch, config.n_epochs,  average_loss_dis, average_loss_gen, mse_val, dtw_val, best_epoch)
         )
 
         # check for testing criterion
