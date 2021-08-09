@@ -88,7 +88,7 @@ class LSTM(nn.Module):
 
 
 class LSTM2(nn.Module):
-    def __init__(self, conf):
+    def __init__(self, conf, device):
         super(LSTM2, self).__init__()
         self.input_size = conf.n_parameters        
         # If False, then the layer does not use bias weights b_ih and b_hh
@@ -98,12 +98,13 @@ class LSTM2(nn.Module):
         # If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer
         self.dropout = conf.dropout_value
         # If True, becomes a bidirectional LSTM
-        self.bidirectional = True
+        self.bidirectional = False
         # number of values we want to predict
         self.seq_len = conf.profile_len
         # batch_size
         # self.batch_size = conf.batch_size
         self.batch_size = conf.batch_size
+        self.device = device
         
         # layer_params
         # self.layer_params = [self.lstm_input, 128, 64, 16, self.lstm_out]
@@ -152,11 +153,11 @@ class LSTM2(nn.Module):
 
     def init_hidden_state(self, n_layers, batch_size, hidden_size):
         if self.bidirectional:
-            hidden_state = torch.zeros(2 * n_layers, batch_size, hidden_size)
-            cell_state = torch.zeros(2 * n_layers, batch_size, hidden_size)
+            hidden_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
+            cell_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
         else:
-            hidden_state = torch.zeros(n_layers, batch_size, hidden_size)
-            cell_state = torch.zeros(n_layers, batch_size, hidden_size)
+            hidden_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
+            cell_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
 
         # Weights initialization
         torch.nn.init.xavier_normal_(hidden_state)

@@ -19,7 +19,7 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-
+from common.utils import utils_compute_dtw, utils_compute_mse
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
@@ -142,7 +142,7 @@ def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
 # -----------------------------------------------------------------
 #   run validation
 # -----------------------------------------------------------------
-def mlp_run_validation(data_loader, model, config):
+def lstm_run_validation(data_loader, model, config):
     """
     function runs validation data set to prevent over-fitting of the model.
     Returns averaged validation loss.
@@ -155,6 +155,7 @@ def mlp_run_validation(data_loader, model, config):
 
     if cuda:
         model.cuda()
+    model.eval()
 
     val_loss = 0.0
 
@@ -169,11 +170,10 @@ def mlp_run_validation(data_loader, model, config):
             # inference
             val_profiles_gen = model(val_parameters)
 
-            loss = mlp_loss_function(val_profiles_gen, val_profiles_true, config)
+        mse = utils_compute_mse(val_profiles_true, val_profiles_gen)
+        dtw = utils_compute_dtw(val_profiles_true, val_profiles_gen)
 
-            val_loss += loss.item()
-
-    return val_loss/len(data_loader)
+    return mse, dtw
 
 
 # -----------------------------------------------------------------
@@ -262,7 +262,7 @@ def main(config):
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
     # if config.model == 'MLP2':
-    model = LSTM2(config)
+    model = LSTM2(config, device)
     # else:
     #     model = MLP1(config)
     # if True:
@@ -332,7 +332,7 @@ def main(config):
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
-        val_loss = mlp_run_validation(val_loader, model, config)
+        val_loss = lstm_run_validation(val_loader, model, config)
         val_loss_array = np.append(val_loss_array, val_loss)
 
         if val_loss < best_loss:
@@ -345,10 +345,10 @@ def main(config):
             % (epoch, config.n_epochs,  train_loss, val_loss, best_epoch)
         )
 
-        # check for testing criterion
-        if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
+#         # check for testing criterion
+#         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            mlp_run_testing(epoch, test_loader, model, data_products_path, config)
+#             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
@@ -386,7 +386,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=5, prefix='test')
+        analysis_auto_plot_profiles(config, k=10, prefix='test')
         # analysis_auto_plot_profiles(post_train_config, k=5, prefix='best')
 
 
