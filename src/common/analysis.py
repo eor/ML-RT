@@ -30,7 +30,7 @@ PLOT_FILE_TYPE = 'pdf'  # or 'png'
 # -----------------------------------------------------------------
 #  setup for the loss function plots
 # -----------------------------------------------------------------
-def analysis_loss_plot(config):
+def analysis_loss_plot(config, gan=False):
 
     """
     function to load and plot the training and validation loss data
@@ -44,22 +44,32 @@ def analysis_loss_plot(config):
     data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
     plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
-    train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-    val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+    if not gan:
 
-    train_loss = np.load(osp.join(data_dir_path, train_loss_file))
-    val_loss = np.load(osp.join(data_dir_path, val_loss_file))
+        train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+
+        loss_1 = np.load(osp.join(data_dir_path, train_loss_file))
+        loss_2 = np.load(osp.join(data_dir_path, val_loss_file))
+
+    else:
+        gen_loss_file = 'G_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+
+        loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
+        loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
+
 
     plot_loss_function(
-        lf1=train_loss,
-        lf2=val_loss,
+        lf1=loss_1,
+        lf2=loss_2,
         epoch=config.n_epochs,
         lr=config.lr,
         output_dir=plot_dir_path,
         profile_type=config.profile_type,
-        file_type=PLOT_FILE_TYPE
+        file_type=PLOT_FILE_TYPE,
+        gan=gan
     )
-
 
 # -----------------------------------------------------------------
 # Automatically plot test profiles
