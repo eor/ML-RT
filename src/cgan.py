@@ -550,12 +550,12 @@ def main(config):
                 batch_size=profiles.shape[0]
             )
 
-            epoch_loss_gen += gen_loss.item()
-            epoch_loss_dis += dis_loss.item()
+            epoch_loss_gen += gen_loss.item()    # average loss per batch
+            epoch_loss_dis += dis_loss.item()    # average loss per batch
 
         # end-of-epoch book keeping
-        average_loss_gen = epoch_loss_gen / len(train_loader)
-        average_loss_dis = epoch_loss_dis / len(train_loader)
+        average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis = epoch_loss_dis / len(train_loader)   # divide by number of batches (!= batch size)
 
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
