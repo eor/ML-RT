@@ -24,9 +24,9 @@ dl() {
 
 check() {
 
-        VAR1=`md5sum ${FILE1} | awk '{print $1}'`
-        VAR2=`md5sum ${FILE2} | awk '{print $1}'`
-        VAR3=`md5sum ${FILE3} | awk '{print $1}'`
+        VAR1=$(md5sum ${FILE1} | awk '{print $1}')
+        VAR2=$(md5sum ${FILE2} | awk '{print $1}')
+        VAR3=$(md5sum ${FILE3} | awk '{print $1}')
         
         # 1
         if [ "$CHECKSUM1" = "$VAR1" ]; then
