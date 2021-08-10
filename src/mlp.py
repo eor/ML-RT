@@ -372,7 +372,7 @@ def main(config):
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
     
     # Add best_epoch to config object for analysis routines
-
+    setattr(config, 'best_epoch', best_epoch)
 
     # finished
     print('\nAll done!')
@@ -384,8 +384,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=5, prefix='test')
-        analysis_parameter_space_plot(config, prefix='test')
+        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------
