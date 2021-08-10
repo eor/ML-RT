@@ -29,7 +29,7 @@ H_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
-SPLIT_FRACTION = (0.90, 0.09, 0.01)  # train, val, test.
+SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
 SHUFFLE = True
 SHUFFLE_SEED = 42
 
@@ -415,7 +415,7 @@ def main(config):
 
         analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=5, prefix='best')
-        analysis_parameter_space_plot(config, prefix='test')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------

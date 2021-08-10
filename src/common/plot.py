@@ -291,6 +291,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     output_file = osp.join(output_dir, file_name)
     f.savefig(output_file)
 
+    print('\tSaved plot to: {} '.format(output_file))
+
 
 # -----------------------------------------------------------------
 #  run the following if this file is called directly
