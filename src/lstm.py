@@ -71,7 +71,12 @@ soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
 
 def lstm_loss_function(func , gen_x, real_x, config):
     if func == 'dtw' and cuda:
-        loss = soft_dtw_loss(gen_x, real_x).mean()
+        # profile tensors are of shape [batch size, profile length]
+        # soft dtw wants input of shape [batch size, 1, profile length]
+        if len(gen_x.size()) != 3:
+            loss = soft_dtw_loss(gen_x.unsqueeze(1), real_x.unsqueeze(1)).mean()
+        else:
+            loss = soft_dtw_loss(gen_x, real_x).mean()
     else:
         loss = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
     return loss
@@ -133,19 +138,19 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             # profile tensors are of shape [batch size, profile length]
             # soft dtw wants input of shape [batch size, 1, profile length]
 
-            dtw = lstm_loss_function('dtw', profiles_true.unsqueeze(1), profiles_gen.unsqueeze(1), config)
-            loss_dtw += dtw.mean()
+            dtw = lstm_loss_function('dtw', profiles_true, profiles_gen, config)
+            loss_dtw += dtw
 
             # compute loss via MSE:
             mse = lstm_loss_function('mse', profiles_true, profiles_gen, config)
-            loss_mse += mse.mean()
+            loss_mse += mse
 
             if save_results:
                 # collate data
                 test_profiles_gen_all = torch.cat((test_profiles_gen_all, profiles_gen), 0)
                 test_profiles_true_all = torch.cat((test_profiles_true_all, profiles_true), 0)
                 test_parameters_true_all = torch.cat((test_parameters_true_all, parameters), 0)
-
+    
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
     loss_dtw = loss_dtw / len(data_loader)
@@ -178,7 +183,7 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         )
 
     
-    return loss_mse, loss_dtw
+    return loss_mse.item(), loss_dtw.item()
 
 
 
@@ -331,11 +336,10 @@ def main(config):
 
             loss.backward()
             optimizer.step()
-
             epoch_loss += loss.item()
 
         # end-of-epoch book keeping
-        train_loss = epoch_loss / len(train_loader.dataset)
+        train_loss = epoch_loss / len(train_loader)
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
