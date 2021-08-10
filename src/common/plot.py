@@ -72,8 +72,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
-    fig = plt.figure(figsize=(10,7))
-    gs = fig.add_gridspec(nrows=2, ncols=1, hspace=0, height_ratios=[3,1])
+    fig = plt.figure(figsize=(10, 7))
+    gs = fig.add_gridspec(nrows=2, ncols=1, hspace=0, height_ratios=[3, 1])
     ax_array = gs.subplots(sharex=True, sharey=False)
 
     rc('font', **{'family': 'serif'})
@@ -91,13 +91,13 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         a = ''
         for j in range(len(param_names)):
             # add line break after every 4 parameters are added
-            if j!= 0 and j%5 == 0:
+            if j != 0 and j % 5 == 0:
                 a += '\n'
             # append the parameter with its name and value to title string
             value = parameters[j]
             name = '$' + param_names[j]
             a = a + name + ' = ' + str(value) + '$'
-            if j==2:
+            if j == 2:
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
@@ -129,7 +129,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     ax_array[1].plot(relative_error, c='black', label='Relative error', linewidth=0.6)
     ax_array[1].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
     ax_array[1].set_ylabel(r'Rel error', fontsize=14)
-    ax_array[1].set_xlabel(r'Radius $\mathrm{[kpc]}$',fontsize=14)
+    ax_array[1].set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=14)
     ax_array[1].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
     ax_array[1].tick_params(axis='both', which='both', right=True, top=True)
 
@@ -209,7 +209,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
-    mse_array = (np.square( (profiles_true) - (profiles_gen))).mean(axis=1)
+    mse_array = (np.square(profiles_true - profiles_gen)).mean(axis=1)
     # mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
     mse_array = np.log10(mse_array + 1e-11)
 
@@ -224,7 +224,6 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # -----------------------------------------------------------------
     # set up main plot
     # -----------------------------------------------------------------
-
     f, ax_array = plt.subplots(N - 1, N - 1, figsize=(12, 12))
     for i in range(0, N - 1):
         for j in range(1, N):
@@ -284,7 +283,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     f.subplots_adjust(hspace=0, wspace=0, left=0.07, bottom=0.07, right=0.95, top=0.98)
 
     # 5. build file name & save file
-    file_name = 'parameter_space_MSE_%s_%d_epochs.%s'%(profile_type, n_epoch, file_type)
+    file_name = 'parameter_space_MSE_%s_%d_epochs.%s' % (profile_type, n_epoch, file_type)
     if prefix:
         file_name = prefix + '_' + file_name
 
@@ -300,10 +299,3 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 if __name__ == '__main__':
 
     print('Hello there!')
-
-
-
-
-
-
-
