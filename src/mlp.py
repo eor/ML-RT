@@ -325,7 +325,7 @@ def main(config):
             epoch_loss += loss.item()
 
         # end-of-epoch book keeping
-        train_loss = epoch_loss / len(train_loader.dataset)
+        train_loss = epoch_loss / len(train_loader)
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model

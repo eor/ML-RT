@@ -64,7 +64,7 @@ check() {
 }
 
 
-if ! command -v wget &> /dev/null
+if ! (dpkg-query -l wget > /dev/null)
 then
     echo "Error: wget could not be found. Exiting"
     exit
@@ -75,7 +75,7 @@ fi
 
 
 
-if ! command -v wget &> /dev/null
+if ! (command -v md5sum > /dev/null)
 then
     echo "Warning: md5sum could not be found. Can't verify file integrity"
     exit
