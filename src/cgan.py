@@ -554,8 +554,8 @@ def main(config):
             epoch_loss_dis += dis_loss.item()
 
         # end-of-epoch book keeping
-        average_loss_gen = epoch_loss_gen / len(train_loader.dataset)
-        average_loss_dis = epoch_loss_dis / len(train_loader.dataset)
+        average_loss_gen = epoch_loss_gen / len(train_loader)
+        average_loss_dis = epoch_loss_dis / len(train_loader)
 
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
