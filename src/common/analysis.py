@@ -59,7 +59,6 @@ def analysis_loss_plot(config, gan=False):
         loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
 
-
     plot_loss_function(
         lf1=loss_1,
         lf2=loss_2,
@@ -70,6 +69,7 @@ def analysis_loss_plot(config, gan=False):
         file_type=PLOT_FILE_TYPE,
         gan=gan
     )
+
 
 # -----------------------------------------------------------------
 # Automatically plot test profiles
@@ -102,7 +102,7 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
     k_small_list = heapq.nsmallest(k, range(len(mse_array)), mse_array.take)
 
     # 4.  plot profiles for largest MSE
-    print('Producing profile plot(s) for profiles with %d largest MSE'%(k))
+    print('Producing profile plot(s) for profiles with %d largest MSE' % k)
     for i in range(len(k_large_list)):
         index = k_large_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -112,17 +112,17 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
         tmp_profile_gen = profiles_gen[index]
 
         plot_profile_single(
-            profile_true = tmp_profile_true, 
-            profile_inferred = tmp_profile_gen, 
-            n_epoch = epoch,
-            output_dir =  plot_dir_path, 
-            profile_type = config.profile_type,
-            prefix = prefix,  
-            parameters = tmp_parameters
+            profile_true=tmp_profile_true,
+            profile_inferred=tmp_profile_gen,
+            n_epoch=epoch,
+            output_dir=plot_dir_path,
+            profile_type=config.profile_type,
+            prefix=prefix,
+            parameters=tmp_parameters
         )
 
     # 5.  plot profiles for smallest MSE
-    print('Producing profile plot(s) for profiles with %d smallest MSE'%(k))
+    print('Producing profile plot(s) for profiles with %d smallest MSE' % k)
     for i in range(len(k_small_list)):
         index = k_small_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -142,13 +142,40 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
         )
 
 
-
+# -----------------------------------------------------------------
+#  generate parameter space plots
+# -----------------------------------------------------------------
 def analysis_parameter_space_plot(config, prefix='test'):
 
-    print('hello')
-    # plot function args:
-    # parameters, profiles_true, profiles_gen, profile_type,
-    # n_epoch, output_dir = './', prefix = 'test', file_type = 'png'
+    print('Producing parameter space - MSE plot')
+
+    # 1. read data
+    data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+    plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
+
+    if prefix == 'test':
+        epoch = config.n_epochs
+    elif prefix == 'best':
+        epoch = config.best_epoch
+
+    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(config.profile_type, epoch)
+
+    parameters = np.load(osp.join(data_dir_path, parameter_true_file))
+    profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
+    profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
+
+    plot_parameter_space_mse(
+        parameters=parameters,
+        profiles_true=profiles_true,
+        profiles_gen=profiles_gen,
+        profile_type=config.profile_type,
+        n_epoch=epoch,
+        output_dir=plot_dir_path,
+        prefix=prefix,
+        file_type='png'
+    )
 
 
 # -----------------------------------------------------------------
@@ -159,11 +186,11 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
 
     # F: local example
-    base = '../test/run_2021_08_01__17_39_48'
-    config = utils_load_config(base)
-    # lr = 0.001
-    k = 5
-    profile = config.profile_type
-    analysis_auto_plot_profiles(config, k=k, prefix='test')
+    # base = '../test/run_2021_08_01__17_39_48'
+    # config = utils_load_config(base)
+    # # lr = 0.001
+    # k = 5
+    # profile = config.profile_type
+    # analysis_auto_plot_profiles(config, k=k, prefix='test')
 
     print('\n Completed! \n')

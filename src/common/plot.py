@@ -69,8 +69,6 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
                         profile_type, prefix, file_type='png', parameters=None):
 
-    # TODO: add file_type argument to enable pdf and png outputs
-
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
@@ -212,7 +210,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     #  compute MSE for each sample
     # -----------------------------------------------------------------
     mse_array = (np.square( (profiles_true) - (profiles_gen))).mean(axis=1)
-    #mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
+    # mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
     mse_array = np.log10(mse_array + 1e-11)
 
     # -----------------------------------------------------------------

@@ -413,7 +413,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=5, prefix='test')
+        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_parameter_space_plot(config, prefix='test')
 
 
 # -----------------------------------------------------------------
@@ -425,7 +426,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (CVAE)')
 
     # arguments for data handling
-    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
+    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory', required=True)
+
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 

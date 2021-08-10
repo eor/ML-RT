@@ -587,6 +587,8 @@ def main(config):
 
     utils_save_model(best_generator.state_dict(), data_products_path, config.profile_type, best_epoch_mse)
 
+    # TODO: run testing again with best model
+
     # save training stats
     utils_save_loss(train_loss_array_gen, data_products_path, config.profile_type, config.n_epochs, prefix='G_train')
     utils_save_loss(train_loss_array_dis, data_products_path, config.profile_type, config.n_epochs, prefix='D_train')
@@ -603,6 +605,7 @@ def main(config):
 
         analysis_loss_plot(config, gan=True)
         analysis_auto_plot_profiles(config, k=5, prefix='test')
+        analysis_parameter_space_plot(config, prefix='test')
 
 
 # -----------------------------------------------------------------
@@ -614,7 +617,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (CGAN)')
 
     # arguments for data handling
-    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
+    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory', required=True)
+
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
