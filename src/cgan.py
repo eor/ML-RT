@@ -198,56 +198,6 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
 
 
 # -----------------------------------------------------------------
-# Evaluate generator on validation set
-# -----------------------------------------------------------------
-# def cgan_evaluate_generator(generator, data_loader, config):
-#     """
-#     This function runs the validation data set through the generator,
-#     and computes mse and dtw on the predicted profiles and true profiles
-#
-#     Args:
-#         generator: model that generates data and needs to be evaluated
-#         data_loader: data loader used for the inference, most likely the validation set
-#         config: config object with user supplied parameters
-#     """
-#
-#     # set generator to evaluation mode (!Important)
-#     generator.eval()
-#
-#     # Empty tensors to hold real and generated profiles
-#     true_profiles_all = torch.empty((0, config.profile_len), device=device)
-#     gen_profiles_all = torch.empty((0, config.profile_len), device=device)
-#
-#     with torch.no_grad():
-#         for i, (profiles, parameters) in enumerate(data_loader):
-#
-#             # obtain batch size
-#             batch_size = profiles.size()[0]
-#
-#             # configure input
-#             latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-#             true_parameters = Variable(parameters.type(FloatTensor))
-#             true_profiles = Variable(profiles.type(FloatTensor))
-#
-#             # obtain predictions from generator using real_parameters
-#             gen_profiles = generator(latent_vector, true_parameters)
-#
-#             # append real and generated profiles to our tensor list
-#             true_profiles_all = torch.cat((true_profiles_all, true_profiles), dim=0)
-#             gen_profiles_all = torch.cat((gen_profiles_all, gen_profiles), dim=0)
-#
-#     # convert tensors to numpy arrays
-#     real_profiles = true_profiles_all.cpu().numpy()
-#     gen_profiles = gen_profiles_all.cpu().numpy()
-#
-#     # compute mse and dtw on numpy profiles
-#     mse = utils_compute_mse(real_profiles, gen_profiles)
-#     dtw = utils_compute_dtw(real_profiles, gen_profiles)
-#
-#     return mse, dtw
-
-
-# -----------------------------------------------------------------
 # Evaluate generator on validation set - NEW version
 # -----------------------------------------------------------------
 def cgan_evaluate_generator_new(generator, data_loader, config):
