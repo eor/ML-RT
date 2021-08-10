@@ -249,7 +249,7 @@ def utils_save_config_to_file(config, file_name='config.dict'):
 
 
 # -----------------------------------------------------------------
-# Write argparse config to binary file (to re-use later)
+# Load argparse config from binary file
 # -----------------------------------------------------------------
 def utils_load_config(path, file_name='config.dict'):
 

@@ -59,7 +59,6 @@ def analysis_loss_plot(config, gan=False):
         loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
 
-
     plot_loss_function(
         lf1=loss_1,
         lf2=loss_2,
