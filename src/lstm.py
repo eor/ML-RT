@@ -20,6 +20,8 @@ from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
 from common.utils import utils_compute_dtw, utils_compute_mse
+from common.sdtw_cuda_loss import SoftDTW
+
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
@@ -66,17 +68,18 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-def mlp_loss_function(gen_x, real_x, config):
+def lstm_loss_function(gen_x, real_x, config):
     mse = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
     return mse
 
 
 # -----------------------------------------------------------------
-#   use mlp with test set
+#   use lstm with test or val set
 # -----------------------------------------------------------------
-def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
+def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results = False, save_results=False, best_model=False):
     """
-    function runs the test data set through the mlp, saves results as well as ground truth to file
+    function runs the given dataset through the lstm, returns mse_loss and dtw_loss, 
+    and saves the results as well as ground truth to file, if in test mode.
 
     Args:
         epoch: current epoch
@@ -84,96 +87,98 @@ def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
+        save_reults: whether to save actual and generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch))
+
+    if save_results:
+        mode = 'Test'
+        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m"%(current_epoch))
+    else: 
+        mode = 'Validation'
 
     if cuda:
         model.cuda()
 
-    test_profiles_gen_all = torch.tensor([], device=device)
-    test_profiles_true_all = torch.tensor([], device=device)
-    test_parameters_true_all = torch.tensor([], device=device)
+    if save_results:        
+        test_profiles_gen_all = torch.tensor([], device=device)
+        test_profiles_true_all = torch.tensor([], device=device)
+        test_parameters_true_all = torch.tensor([], device=device)
 
     # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
     # we don't have to worry about randomisation of the samples.
 
     model.eval()
 
-    with torch.no_grad():
-        for i, (profiles, parameters) in enumerate(data_loader):
-
-            # configure input
-            test_profiles_true = Variable(profiles.type(FloatTensor))
-            test_parameters = Variable(parameters.type(FloatTensor))
-
-            # inference
-            test_profiles_gen = model(test_parameters)
-
-            # collate data
-            test_profiles_gen_all = torch.cat((test_profiles_gen_all, test_profiles_gen), 0)
-            test_profiles_true_all = torch.cat((test_profiles_true_all, test_profiles_true), 0)
-            test_parameters_true_all = torch.cat((test_parameters_true_all, test_parameters), 0)
-
-    # move data to CPU, re-scale parameters, and write everything to file
-    test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-    test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-    test_parameters_true_all = test_parameters_true_all.cpu().numpy()
-
-    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
-
-    if best_model:
-        prefix = 'best'
-    else:
-        prefix = 'test'
-
-    utils_save_test_data(
-        parameters=test_parameters_true_all,
-        profiles_true=test_profiles_true_all,
-        profiles_gen=test_profiles_gen_all,
-        path=path,
-        profile_choice=config.profile_type,
-        epoch=epoch,
-        prefix=prefix
-    )
-
-
-# -----------------------------------------------------------------
-#   run validation
-# -----------------------------------------------------------------
-def lstm_run_validation(data_loader, model, config):
-    """
-    function runs validation data set to prevent over-fitting of the model.
-    Returns averaged validation loss.
-
-    Args:
-        data_loader: data loader used for the inference, here, validation set
-        model: current model state
-        config: config object with user supplied parameters
-    """
-
-    if cuda:
-        model.cuda()
-    model.eval()
-
-    val_loss = 0.0
+    loss_dtw = 0.0
+    loss_mse = 0.0
 
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
             batch_size = profiles.shape[0]
 
             # configure input
-            val_profiles_true = Variable(profiles.type(FloatTensor))
-            val_parameters = Variable(parameters.type(FloatTensor))
+            profiles_true = Variable(profiles.type(FloatTensor))
+            parameters = Variable(parameters.type(FloatTensor))
 
             # inference
-            val_profiles_gen = model(val_parameters)
+            profiles_gen = model(parameters)
 
-        mse = utils_compute_mse(val_profiles_true, val_profiles_gen)
-        dtw = utils_compute_dtw(val_profiles_true, val_profiles_gen)
+            # compute loss via soft dtw
+            if cuda:
 
-    return mse, dtw
+                # profile tensors are of shape [batch size, profile length]
+                # soft dtw wants input of shape [batch size, 1, profile length]
+
+                dtw = soft_dtw_loss(profiles_true.unsqueeze(1), profiles_gen.unsqueeze(1))
+                loss_dtw += dtw.mean()
+
+            # compute loss via MSE:
+            mse = lstm_loss_function(profiles_true, profiles_gen, config)
+            loss_mse += mse.mean()
+
+            if save_results:
+                # collate data
+                test_profiles_gen_all = torch.cat((test_profiles_gen_all, profiles_gen), 0)
+                test_profiles_true_all = torch.cat((test_profiles_true_all, profiles_true), 0)
+                test_parameters_true_all = torch.cat((test_parameters_true_all, parameters), 0)
+
+    # mean of computed losses
+    loss_mse = loss_mse / len(data_loader)
+    if cuda:
+        loss_dtw = loss_dtw / len(data_loader)
+
+    if print_results:
+        print("%s results: MSE: %e DTW %e"%(mode, loss_mse, loss_dtw))
+    
+
+    if save_results:
+        # move data to CPU, re-scale parameters, and write everything to file
+        test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
+        test_profiles_true_all = test_profiles_true_all.cpu().numpy()
+        test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+
+        test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
+        
+        if best_model:
+            prefix = 'best'
+        else:
+            prefix = 'test'
+
+        utils_save_test_data(
+            parameters=test_parameters_true_all,
+            profiles_true=test_profiles_true_all,
+            profiles_gen=test_profiles_gen_all,
+            path=path,
+            profile_choice=config.profile_type,
+            epoch=current_epoch,
+            prefix=prefix
+        )
+
+    
+    return loss_mse, loss_dtw
+
 
 
 # -----------------------------------------------------------------
@@ -320,7 +325,7 @@ def main(config):
 
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
-            loss = mlp_loss_function(gen_profiles, real_profiles, config)
+            loss = lstm_loss_function(gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -332,23 +337,32 @@ def main(config):
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
-        val_loss = lstm_run_validation(val_loader, model, config)
-        val_loss_array = np.append(val_loss_array, val_loss)
+        val_loss_mse, val_loss_dtw = lstm_run_evaluation(
+                                        current_epoch=epoch,
+                                        data_loader=val_loader,
+                                        model=model,
+                                        path=data_products_path,
+                                        config=config,
+                                        print_results=False,
+                                        save_results=False,
+                                        best_model=False
+                                    )
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        val_loss_array = np.append(val_loss_array, [val_loss_mse, val_loss_dtw])
+
+        if val_loss_mse < best_loss:
+            best_loss = val_loss_mse
             best_model = copy.deepcopy(model)
             best_epoch = epoch
 
         print(
-            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs,  train_loss, val_loss, best_epoch)
+            "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] [Best epoch: %d]"
+            % (epoch, config.n_epochs,  train_loss, val_loss_mse, val_loss_dtw, best_epoch)
         )
 
-#         # check for testing criterion
-#         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-
-#             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
+        # check for testing criterion
+        # if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
+            # lstm_run_evaluation(epoch, test_loader, model, data_products_path, config, print_results=True, save_results = True, best_model=False)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
@@ -363,16 +377,19 @@ def main(config):
     #     'optimizer': optimizer.state_dict(),
     #     }
 
-    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
+    # saving the best model using default number of epochs and not the best epoch
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, config.n_epochs)
     # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
-    utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
+    utils_save_loss(val_loss_array[:][0], data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
+    # mlp_run_testing(config.n_epochs, test_loader, best_model, data_products_path, config, best_model=True)
+    lstm_run_evaluation(config.n_epochs, test_loader, model, data_products_path, config, print_results=True,save_results = True, best_model=False)
+
     
     # TODO: save best epoch to a new config
 
