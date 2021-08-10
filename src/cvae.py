@@ -129,13 +129,13 @@ def cvae_train(model, optimizer, train_loader, config):
         # estimate loss
         loss = cvae_loss_function(gen_profiles, real_profiles, mu, log_var, config)
 
-        train_loss += loss.item()
+        train_loss += loss.item()    # average loss per batch
 
         # back propagation
         loss.backward()
         optimizer.step()
 
-    average_loss = train_loss / len(train_loader.dataset)
+    average_loss = train_loss / len(train_loader)   # divide by number of batches (!= batch size)
 
     return average_loss  # float
 
@@ -168,13 +168,13 @@ def cvae_validate(model, val_loader, config):
             real_parameters = Variable(parameters.type(FloatTensor))
 
             # inference
-            gen_profiles, mu, logvar = model(real_profiles, real_parameters)
+            gen_profiles, mu, log_var = model(real_profiles, real_parameters)
 
-            loss = cvae_loss_function(gen_profiles, real_profiles, mu, logvar, config)
+            loss = cvae_loss_function(gen_profiles, real_profiles, mu, log_var, config)
 
-            val_loss += loss.item()
+            val_loss += loss.item()    # average loss per batch
 
-    average_loss = val_loss / len(val_loader.dataset)
+    average_loss = val_loss / len(val_loader)   # divide by number of batches (!= batch size)
 
     return average_loss  # float
 
@@ -196,7 +196,7 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m"%epoch)
+    print("\033[94m\033[1mTesting the autoencoder now at epoch %d \033[0m" % epoch)
 
     if cuda:
         model.cuda()
@@ -221,14 +221,15 @@ def cvae_test(epoch, test_loader, model, path, config, best_model=False):
 
             loss = cvae_loss_function(gen_profiles, real_profiles, mu, log_var, config)
 
-            test_loss += loss.item()
+            test_loss += loss.item()    # average loss per batch
 
             # collate data
             test_profiles_gen_all = torch.cat((test_profiles_gen_all, gen_profiles), 0)
             test_profiles_true_all = torch.cat((test_profiles_true_all, real_profiles), 0)
             test_parameters_true_all = torch.cat((test_parameters_true_all, real_parameters), 0)
 
-    average_loss = test_loss / len(test_loader.dataset)
+    average_loss = test_loss / len(test_loader)  # divide by number of batches (!= batch size)
+
     print("[Epoch %d/%d] [Test loss: %e]" % (epoch, config.n_epochs, average_loss))
 
     # move data to CPU, re-scale parameters, and write everything to file
