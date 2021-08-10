@@ -1,9 +1,9 @@
 from torch import nn
 import torch
 
-
+# NOT WORKING FOR NOW :(
 class LSTM(nn.Module):
-    def __init__(self, conf):
+    def __init__(self, conf, device):
         super(LSTM, self).__init__()
         self.input_size = conf.n_parameters        
         # If False, then the layer does not use bias weights b_ih and b_hh
@@ -13,7 +13,7 @@ class LSTM(nn.Module):
         # If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer
         self.dropout = conf.dropout_value
         # If True, becomes a bidirectional LSTM
-        self.bidirectional = 1
+        self.bidirectional = False
         # number of values we want to predict
         self.seq_len = conf.profile_len
         # batch_size
@@ -29,6 +29,7 @@ class LSTM(nn.Module):
         self.layer_params = [self.lstm_input, self.lstm_out]
         # Number of hidden layers
         self.num_layers = len(self.layer_params) - 1
+        self.device = device
         
         self.linear_model = nn.Sequential(
             nn.Linear(self.input_size, 64),
@@ -75,16 +76,19 @@ class LSTM(nn.Module):
         return x
         
 
-    def init_hidden_state(self, batch_size, hidden_size):
-        hidden_state = torch.zeros(batch_size, hidden_size)
-        cell_state = torch.zeros(batch_size, hidden_size)
+    def init_hidden_state(self, n_layers, batch_size, hidden_size):
+        if self.bidirectional:
+            hidden_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
+            cell_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
+        else:
+            hidden_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
+            cell_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
 
         # Weights initialization
         torch.nn.init.xavier_normal_(hidden_state)
         torch.nn.init.xavier_normal_(cell_state)
 
         return [hidden_state,cell_state]
-
 
 
 class LSTM2(nn.Module):
@@ -133,7 +137,7 @@ class LSTM2(nn.Module):
             batch_first = self.batch_first,
             bidirectional = self.bidirectional
         )
-                    
+        
         if self.bidirectional:
             self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
         else:
@@ -147,6 +151,8 @@ class LSTM2(nn.Module):
         x = torch.unsqueeze(x,dim=2)
         x, (hidden_state,cell_state) = self.lstm(x, (hidden_state,cell_state))
         x = torch.squeeze(x,dim=2)
+        if self.bidirectional:
+            x = x.reshape(x.size()[0],-1)
         x = self.out_layer(x)
         return x
         

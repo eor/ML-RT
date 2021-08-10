@@ -64,13 +64,17 @@ else:
 # -----------------------------------------------------------------
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
-
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-def lstm_loss_function(gen_x, real_x, config):
-    mse = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
-    return mse
+soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
+
+def lstm_loss_function(func , gen_x, real_x, config):
+    if func == 'dtw' and cuda:
+        loss = soft_dtw_loss(gen_x, real_x).mean()
+    else:
+        loss = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
+    return loss
 
 
 # -----------------------------------------------------------------
@@ -126,16 +130,14 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             profiles_gen = model(parameters)
 
             # compute loss via soft dtw
-            if cuda:
+            # profile tensors are of shape [batch size, profile length]
+            # soft dtw wants input of shape [batch size, 1, profile length]
 
-                # profile tensors are of shape [batch size, profile length]
-                # soft dtw wants input of shape [batch size, 1, profile length]
-
-                dtw = soft_dtw_loss(profiles_true.unsqueeze(1), profiles_gen.unsqueeze(1))
-                loss_dtw += dtw.mean()
+            dtw = lstm_loss_function('dtw', profiles_true.unsqueeze(1), profiles_gen.unsqueeze(1), config)
+            loss_dtw += dtw.mean()
 
             # compute loss via MSE:
-            mse = lstm_loss_function(profiles_true, profiles_gen, config)
+            mse = lstm_loss_function('mse', profiles_true, profiles_gen, config)
             loss_mse += mse.mean()
 
             if save_results:
@@ -146,8 +148,7 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
-    if cuda:
-        loss_dtw = loss_dtw / len(data_loader)
+    loss_dtw = loss_dtw / len(data_loader)
 
     if print_results:
         print("%s results: MSE: %e DTW %e"%(mode, loss_mse, loss_dtw))
@@ -291,7 +292,8 @@ def main(config):
     # book keeping arraysSCALE_PARAMETERS
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
-    val_loss_array = np.empty(0)
+    val_loss_mse_array = np.empty(0)
+    val_loss_dtw_array = np.empty(0)
 
     # -----------------------------------------------------------------
     # keep the model with min validation loss
@@ -325,7 +327,7 @@ def main(config):
 
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
-            loss = lstm_loss_function(gen_profiles, real_profiles, config)
+            loss = lstm_loss_function('mse', gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -348,7 +350,9 @@ def main(config):
                                         best_model=False
                                     )
 
-        val_loss_array = np.append(val_loss_array, [val_loss_mse, val_loss_dtw])
+        val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
+        val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
+
 
         if val_loss_mse < best_loss:
             best_loss = val_loss_mse
@@ -382,13 +386,13 @@ def main(config):
     # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
-    utils_save_loss(val_loss_array[:][0], data_products_path, config.profile_type, config.n_epochs, prefix='val')
+    utils_save_loss(val_loss_mse_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
 
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     # mlp_run_testing(config.n_epochs, test_loader, best_model, data_products_path, config, best_model=True)
-    lstm_run_evaluation(config.n_epochs, test_loader, model, data_products_path, config, print_results=True,save_results = True, best_model=False)
+    lstm_run_evaluation(config.n_epochs, test_loader, model, data_products_path, config, print_results=True, save_results = True, best_model=False)
 
     
     # TODO: save best epoch to a new config
