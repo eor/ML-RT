@@ -22,7 +22,7 @@ H_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
-SPLIT_FRACTION = (0.90, 0.09, 0.01)  # train, val, test.
+SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
 SHUFFLE = True
 SHUFFLE_SEED = 42
 
@@ -195,56 +195,6 @@ def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
         epoch=epoch,
         prefix=prefix
     )
-
-
-# -----------------------------------------------------------------
-# Evaluate generator on validation set
-# -----------------------------------------------------------------
-# def cgan_evaluate_generator(generator, data_loader, config):
-#     """
-#     This function runs the validation data set through the generator,
-#     and computes mse and dtw on the predicted profiles and true profiles
-#
-#     Args:
-#         generator: model that generates data and needs to be evaluated
-#         data_loader: data loader used for the inference, most likely the validation set
-#         config: config object with user supplied parameters
-#     """
-#
-#     # set generator to evaluation mode (!Important)
-#     generator.eval()
-#
-#     # Empty tensors to hold real and generated profiles
-#     true_profiles_all = torch.empty((0, config.profile_len), device=device)
-#     gen_profiles_all = torch.empty((0, config.profile_len), device=device)
-#
-#     with torch.no_grad():
-#         for i, (profiles, parameters) in enumerate(data_loader):
-#
-#             # obtain batch size
-#             batch_size = profiles.size()[0]
-#
-#             # configure input
-#             latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-#             true_parameters = Variable(parameters.type(FloatTensor))
-#             true_profiles = Variable(profiles.type(FloatTensor))
-#
-#             # obtain predictions from generator using real_parameters
-#             gen_profiles = generator(latent_vector, true_parameters)
-#
-#             # append real and generated profiles to our tensor list
-#             true_profiles_all = torch.cat((true_profiles_all, true_profiles), dim=0)
-#             gen_profiles_all = torch.cat((gen_profiles_all, gen_profiles), dim=0)
-#
-#     # convert tensors to numpy arrays
-#     real_profiles = true_profiles_all.cpu().numpy()
-#     gen_profiles = gen_profiles_all.cpu().numpy()
-#
-#     # compute mse and dtw on numpy profiles
-#     mse = utils_compute_mse(real_profiles, gen_profiles)
-#     dtw = utils_compute_dtw(real_profiles, gen_profiles)
-#
-#     return mse, dtw
 
 
 # -----------------------------------------------------------------
@@ -550,12 +500,12 @@ def main(config):
                 batch_size=profiles.shape[0]
             )
 
-            epoch_loss_gen += gen_loss.item()
-            epoch_loss_dis += dis_loss.item()
+            epoch_loss_gen += gen_loss.item()    # average loss per batch
+            epoch_loss_dis += dis_loss.item()    # average loss per batch
 
         # end-of-epoch book keeping
-        average_loss_gen = epoch_loss_gen / len(train_loader.dataset)
-        average_loss_dis = epoch_loss_dis / len(train_loader.dataset)
+        average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis = epoch_loss_dis / len(train_loader)   # divide by number of batches (!= batch size)
 
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)

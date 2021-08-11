@@ -89,7 +89,7 @@ def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch))
+    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m" % epoch)
 
     if cuda:
         model.cuda()
@@ -175,7 +175,7 @@ def mlp_run_validation(data_loader, model, config):
 
             val_loss += loss.item()
 
-    return val_loss/len(data_loader)
+    return val_loss/len(data_loader)   # divide by number of batches (!= batch size)
 
 
 # -----------------------------------------------------------------
@@ -203,8 +203,6 @@ def main(config):
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
     global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
-
-
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
@@ -213,10 +211,12 @@ def main(config):
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if USE_BLOWOUT_FILTER:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles,
+                                                                            global_parameters)
 
     if CUT_PARAMETER_SPACE:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
+                                                                               global_parameters)
 
     # -----------------------------------------------------------------
     # log space?
@@ -325,7 +325,7 @@ def main(config):
             epoch_loss += loss.item()
 
         # end-of-epoch book keeping
-        train_loss = epoch_loss / len(train_loader.dataset)
+        train_loss = epoch_loss / len(train_loader)    # divide by number of batches (!= batch size)
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
@@ -372,7 +372,7 @@ def main(config):
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
     
     # Add best_epoch to config object for analysis routines
-
+    setattr(config, 'best_epoch', best_epoch)
 
     # finished
     print('\nAll done!')
@@ -384,8 +384,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=5, prefix='test')
-        analysis_parameter_space_plot(config, prefix='test')
+        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------

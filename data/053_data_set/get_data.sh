@@ -1,8 +1,6 @@
-#! /bin/sh 
-
+#!/bin/sh
 
 # GitHub has a 100MB filesize limit at this time, so please download the data using this script.
-
 
 BASEURL="https://www.astro.rug.nl/~krause/static/ML-RT/053_data_set/"
 
@@ -26,9 +24,9 @@ dl() {
 
 check() {
 
-        VAR1=`md5sum ${FILE1} | awk '{print $1}'`
-        VAR2=`md5sum ${FILE2} | awk '{print $1}'`
-        VAR3=`md5sum ${FILE3} | awk '{print $1}'`
+        VAR1=$(md5sum ${FILE1} | awk '{print $1}')
+        VAR2=$(md5sum ${FILE2} | awk '{print $1}')
+        VAR3=$(md5sum ${FILE3} | awk '{print $1}')
         
         # 1
         if [ "$CHECKSUM1" = "$VAR1" ]; then
@@ -59,23 +57,20 @@ check() {
             echo "Checksum NOT ok: "$FILE3
         fi        
         
-        
-
 }
 
 
-if ! command -v wget &> /dev/null
+if ! (command -v wget &> /dev/null)
 then
     echo "Error: wget could not be found. Exiting"
     exit
-    
+
 else
     dl
 fi
 
 
-
-if ! command -v wget &> /dev/null
+if ! (command -v md5sum &> /dev/null)
 then
     echo "Warning: md5sum could not be found. Can't verify file integrity"
     exit
