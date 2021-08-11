@@ -38,6 +38,7 @@ SCALE_PARAMETERS = True
 USE_LOG_PROFILES = True
 USE_BLOWOUT_FILTER = True
 CUT_PARAMTER_SPACE = True
+ENABLE_EARLY_STOPPING = True
 
 DATA_PRODUCTS_DIR = 'data_products'
 PLOT_DIR = 'plots'
@@ -69,12 +70,14 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
 
-def lstm_loss_function(func , gen_x, real_x, config):
+
+def lstm_loss_function(func, gen_x, real_x, config):
     if func == 'dtw' and cuda:
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:
-            loss = soft_dtw_loss(gen_x.unsqueeze(1), real_x.unsqueeze(1)).mean()
+            loss = soft_dtw_loss(gen_x.unsqueeze(
+                1), real_x.unsqueeze(1)).mean()
         else:
             loss = soft_dtw_loss(gen_x, real_x).mean()
     else:
@@ -85,7 +88,7 @@ def lstm_loss_function(func , gen_x, real_x, config):
 # -----------------------------------------------------------------
 #   use lstm with test or val set
 # -----------------------------------------------------------------
-def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results = False, save_results=False, best_model=False):
+def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the lstm, returns mse_loss and dtw_loss, 
     and saves the results as well as ground truth to file, if in test mode.
@@ -100,17 +103,17 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         best_model: flag for testing on best model
     """
 
-
     if save_results:
         mode = 'Test'
-        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m"%(current_epoch))
-    else: 
+        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" %
+              (current_epoch))
+    else:
         mode = 'Validation'
 
     if cuda:
         model.cuda()
 
-    if save_results:        
+    if save_results:
         test_profiles_gen_all = torch.tensor([], device=device)
         test_profiles_true_all = torch.tensor([], device=device)
         test_parameters_true_all = torch.tensor([], device=device)
@@ -138,26 +141,30 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             # profile tensors are of shape [batch size, profile length]
             # soft dtw wants input of shape [batch size, 1, profile length]
 
-            dtw = lstm_loss_function('dtw', profiles_true, profiles_gen, config)
+            dtw = lstm_loss_function(
+                'dtw', profiles_true, profiles_gen, config)
             loss_dtw += dtw
 
             # compute loss via MSE:
-            mse = lstm_loss_function('mse', profiles_true, profiles_gen, config)
+            mse = lstm_loss_function(
+                'mse', profiles_true, profiles_gen, config)
             loss_mse += mse
 
             if save_results:
                 # collate data
-                test_profiles_gen_all = torch.cat((test_profiles_gen_all, profiles_gen), 0)
-                test_profiles_true_all = torch.cat((test_profiles_true_all, profiles_true), 0)
-                test_parameters_true_all = torch.cat((test_parameters_true_all, parameters), 0)
-    
+                test_profiles_gen_all = torch.cat(
+                    (test_profiles_gen_all, profiles_gen), 0)
+                test_profiles_true_all = torch.cat(
+                    (test_profiles_true_all, profiles_true), 0)
+                test_parameters_true_all = torch.cat(
+                    (test_parameters_true_all, parameters), 0)
+
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
     loss_dtw = loss_dtw / len(data_loader)
 
     if print_results:
-        print("%s results: MSE: %e DTW %e"%(mode, loss_mse, loss_dtw))
-    
+        print("%s results: MSE: %e DTW %e" % (mode, loss_mse, loss_dtw))
 
     if save_results:
         # move data to CPU, re-scale parameters, and write everything to file
@@ -165,8 +172,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         test_profiles_true_all = test_profiles_true_all.cpu().numpy()
         test_parameters_true_all = test_parameters_true_all.cpu().numpy()
 
-        test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
-        
+        test_parameters_true_all = utils_rescale_parameters(
+            limits=parameter_limits, parameters=test_parameters_true_all)
+
         if best_model:
             prefix = 'best'
         else:
@@ -182,9 +190,7 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             prefix=prefix
         )
 
-    
     return loss_mse.item(), loss_dtw.item()
-
 
 
 # -----------------------------------------------------------------
@@ -210,9 +216,8 @@ def main(config):
     # -----------------------------------------------------------------
     H_profile_file_path = utils_join_path(config.data_dir, H_PROFILE_FILE)
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
-    global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
-
-
+    global_parameter_file_path = utils_join_path(
+        config.data_dir, GLOBAL_PARAMETER_FILE)
 
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
@@ -222,23 +227,27 @@ def main(config):
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if USE_BLOWOUT_FILTER:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(
+            H_profiles, T_profiles, global_parameters)
 
     if CUT_PARAMTER_SPACE:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(
+            H_profiles, T_profiles, global_parameters)
 
     # -----------------------------------------------------------------
     # log space?
     # -----------------------------------------------------------------
     if USE_LOG_PROFILES:
-        H_profiles = np.log10(H_profiles + 1.0e-6)  # add a small number to avoid trouble
+        # add a small number to avoid trouble
+        H_profiles = np.log10(H_profiles + 1.0e-6)
         T_profiles = np.log10(T_profiles)
 
     # -----------------------------------------------------------------
     # shuffle / rescale parameters
     # -----------------------------------------------------------------
     if SCALE_PARAMETERS:
-        global_parameters = utils_scale_parameters(limits=parameter_limits, parameters=global_parameters)
+        global_parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=global_parameters)
 
     if SHUFFLE:
         np.random.seed(SHUFFLE_SEED)
@@ -260,15 +269,18 @@ def main(config):
     # -----------------------------------------------------------------
     # data loaders
     # -----------------------------------------------------------------
-    training_data = RTdata(profiles, global_parameters, split='train', split_frac=SPLIT_FRACTION)
-    validation_data = RTdata(profiles, global_parameters, split='val', split_frac=SPLIT_FRACTION)
-    testing_data = RTdata(profiles, global_parameters, split='test', split_frac=SPLIT_FRACTION)
+    training_data = RTdata(profiles, global_parameters,
+                           split='train', split_frac=SPLIT_FRACTION)
+    validation_data = RTdata(profiles, global_parameters,
+                             split='val', split_frac=SPLIT_FRACTION)
+    testing_data = RTdata(profiles, global_parameters,
+                          split='test', split_frac=SPLIT_FRACTION)
 
-    train_loader = DataLoader(training_data, batch_size=config.batch_size, shuffle=True)
+    train_loader = DataLoader(
+        training_data, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(validation_data, batch_size=config.batch_size)
     test_loader = DataLoader(testing_data, batch_size=config.batch_size)
 
-    
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
@@ -286,7 +298,7 @@ def main(config):
     # for name, param in model.named_parameters():
     #     if param.requires_grad:
     #         print(name, param.data)
-    # return 
+    # return
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=config.lr
@@ -307,13 +319,26 @@ def main(config):
     best_loss = np.inf
     best_epoch = 0
 
+    # -----------------------------------------------------------------
+    # Early Stopping Criteria
+    # -----------------------------------------------------------------
 
+    # number of epochs to try to before ending training
+    early_stopping_threshold = 10
+    n_epoch_without_improvement = 0
+    stopped_early = False
+    epochs_trained = -1
+
+    # -----------------------------------------------------------------
+    # Loss function to use
+    # -----------------------------------------------------------------
+    train_loss_func = 'mse'  # 'mse' or 'dtw'
 
     # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(1, config.n_epochs+1):
+    for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss = 0
 
@@ -322,7 +347,8 @@ def main(config):
 
         for i, (profiles, parameters) in enumerate(train_loader):
 
-            batch_size = profiles.shape[0]      # in case one batch is smaller (most likely last batch)
+            # in case one batch is smaller (most likely last batch)
+            batch_size = profiles.shape[0]
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
@@ -332,7 +358,8 @@ def main(config):
 
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
-            loss = lstm_loss_function('mse', gen_profiles, real_profiles, config)
+            loss = lstm_loss_function(
+                train_loss_func, gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -344,34 +371,41 @@ def main(config):
 
         # validation & save the best performing model
         val_loss_mse, val_loss_dtw = lstm_run_evaluation(
-                                        current_epoch=epoch,
-                                        data_loader=val_loader,
-                                        model=model,
-                                        path=data_products_path,
-                                        config=config,
-                                        print_results=False,
-                                        save_results=False,
-                                        best_model=False
-                                    )
+            current_epoch=epoch,
+            data_loader=val_loader,
+            model=model,
+            path=data_products_path,
+            config=config,
+            print_results=False,
+            save_results=False,
+            best_model=False
+        )
 
         val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
         val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
-
 
         if val_loss_mse < best_loss:
             best_loss = val_loss_mse
             best_model = copy.deepcopy(model)
             best_epoch = epoch
+            n_epoch_without_improvement = 0
+        else:
+            n_epoch_without_improvement += 1
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs,  train_loss, val_loss_mse, val_loss_dtw, best_epoch)
+            % (epoch, config.n_epochs, train_loss, val_loss_mse, val_loss_dtw, best_epoch)
         )
+
+        if ENABLE_EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
+            print("\033[96m\033[1m\nStopping Early\033[0m\n")
+            stopped_early = True
+            epochs_trained = epoch
+            break
 
         # check for testing criterion
         # if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
             # lstm_run_evaluation(epoch, test_loader, model, data_products_path, config, print_results=True, save_results = True, best_model=False)
-
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
@@ -386,20 +420,34 @@ def main(config):
     #     }
 
     # saving the best model using default number of epochs and not the best epoch
-    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, config.n_epochs)
+    utils_save_model(best_model.state_dict(), data_products_path,
+                     config.profile_type, config.n_epochs)
     # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
-    utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
-    utils_save_loss(val_loss_mse_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
+    utils_save_loss(train_loss_array, data_products_path,
+                    config.profile_type, config.n_epochs, prefix='train')
+    if train_loss_func == 'mse':
+        utils_save_loss(val_loss_mse_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val')
+    else:
+        utils_save_loss(val_loss_dtw_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val')
 
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    # mlp_run_testing(config.n_epochs, test_loader, best_model, data_products_path, config, best_model=True)
-    lstm_run_evaluation(config.n_epochs, test_loader, model, data_products_path, config, print_results=True, save_results = True, best_model=False)
+    # saving best model with best_model = false for now. As we are not exporting the best_epoch
+    test_mse, test_dtw = lstm_run_evaluation(config.n_epochs, test_loader, best_model,
+                                             data_products_path, config, print_results=True, save_results=True, best_model=False)
 
-    
-    # TODO: save best epoch to a new config
+    # TODO: save best_epoch to a new config
+    # TODO: save best_val_mse to a new config
+    # TODO: save best_val_dtw to a new config
+    # TODO: save test_mse to a new config
+    # TODO: save test_dtw to a new config
+    # TODO: save if stopped_early while training
+    # TODO: save epochs_trained ie. epochs model is actually trained for
+    # TODO: (!optional) save training time
 
     # finished
     print('\nAll done!')
@@ -421,31 +469,38 @@ def main(config):
 if __name__ == "__main__":
 
     # parse arguments
-    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (MLP)')
+    parser = argparse.ArgumentParser(
+        description='ML-RT - Cosmological radiative transfer with neural networks (MLP)')
 
     # arguments for data handling
-    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
+    parser.add_argument('--data_dir', type=str,
+                        metavar='(string)', help='Path to data directory')
 
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
-    parser.add_argument("--testing_interval", type=int, default=100, help="epoch interval between testing runs")
+    parser.add_argument("--testing_interval", type=int,
+                        default=100, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
                         help='Select H for neutral hydrogen fraction or T for temperature profiles (default: H)')
 
-    parser.add_argument("--profile_len", type=int, default=1500, help="number of profile grid points")
+    parser.add_argument("--profile_len", type=int, default=1500,
+                        help="number of profile grid points")
 
-    parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
+    parser.add_argument("--n_parameters", type=int, default=8,
+                        help="number of RT parameters (5 or 8)")
 
     # network model switch
     parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
                         help='Pick a model: MLP1 (default) or MLP2')
 
     # network optimisation
-    parser.add_argument("--n_epochs", type=int, default=100, help="number of epochs of training")
-    parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")
+    parser.add_argument("--n_epochs", type=int, default=100,
+                        help="number of epochs of training")
+    parser.add_argument("--batch_size", type=int, default=32,
+                        help="size of the batches (default=32)")
 
     parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
                         help="use batch normalisation in network (default)")
@@ -459,9 +514,11 @@ if __name__ == "__main__":
                         help="do not use dropout regularisation in network")
     parser.set_defaults(dropout=True)
 
-    parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
+    parser.add_argument("--dropout_value", type=float,
+                        default=0.25, help="dropout probability, default=0.25 ")
 
-    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate, default=0.0002 ")
+    parser.add_argument("--lr", type=float, default=0.0002,
+                        help="adam: learning rate, default=0.0002 ")
 
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
@@ -471,8 +528,10 @@ if __name__ == "__main__":
     # momentum?
 
     # etc
-    parser.add_argument("--analysis", dest='analysis', action='store_true', help="automatically generate some plots")
-    parser.add_argument("--no-analysis", dest='analysis', action='store_false', help="do not run analysis (default)")
+    parser.add_argument("--analysis", dest='analysis',
+                        action='store_true', help="automatically generate some plots")
+    parser.add_argument("--no-analysis", dest='analysis',
+                        action='store_false', help="do not run analysis (default)")
     parser.set_defaults(analysis=False)
 
     my_config = parser.parse_args()
@@ -484,7 +543,8 @@ if __name__ == "__main__":
         exit(1)
 
     if my_config.n_parameters not in [5, 8]:
-        print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
+        print(
+            '\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
         argparse.ArgumentParser().print_help()
         exit(1)
 
