@@ -89,7 +89,7 @@ def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m"%(epoch))
+    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m" % epoch)
 
     if cuda:
         model.cuda()
@@ -203,8 +203,6 @@ def main(config):
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
     global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
-
-
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
@@ -213,10 +211,12 @@ def main(config):
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if USE_BLOWOUT_FILTER:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles,
+                                                                            global_parameters)
 
     if CUT_PARAMETER_SPACE:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
+                                                                               global_parameters)
 
     # -----------------------------------------------------------------
     # log space?
