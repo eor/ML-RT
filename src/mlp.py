@@ -339,7 +339,7 @@ def main(config):
 
             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
-        # early stopping?
+        # early stopping check
         if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
@@ -360,7 +360,6 @@ def main(config):
     #     }
 
     utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
-    # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
