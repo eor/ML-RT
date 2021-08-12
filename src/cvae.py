@@ -504,10 +504,11 @@ if __name__ == "__main__":
                         help="do not use user_config to filter data set by parameters (default)")
     parser.set_defaults(filter_parameters=False)
 
-    # etc
-    parser.add_argument("--analysis", dest='analysis', action='store_true', help="automatically generate some plots")
-    parser.add_argument("--no-analysis", dest='analysis', action='store_false', help="do not run analysis (default)")
-    parser.set_defaults(analysis=False)
+    # analysis
+    parser.add_argument("--analysis", dest='analysis', action='store_true',
+                        help="automatically generate some plots (default)")
+    parser.add_argument("--no-analysis", dest='analysis', action='store_false', help="do not run analysis")
+    parser.set_defaults(analysis=True)
 
     my_config = parser.parse_args()
 

@@ -551,12 +551,11 @@ if __name__ == "__main__":
 
     # momentum?
 
-    # etc
-    parser.add_argument("--analysis", dest='analysis',
-                        action='store_true', help="automatically generate some plots")
-    parser.add_argument("--no-analysis", dest='analysis',
-                        action='store_false', help="do not run analysis (default)")
-    parser.set_defaults(analysis=False)
+    # analysis
+    parser.add_argument("--analysis", dest='analysis', action='store_true',
+                        help="automatically generate some plots (default)")
+    parser.add_argument("--no-analysis", dest='analysis', action='store_false', help="do not run analysis")
+    parser.set_defaults(analysis=True)
 
     my_config = parser.parse_args()
 
