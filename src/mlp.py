@@ -325,6 +325,9 @@ def main(config):
             best_loss = val_loss
             best_model = copy.deepcopy(model)
             best_epoch = epoch
+            n_epoch_without_improvement = 0
+        else:
+            n_epoch_without_improvement += 1
 
         print(
             "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
