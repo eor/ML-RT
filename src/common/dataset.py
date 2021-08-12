@@ -38,7 +38,7 @@ class RTdata(Dataset):
         return self.profiles.shape[0]
 
     def __getitem__(self, index):
-        return self.profiles[index], self.parameters[index]   # switch these to switch profiles and parameters
+        return self.profiles[index], self.parameters[index]   
 
 
 class RTdataWithDerivatives(Dataset):
@@ -76,4 +76,4 @@ class RTdataWithDerivatives(Dataset):
 
     def __getitem__(self, index):
 
-        return self.profiles[index], self.parameters[index], self.derivatives[index]  # switch these to switch profiles and parameters
+        return self.profiles[index], self.parameters[index], self.derivatives[index]
