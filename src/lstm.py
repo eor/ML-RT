@@ -452,6 +452,7 @@ def main(config):
     # Save some results to config object for later use
     # -----------------------------------------------------------------
     setattr(config, 'best_epoch', best_epoch_mse)
+    setattr(config, 'best_epoch_mse', best_epoch_mse)
     setattr(config, 'best_epoch_dtw', best_epoch_dtw)
 
     setattr(config, 'best_val_mse', best_loss_mse)
