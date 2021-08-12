@@ -471,8 +471,6 @@ if __name__ == "__main__":
 
     my_config = parser.parse_args()
 
-
-
     # sanity checks
     if my_config.data_dir is None:
         print('\nError: Parameter data_dir must not be empty. Exiting.\n')
