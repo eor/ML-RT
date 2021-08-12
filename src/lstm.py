@@ -316,8 +316,10 @@ def main(config):
     # keep the model with min validation loss
     # -----------------------------------------------------------------
     best_model = copy.deepcopy(model)
-    best_loss = np.inf
-    best_epoch = 0
+    best_loss_mse = np.inf
+    best_loss_dtw = np.inf
+    best_epoch_mse = 0
+    best_epoch_dtw = 0
 
     # -----------------------------------------------------------------
     # Early Stopping Criteria
@@ -384,17 +386,23 @@ def main(config):
         val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
         val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
 
-        if val_loss_mse < best_loss:
-            best_loss = val_loss_mse
+        if val_loss_mse < best_loss_mse:
+            best_loss_mse = val_loss_mse
             best_model = copy.deepcopy(model)
-            best_epoch = epoch
+            best_epoch_mse = epoch
             n_epoch_without_improvement = 0
         else:
             n_epoch_without_improvement += 1
 
+        if val_loss_dtw < best_loss_dtw:
+            best_loss_dtw = val_loss_dtw
+            best_epoch_dtw = epoch
+
         print(
-            "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs, train_loss, val_loss_mse, val_loss_dtw, best_epoch)
+            "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
+            "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+            % (epoch, config.n_epochs, train_loss, val_loss_mse, val_loss_dtw,
+               best_epoch_mse, best_loss_dtw)
         )
 
         if ENABLE_EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
@@ -437,16 +445,30 @@ def main(config):
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     # saving best model with best_model = false for now. As we are not exporting the best_epoch
-    test_mse, test_dtw = lstm_run_evaluation(config.n_epochs, test_loader, best_model,
-                                             data_products_path, config, print_results=True, save_results=True, best_model=False)
+    best_test_mse, best_test_dtw = lstm_run_evaluation(config.n_epochs, test_loader, best_model, data_products_path,
+                                                       config, print_results=True, save_results=True, best_model=False)
 
-    # TODO: save best_epoch to a new config
-    # TODO: save best_val_mse to a new config
-    # TODO: save best_val_dtw to a new config
-    # TODO: save test_mse to a new config
-    # TODO: save test_dtw to a new config
-    # TODO: save if stopped_early while training
-    # TODO: save epochs_trained ie. epochs model is actually trained for
+    # -----------------------------------------------------------------
+    # Save some results to config object for later use
+    # -----------------------------------------------------------------
+    setattr(config, 'best_epoch', best_epoch_mse)
+    setattr(config, 'best_epoch_dtw', best_epoch_dtw)
+
+    setattr(config, 'best_val_mse', best_loss_mse)
+    setattr(config, 'best_val_dtw', best_loss_dtw)
+
+    setattr(config, 'best_test_mse', best_test_mse)
+    setattr(config, 'best_test_dtw', best_test_dtw)
+
+    setattr(config, 'stopped_early', stopped_early)
+    setattr(config, 'epochs_trained', epochs_trained)
+
+    # -----------------------------------------------------------------
+    # Overwrite config object
+    # -----------------------------------------------------------------
+    utils_save_config_to_log(config)
+    utils_save_config_to_file(config)
+
     # TODO: (!optional) save training time
 
     # finished
@@ -459,8 +481,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=10, prefix='test')
-        # analysis_auto_plot_profiles(post_train_config, k=5, prefix='best')
+        analysis_auto_plot_profiles(config, k=10, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------
