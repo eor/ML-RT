@@ -283,9 +283,10 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     f.subplots_adjust(hspace=0, wspace=0, left=0.07, bottom=0.07, right=0.95, top=0.98)
 
     # 5. build file name & save file
-    file_name = 'parameter_space_MSE_%s_%d_epochs.%s' % (profile_type, n_epoch, file_type)
     if prefix:
-        file_name = prefix + '_' + file_name
+        file_name = '%s_%s_parameter_space_MSE_%d_epochs.%s' % (profile_type, prefix, n_epoch, file_type)
+    else:
+        file_name = '%s_parameter_space_MSE_%d_epochs.%s' % (profile_type, n_epoch, file_type)
 
     output_file = osp.join(output_dir, file_name)
     f.savefig(output_file)
