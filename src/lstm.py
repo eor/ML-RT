@@ -401,7 +401,7 @@ def main(config):
             "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
             "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
             % (epoch, config.n_epochs, train_loss, val_loss_mse, val_loss_dtw,
-               best_epoch_mse, best_loss_dtw)
+               best_epoch_mse, best_epoch_dtw)
         )
 
         if ENABLE_EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
@@ -447,6 +447,8 @@ def main(config):
     best_test_mse, best_test_dtw = lstm_run_evaluation(config.n_epochs, test_loader, best_model, data_products_path,
                                                        config, print_results=True, save_results=True, best_model=False)
 
+    #TODO: save best model results
+
     # -----------------------------------------------------------------
     # Save some results to config object for later use
     # -----------------------------------------------------------------
@@ -481,8 +483,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=10, prefix='best')
-        analysis_parameter_space_plot(config, prefix='best')
+        analysis_auto_plot_profiles(config, k=10, prefix='test')
+        analysis_parameter_space_plot(config, prefix='test')
 
 
 # -----------------------------------------------------------------
