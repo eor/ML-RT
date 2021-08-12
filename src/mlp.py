@@ -20,28 +20,10 @@ from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
 
+from common.settings import *
 
 # -----------------------------------------------------------------
-# hard-coded parameters (for now)
-# -----------------------------------------------------------------
-H_PROFILE_FILE = 'data_Hprofiles.npy'
-T_PROFILE_FILE = 'data_Tprofiles.npy'
-GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
-
-SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
-SHUFFLE = True
-SHUFFLE_SEED = 42
-
-SCALE_PARAMETERS = True
-USE_LOG_PROFILES = True
-USE_BLOWOUT_FILTER = True
-CUT_PARAMETER_SPACE = True
-
-DATA_PRODUCTS_DIR = 'data_products'
-PLOT_DIR = 'plots'
-
-# -----------------------------------------------------------------
-#  global  variables :-|
+#  global  variables
 # -----------------------------------------------------------------
 parameter_limits = list()
 parameter_names_latex = list()
@@ -210,11 +192,11 @@ def main(config):
     # -----------------------------------------------------------------
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
-    if USE_BLOWOUT_FILTER:
+    if config.filter_blowouts:
         H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles,
                                                                             global_parameters)
 
-    if CUT_PARAMETER_SPACE:
+    if config.filter_parameters:
         H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
                                                                                global_parameters)
 
@@ -280,7 +262,7 @@ def main(config):
     )
 
     # -----------------------------------------------------------------
-    # book keeping arraysSCALE_PARAMETERS
+    # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
     val_loss_array = np.empty(0)
@@ -291,6 +273,13 @@ def main(config):
     best_model = copy.deepcopy(model)
     best_loss = np.inf
     best_epoch = 0
+
+    # -----------------------------------------------------------------
+    # Early Stopping Criteria
+    # -----------------------------------------------------------------
+    n_epoch_without_improvement = 0
+    stopped_early = False
+    epochs_trained = -1
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -347,6 +336,13 @@ def main(config):
 
             mlp_run_testing(epoch, test_loader, model, data_products_path, config)
 
+        # early stopping?
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
+            print("\033[96m\033[1m\nStopping Early\033[0m\n")
+            stopped_early = True
+            epochs_trained = epoch
+            break
+
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
@@ -370,9 +366,20 @@ def main(config):
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
-    
-    # Add best_epoch to config object for analysis routines
+
+    # -----------------------------------------------------------------
+    # Save additional information to config object for later use
+    # -----------------------------------------------------------------
     setattr(config, 'best_epoch', best_epoch)
+
+    setattr(config, 'stopped_early', stopped_early)
+    setattr(config, 'epochs_trained', epochs_trained)
+
+    # -----------------------------------------------------------------
+    # Overwrite config object
+    # -----------------------------------------------------------------
+    utils_save_config_to_log(config)
+    utils_save_config_to_file(config)
 
     # finished
     print('\nAll done!')
@@ -441,14 +448,28 @@ if __name__ == "__main__":
     parser.add_argument("--b2", type=float, default=0.999,
                         help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
 
-    # momentum?
+    # use blow out filter?
+    parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
+                        help="use blowout filter on data set (default)")
+    parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
+                        help="do not use blowout filter on data set")
+    parser.set_defaults(filter_blowouts=True)
 
-    # etc
+    # cut parameter space
+    parser.add_argument("--filter_parameters", dest='analysis', action='store_true',
+                        help="use user_config to filter data set by parameters")
+    parser.add_argument("--no-filter_parameters", dest='analysis', action='store_false',
+                        help="do not use user_config to filter data set by parameters (default)")
+    parser.set_defaults(filter_parameters=False)
+
+    # analysis
     parser.add_argument("--analysis", dest='analysis', action='store_true', help="automatically generate some plots")
     parser.add_argument("--no-analysis", dest='analysis', action='store_false', help="do not run analysis (default)")
     parser.set_defaults(analysis=False)
 
     my_config = parser.parse_args()
+
+
 
     # sanity checks
     if my_config.data_dir is None:
