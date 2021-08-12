@@ -94,19 +94,18 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
     and saves the results as well as ground truth to file, if in test mode.
 
     Args:
-        epoch: current epoch
+        current_epoch: current epoch
         data_loader: data loader used for the inference, most likely the test set
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
-        save_reults: whether to save actual and generated profiles locally (default: False)
+        save_results: whether to save actual and generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
 
     if save_results:
         mode = 'Test'
-        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" %
-              (current_epoch))
+        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" % current_epoch)
     else:
         mode = 'Validation'
 
@@ -326,7 +325,7 @@ def main(config):
     # -----------------------------------------------------------------
 
     # number of epochs to try to before ending training
-    early_stopping_threshold = 10
+    early_stopping_threshold = 10   # TODO: move this to GLOBALS
     n_epoch_without_improvement = 0
     stopped_early = False
     epochs_trained = -1
@@ -580,7 +579,7 @@ if __name__ == "__main__":
         parameter_names_latex = ps.p8_names_latex
 
     if my_config.model not in ['MLP1', 'MLP2']:
-        my_config.model = 'MLP1'
+        my_config.model = 'MLP1'            # TODO: change this
 
     # print summary
     print("\nUsed parameters:\n")
