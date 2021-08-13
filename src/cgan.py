@@ -13,7 +13,6 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.utils import utils_compute_dtw, utils_compute_mse, utils_save_model
 from common.sdtw_cuda_loss import SoftDTW
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
