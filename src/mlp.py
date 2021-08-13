@@ -17,7 +17,7 @@ from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
-#  global  variables
+#  global variables
 # -----------------------------------------------------------------
 parameter_limits = list()
 parameter_names_latex = list()
@@ -40,7 +40,7 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 
 # -----------------------------------------------------------------
-#  loss function
+#  loss function(s)
 # -----------------------------------------------------------------
 if cuda:
     soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
@@ -78,8 +78,8 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config,
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
-        print_results: print average loss to screen
-        save_results: whether to save actual and generated profiles locally (default: False)
+        print_results: print average loss to screen?
+        save_results: flag to save generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
 
@@ -287,11 +287,6 @@ def main(config):
     epochs_trained = -1
 
     # -----------------------------------------------------------------
-    # Loss function to use
-    # -----------------------------------------------------------------
-    train_loss_func = 'MSE'  # 'MSE' or 'DTW'  #TODO: add this as a user option --> config.loss_type
-
-    # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
@@ -362,7 +357,7 @@ def main(config):
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
             best_test_mse, best_test_dtw = mlp_run_evaluation(epoch, test_loader, model, data_products_path, config,
-                                                              print_results=True, save_results=False, best_model=False)
+                                                              print_results=True, save_results=True, best_model=False)
 
         # early stopping check
         if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
