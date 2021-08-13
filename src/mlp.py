@@ -48,14 +48,13 @@ else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 
-def mlp_loss_function(func, gen_x, real_x, config):
+def mlp_loss_function(loss_function, gen_x, real_x, config):
 
-    if func == 'DTW' and cuda:
+    if loss_function == 'DTW' and cuda:
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:
-            loss = soft_dtw_loss(gen_x.unsqueeze(
-                1), real_x.view(-1, config.profile_len).unsqueeze(1)).mean()
+            loss = soft_dtw_loss(gen_x.unsqueeze(1), real_x.view(-1, config.profile_len).unsqueeze(1)).mean()
         else:
             loss = soft_dtw_loss(gen_x, real_x.view(-1, config.profile_len)).mean()
     else:
@@ -67,7 +66,8 @@ def mlp_loss_function(func, gen_x, real_x, config):
 # -----------------------------------------------------------------
 #   use mlp with test or val set
 # -----------------------------------------------------------------
-def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
+def mlp_run_evaluation(current_epoch, data_loader, model, path, config,
+                       print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the mlp model, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if save_results is True.
@@ -78,6 +78,7 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
+        print_results: print average loss to screen
         save_results: whether to save actual and generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
@@ -115,13 +116,11 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
             # profile tensors are of shape [batch size, profile length]
             # soft dtw wants input of shape [batch size, 1, profile length]
 
-            dtw = mlp_loss_function(
-                'DTW', profiles_true, profiles_gen, config)
+            dtw = mlp_loss_function('DTW', profiles_true, profiles_gen, config)
             loss_dtw += dtw
 
             # compute loss via MSE:
-            mse = mlp_loss_function(
-                'MSE', profiles_true, profiles_gen, config)
+            mse = mlp_loss_function('MSE', profiles_true, profiles_gen, config)
             loss_mse += mse
 
             if save_results:
@@ -290,7 +289,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Loss function to use
     # -----------------------------------------------------------------
-    train_loss_func = 'MSE'  # 'MSE' or 'DTW'  #TODO: add this as a user option
+    train_loss_func = 'MSE'  # 'MSE' or 'DTW'  #TODO: add this as a user option --> config.loss_type
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -315,7 +314,7 @@ def main(config):
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
 
-            loss = mlp_loss_function(train_loss_func, gen_profiles, real_profiles, config)
+            loss = mlp_loss_function(config.loss_type, gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -355,15 +354,15 @@ def main(config):
         print(
             "[Epoch %d/%d] [Train loss %s: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
             "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs, train_loss_func, train_loss, val_loss_mse, val_loss_dtw,
+            % (epoch, config.n_epochs, config.loss_type, train_loss, val_loss_mse, val_loss_dtw,
                best_epoch_mse, best_epoch_dtw)
         )
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            best_test_mse, best_test_dtw = mlp_run_evaluation(epoch, test_loader, model, data_products_path,
-                                                               config, print_results=True, save_results=False, best_model=False)
+            best_test_mse, best_test_dtw = mlp_run_evaluation(epoch, test_loader, model, data_products_path, config,
+                                                              print_results=True, save_results=False, best_model=False)
 
         # early stopping check
         if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
@@ -392,7 +391,8 @@ def main(config):
     utils_save_model(model.state_dict(), data_products_path, config.profile_type, config.n_epochs, best_model=False)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
-    if train_loss_func == 'mse':
+
+    if config.loss_type == 'MSE':
         utils_save_loss(val_loss_mse_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
     else:
@@ -403,7 +403,7 @@ def main(config):
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
     best_test_mse, best_test_dtw = mlp_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
-                                                       config, print_results=True, save_results=True, best_model=True)
+                                                      config, print_results=True, save_results=True, best_model=True)
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use
@@ -466,7 +466,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_parameters", type=int, default=8, help="number of RT parameters (5 or 8)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
+    parser.add_argument('--model', type=str, default='MLP1', metavar='(string)',
                         help='Pick a model: MLP1 (default) or MLP2')
 
     # network optimisation
@@ -493,6 +493,9 @@ if __name__ == "__main__":
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
                         help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
+
+    parser.add_argument('--loss_type', type=str, default='MSE', metavar='(string)',
+                        help='Pick a loss function: MSE (default) or DTW')
 
     # use blow out filter?
     parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
@@ -537,6 +540,9 @@ if __name__ == "__main__":
 
     if my_config.model not in ['MLP1', 'MLP2']:
         my_config.model = 'MLP1'
+
+    if my_config.loss_type not in ['MSE', 'DTW']:
+        my_config.model = 'MSE'
 
     # print summary
     print("\nUsed parameters:\n")
