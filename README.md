@@ -1,12 +1,20 @@
 # ML-RT
-Machine Learning and Radiative Transfer
+ML-RT stand for Machine Learning and Radiative Transfer. It is a project aimed at examining the possibility to use 
+machine learning techniques to emulate radiative transfer simulation results.
 
 
-## Software requirements / dependencies
 
-* python 3.7 or newer
+## Setup
 
-Python packages:
+### Software requirements
+
+We assume your system is equipped with the following dependencies:
+
+* Python 3.7 or newer
+* bash
+* wget
+
+Furthermore, the following Python packages are needed:
 
 * pytorch
 * numpy (1.20.0 or newer)
@@ -15,5 +23,14 @@ Python packages:
 * dtaidistance (implementation of DTW for numpy)
 
 
+They can be installed with pip like so:
+```bash
+pip3 install pytorch numpy matplotlib numba dtaidistance
+```
 
+### Training data download
 
+tba.
+
+## Cite this repo / work
+tba.
