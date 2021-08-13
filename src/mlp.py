@@ -15,6 +15,9 @@ import common.parameter_settings as ps
 
 from common.settings import *
 
+from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
+
 # -----------------------------------------------------------------
 #  global  variables
 # -----------------------------------------------------------------
@@ -41,6 +44,11 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
+if cuda:
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+else:
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
+
 def mlp_loss_function(func, gen_x, real_x, config):
     if func == 'DTW' and cuda:
         # profile tensors are of shape [batch size, profile length]

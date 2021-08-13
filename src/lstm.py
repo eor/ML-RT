@@ -12,8 +12,10 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.sdtw_cuda_loss import SoftDTW
 from common.settings import *
+
+from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 #  global  variables :-|
@@ -40,11 +42,13 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
-
+if cuda:
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+else:
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 def lstm_loss_function(func, gen_x, real_x, config):
-    if func == 'DTW' and cuda:
+    if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:

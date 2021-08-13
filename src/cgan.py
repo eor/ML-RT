@@ -15,7 +15,9 @@ from common.analysis import *
 from common.settings import *
 from common.utils import utils_save_model
 import common.parameter_settings as ps
-from common.sdtw_cuda_loss import SoftDTW
+
+from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 #  global  variables
@@ -45,11 +47,10 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 #  loss function(s)
 # -----------------------------------------------------------------
 adversarial_loss = torch.nn.MSELoss()
-
 if cuda:
-    soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
 else:
-    soft_dtw_loss = torch.nn.MSELoss()   # SoftDTW only works for cuda right now :-/
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 
 def cgan_loss_function(func, gen_x, real_x, config):
