@@ -85,9 +85,9 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
     elif prefix == 'best':
         epoch = config.best_epoch
 
-    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(config.profile_type, epoch)
-    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(config.profile_type, epoch)
-    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    parameter_true_file = prefix + ('_parameters_%s_%d_epochs.npy' % (config.profile_type, epoch))
+    profiles_true_file = prefix + ('_profiles_true_%s_%d_epochs.npy' % (config.profile_type, epoch))
+    profiles_gen_file = prefix + ('_profiles_gen_%s_%d_epochs.npy' % (config.profile_type, epoch))
 
     parameters = np.load(osp.join(data_dir_path, parameter_true_file))
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
@@ -158,9 +158,9 @@ def analysis_parameter_space_plot(config, prefix='test'):
     elif prefix == 'best':
         epoch = config.best_epoch
 
-    parameter_true_file = prefix+'_parameters_%s_%d_epochs.npy'%(config.profile_type, epoch)
-    profiles_true_file = prefix+'_profiles_true_%s_%d_epochs.npy'%(config.profile_type, epoch)
-    profiles_gen_file = prefix+'_profiles_gen_%s_%d_epochs.npy'%(config.profile_type, epoch)
+    parameter_true_file = prefix + ('_parameters_%s_%d_epochs.npy' % (config.profile_type, epoch))
+    profiles_true_file = prefix + ('_profiles_true_%s_%d_epochs.npy' % (config.profile_type, epoch))
+    profiles_gen_file = prefix + ('_profiles_gen_%s_%d_epochs.npy' % (config.profile_type, epoch))
 
     parameters = np.load(osp.join(data_dir_path, parameter_true_file))
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))

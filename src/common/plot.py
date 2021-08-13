@@ -77,7 +77,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     ax_array = gs.subplots(sharex=True, sharey=False)
 
     rc('font', **{'family': 'serif'})
-    rc('text', usetex=True) 
+    rc('text', usetex=True)
     
     # -----------------------------------------------------------------
     # add parameters as title

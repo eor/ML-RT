@@ -1,12 +1,5 @@
 import argparse
 
-# import os
-# import numpy as np
-# import math
-# from torchvision import datasets
-# import torch.nn as nn
-# import torch
-
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
@@ -21,6 +14,9 @@ from common.analysis import *
 import common.parameter_settings as ps
 
 from common.settings import *
+
+from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 #  global  variables
@@ -48,116 +44,123 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-def mlp_loss_function(gen_x, real_x, config):
+if cuda:
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+else:
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
-    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
+def mlp_loss_function(func, gen_x, real_x, config):
+    if func == 'DTW' and cuda:
+        # profile tensors are of shape [batch size, profile length]
+        # soft dtw wants input of shape [batch size, 1, profile length]
+        if len(gen_x.size()) != 3:
+            loss = soft_dtw_loss(gen_x.unsqueeze(
+                1), real_x.view(-1, config.profile_len).unsqueeze(1)).mean()
+        else:
+            loss = soft_dtw_loss(gen_x, real_x.view(-1, config.profile_len)).mean()
+    else:
+        loss = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
 
-    return mse
+    return loss
 
 
 # -----------------------------------------------------------------
-#   use mlp with test set
+#   use mlp with test or val set
 # -----------------------------------------------------------------
-def mlp_run_testing(epoch, data_loader, model, path, config, best_model=False):
+def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
     """
-    function runs the test data set through the mlp, saves results as well as ground truth to file
+    function runs the given dataset through the mlp model, returns mse_loss and dtw_loss,
+    and saves the results as well as ground truth to file, if save_results is True.
 
     Args:
-        epoch: current epoch
+        current_epoch: current epoch
         data_loader: data loader used for the inference, most likely the test set
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
+        save_results: whether to save actual and generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
 
-    print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m" % epoch)
+    if save_results:
+        print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m" % current_epoch)
 
     if cuda:
         model.cuda()
 
-    test_profiles_gen_all = torch.tensor([], device=device)
-    test_profiles_true_all = torch.tensor([], device=device)
-    test_parameters_true_all = torch.tensor([], device=device)
+    if save_results:
+        profiles_gen_all = torch.tensor([], device=device)
+        profiles_true_all = torch.tensor([], device=device)
+        parameters_true_all = torch.tensor([], device=device)
 
     # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
     # we don't have to worry about randomisation of the samples.
 
     model.eval()
 
+    loss_dtw = 0.0
+    loss_mse = 0.0
+
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
 
             # configure input
-            test_profiles_true = Variable(profiles.type(FloatTensor))
-            test_parameters = Variable(parameters.type(FloatTensor))
+            profiles_true = Variable(profiles.type(FloatTensor))
+            parameters = Variable(parameters.type(FloatTensor))
 
             # inference
-            test_profiles_gen = model(test_parameters)
+            profiles_gen = model(parameters)
 
-            # collate data
-            test_profiles_gen_all = torch.cat((test_profiles_gen_all, test_profiles_gen), 0)
-            test_profiles_true_all = torch.cat((test_profiles_true_all, test_profiles_true), 0)
-            test_parameters_true_all = torch.cat((test_parameters_true_all, test_parameters), 0)
+            # compute loss via soft dtw
+            # profile tensors are of shape [batch size, profile length]
+            # soft dtw wants input of shape [batch size, 1, profile length]
 
-    # move data to CPU, re-scale parameters, and write everything to file
-    test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-    test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-    test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+            dtw = mlp_loss_function(
+                'DTW', profiles_true, profiles_gen, config)
+            loss_dtw += dtw
 
-    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=test_parameters_true_all)
+            # compute loss via MSE:
+            mse = mlp_loss_function(
+                'MSE', profiles_true, profiles_gen, config)
+            loss_mse += mse
 
-    if best_model:
-        prefix = 'best'
-    else:
-        prefix = 'test'
+            if save_results:
+                # collate data
+                profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
+                profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
+                parameters_true_all = torch.cat((parameters_true_all, parameters), 0)
 
-    utils_save_test_data(
-        parameters=test_parameters_true_all,
-        profiles_true=test_profiles_true_all,
-        profiles_gen=test_profiles_gen_all,
-        path=path,
-        profile_choice=config.profile_type,
-        epoch=epoch,
-        prefix=prefix
-    )
+    # mean of computed losses
+    loss_mse = loss_mse / len(data_loader)
+    loss_dtw = loss_dtw / len(data_loader)
 
+    if print_results:
+        print("results: MSE: %e DTW %e" % (loss_mse, loss_dtw))
 
-# -----------------------------------------------------------------
-#   run validation
-# -----------------------------------------------------------------
-def mlp_run_validation(data_loader, model, config):
-    """
-    function runs validation data set to prevent over-fitting of the model.
-    Returns averaged validation loss.
+    if save_results:
+        # move data to CPU, re-scale parameters, and write everything to file
+        profiles_gen_all = profiles_gen_all.cpu().numpy()
+        profiles_true_all = profiles_true_all.cpu().numpy()
+        parameters_true_all = parameters_true_all.cpu().numpy()
 
-    Args:
-        data_loader: data loader used for the inference, here, validation set
-        model: current model state
-        config: config object with user supplied parameters
-    """
+        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
 
-    if cuda:
-        model.cuda()
+        if best_model:
+            prefix = 'best'
+        else:
+            prefix = 'test'
 
-    val_loss = 0.0
+        utils_save_test_data(
+            parameters=parameters_true_all,
+            profiles_true=profiles_true_all,
+            profiles_gen=profiles_gen_all,
+            path=path,
+            profile_choice=config.profile_type,
+            epoch=current_epoch,
+            prefix=prefix
+        )
 
-    with torch.no_grad():
-        for i, (profiles, parameters) in enumerate(data_loader):
-            batch_size = profiles.shape[0]
-
-            # configure input
-            val_profiles_true = Variable(profiles.type(FloatTensor))
-            val_parameters = Variable(parameters.type(FloatTensor))
-
-            # inference
-            val_profiles_gen = model(val_parameters)
-
-            loss = mlp_loss_function(val_profiles_gen, val_profiles_true, config)
-
-            val_loss += loss.item()
-
-    return val_loss/len(data_loader)   # divide by number of batches (!= batch size)
+    return loss_mse.item(), loss_dtw.item()
 
 
 # -----------------------------------------------------------------
@@ -265,14 +268,17 @@ def main(config):
     # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
-    val_loss_array = np.empty(0)
+    val_loss_mse_array = np.empty(0)
+    val_loss_dtw_array = np.empty(0)
 
     # -----------------------------------------------------------------
     # keep the model with min validation loss
     # -----------------------------------------------------------------
     best_model = copy.deepcopy(model)
-    best_loss = np.inf
-    best_epoch = 0
+    best_loss_mse = np.inf
+    best_loss_dtw = np.inf
+    best_epoch_mse = 0
+    best_epoch_dtw = 0
 
     # -----------------------------------------------------------------
     # Early Stopping Criteria
@@ -282,10 +288,15 @@ def main(config):
     epochs_trained = -1
 
     # -----------------------------------------------------------------
+    # Loss function to use
+    # -----------------------------------------------------------------
+    train_loss_func = 'MSE'  # 'MSE' or 'DTW'
+
+    # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(1, config.n_epochs+1):
+    for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss = 0
 
@@ -293,8 +304,6 @@ def main(config):
         model.train()
 
         for i, (profiles, parameters) in enumerate(train_loader):
-
-            batch_size = profiles.shape[0]      # in case one batch is smaller (most likely last batch)
 
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))
@@ -306,7 +315,7 @@ def main(config):
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
 
-            loss = mlp_loss_function(gen_profiles, real_profiles, config)
+            loss = mlp_loss_function(train_loss_func, gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -317,27 +326,44 @@ def main(config):
         train_loss = epoch_loss / len(train_loader)    # divide by number of batches (!= batch size)
         train_loss_array = np.append(train_loss_array, train_loss)
 
-        # validation & save the best performing model
-        val_loss = mlp_run_validation(val_loader, model, config)
-        val_loss_array = np.append(val_loss_array, val_loss)
+        val_loss_mse, val_loss_dtw = mlp_run_evaluation(
+            current_epoch=epoch,
+            data_loader=val_loader,
+            model=model,
+            path=data_products_path,
+            config=config,
+            print_results=False,
+            save_results=False,
+            best_model=False
+        )
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
+        val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
+
+        if val_loss_mse < best_loss_mse:
+            best_loss_mse = val_loss_mse
             best_model = copy.deepcopy(model)
-            best_epoch = epoch
+            best_epoch_mse = epoch
             n_epoch_without_improvement = 0
         else:
             n_epoch_without_improvement += 1
 
+        if val_loss_dtw < best_loss_dtw:
+            best_loss_dtw = val_loss_dtw
+            best_epoch_dtw = epoch
+
         print(
-            "[Epoch %d/%d] [Train loss: %e] [Validation loss: %e] [Best epoch: %d]"
-            % (epoch, config.n_epochs,  train_loss, val_loss, best_epoch)
+            "[Epoch %d/%d] [Train loss %s: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
+            "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+            % (epoch, config.n_epochs, train_loss_func, train_loss, val_loss_mse, val_loss_dtw,
+               best_epoch_mse, best_epoch_dtw)
         )
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            mlp_run_testing(epoch, test_loader, model, data_products_path, config)
+            best_test_mse, best_test_dtw = mlp_run_evaluation(epoch, test_loader, model, data_products_path,
+                                                               config, print_results=True, save_results=False, best_model=False)
 
         # early stopping check
         if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
@@ -359,20 +385,38 @@ def main(config):
     #     'optimizer': optimizer.state_dict(),
     #     }
 
-    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch)
+    # -----------------------------------------------------------------
+    # Save the best model and the final model
+    # -----------------------------------------------------------------
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch_mse, best_model=True)
+    utils_save_model(model.state_dict(), data_products_path, config.profile_type, config.n_epochs, best_model=False)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
-    utils_save_loss(val_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
+    if train_loss_func == 'mse':
+        utils_save_loss(val_loss_mse_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val')
+    else:
+        utils_save_loss(val_loss_dtw_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val')
 
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    mlp_run_testing(best_epoch, test_loader, best_model, data_products_path, config, best_model=True)
+    best_test_mse, best_test_dtw = mlp_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
+                                                       config, print_results=True, save_results=True, best_model=True)
 
     # -----------------------------------------------------------------
-    # Save additional information to config object for later use
+    # Save some results to config object for later use
     # -----------------------------------------------------------------
-    setattr(config, 'best_epoch', best_epoch)
+    setattr(config, 'best_epoch', best_epoch_mse)
+    setattr(config, 'best_epoch_mse', best_epoch_mse)
+    setattr(config, 'best_epoch_dtw', best_epoch_dtw)
+
+    setattr(config, 'best_val_mse', best_loss_mse)
+    setattr(config, 'best_val_dtw', best_loss_dtw)
+
+    setattr(config, 'best_test_mse', best_test_mse)
+    setattr(config, 'best_test_dtw', best_test_dtw)
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)

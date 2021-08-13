@@ -147,7 +147,7 @@ def utils_save_model(state, path, profile_choice, n_epoch, best_model=False, fil
         file_name = 'model_%s_%d_epochs.pth.tar'%(profile_choice, n_epoch)
 
         if best_model:
-            file_name = 'best_'+file_name
+            file_name = 'best_'+ file_name
 
     path = osp.join(path, file_name)
     torch.save(state, path)
@@ -159,10 +159,10 @@ def utils_save_model(state, path, profile_choice, n_epoch, best_model=False, fil
 # -----------------------------------------------------------------
 def utils_save_loss(loss_array, path, profile_choice, n_epoch, prefix='train'):
 
-    file_name = prefix + '_loss_%s_%d_epochs.npy'%(profile_choice, n_epoch)
+    file_name = prefix + '_loss_%s_%d_epochs.npy' % (profile_choice, n_epoch)
     path = osp.join(path, file_name)
     np.save(path, loss_array)
-    print('Saved %s loss function to:\t%s' %(prefix, path))
+    print('Saved %s loss function to:\t%s' % (prefix, path))
 
 
 # -----------------------------------------------------------------
@@ -170,8 +170,8 @@ def utils_save_loss(loss_array, path, profile_choice, n_epoch, prefix='train'):
 # -----------------------------------------------------------------
 def utils_save_test_data(parameters, profiles_true, profiles_gen, path, profile_choice, epoch, prefix='test'):
 
-    parameter_filename = prefix + '_parameters_%s_%d_epochs.npy'%(profile_choice, epoch)
-    profiles_true_filename = prefix + '_profiles_true_%s_%d_epochs.npy'%(profile_choice, epoch)
+    parameter_filename = prefix + '_parameters_%s_%d_epochs.npy' % (profile_choice, epoch)
+    profiles_true_filename = prefix + '_profiles_true_%s_%d_epochs.npy' % (profile_choice, epoch)
     profiles_gen_filename = prefix + '_profiles_gen_%s_%d_epochs.npy' % (profile_choice, epoch)
 
     parameter_path = osp.join(path, parameter_filename)
@@ -284,7 +284,6 @@ def utils_get_user_param_limits(path_user_config='', file_name='user_config.ini'
     config.read(p)
     # retrieve parameter_limits from config file as a dictionary
     param_limits = config._sections['PARAMETER_LIMITS']
-    
     # for every key in parameter_limits, convert the corresponding string to list
     for key in param_limits.keys():
         param_string = param_limits[key]
@@ -309,8 +308,7 @@ def utils_get_user_param_limits(path_user_config='', file_name='user_config.ini'
 # length of each sample, in our case the profile length.
 # -----------------------------------------------------------------
 def utils_compute_mse(original_series, predicted_series):
-
-    mse = np.mean((original_series-predicted_series)**2, axis=1)
+    mse = np.mean((original_series - predicted_series)**2, axis=1)
     return np.mean(mse)
 
 

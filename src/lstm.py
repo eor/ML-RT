@@ -1,12 +1,5 @@
 import argparse
 
-# import os
-# import numpy as np
-# import math
-# from torchvision import datasets
-# import torch.nn as nn
-# import torch
-
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
@@ -19,29 +12,10 @@ from common.filter import *
 from common.utils import *
 from common.analysis import *
 import common.parameter_settings as ps
-from common.utils import utils_compute_dtw, utils_compute_mse
-from common.sdtw_cuda_loss import SoftDTW
+from common.settings import *
 
-
-# -----------------------------------------------------------------
-# hard-coded parameters (for now)
-# -----------------------------------------------------------------
-H_PROFILE_FILE = 'data_Hprofiles.npy'
-T_PROFILE_FILE = 'data_Tprofiles.npy'
-GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
-
-SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
-SHUFFLE = True
-SHUFFLE_SEED = 42
-
-SCALE_PARAMETERS = True
-USE_LOG_PROFILES = True
-USE_BLOWOUT_FILTER = True
-CUT_PARAMTER_SPACE = True
-ENABLE_EARLY_STOPPING = True
-
-DATA_PRODUCTS_DIR = 'data_products'
-PLOT_DIR = 'plots'
+from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 #  global  variables :-|
@@ -68,11 +42,13 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-soft_dtw_loss = SoftDTW(use_cuda=True, gamma=0.1)
-
+if cuda:
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+else:
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 def lstm_loss_function(func, gen_x, real_x, config):
-    if func == 'dtw' and cuda:
+    if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:
@@ -90,7 +66,7 @@ def lstm_loss_function(func, gen_x, real_x, config):
 # -----------------------------------------------------------------
 def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
     """
-    function runs the given dataset through the lstm, returns mse_loss and dtw_loss, 
+    function runs the given dataset through the lstm, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if in test mode.
 
     Args:
@@ -104,18 +80,15 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
     """
 
     if save_results:
-        mode = 'Test'
         print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" % current_epoch)
-    else:
-        mode = 'Validation'
 
     if cuda:
         model.cuda()
 
     if save_results:
-        test_profiles_gen_all = torch.tensor([], device=device)
-        test_profiles_true_all = torch.tensor([], device=device)
-        test_parameters_true_all = torch.tensor([], device=device)
+        profiles_gen_all = torch.tensor([], device=device)
+        profiles_true_all = torch.tensor([], device=device)
+        parameters_true_all = torch.tensor([], device=device)
 
     # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
     # we don't have to worry about randomisation of the samples.
@@ -127,7 +100,6 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
-            batch_size = profiles.shape[0]
 
             # configure input
             profiles_true = Variable(profiles.type(FloatTensor))
@@ -141,38 +113,35 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             # soft dtw wants input of shape [batch size, 1, profile length]
 
             dtw = lstm_loss_function(
-                'dtw', profiles_true, profiles_gen, config)
+                'DTW', profiles_true, profiles_gen, config)
             loss_dtw += dtw
 
             # compute loss via MSE:
             mse = lstm_loss_function(
-                'mse', profiles_true, profiles_gen, config)
+                'MSE', profiles_true, profiles_gen, config)
             loss_mse += mse
 
             if save_results:
                 # collate data
-                test_profiles_gen_all = torch.cat(
-                    (test_profiles_gen_all, profiles_gen), 0)
-                test_profiles_true_all = torch.cat(
-                    (test_profiles_true_all, profiles_true), 0)
-                test_parameters_true_all = torch.cat(
-                    (test_parameters_true_all, parameters), 0)
+                profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
+                profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
+                parameters_true_all = torch.cat((parameters_true_all, parameters), 0)
 
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
     loss_dtw = loss_dtw / len(data_loader)
 
     if print_results:
-        print("%s results: MSE: %e DTW %e" % (mode, loss_mse, loss_dtw))
+        print("Results: MSE: %e DTW %e" % (loss_mse, loss_dtw))
 
     if save_results:
         # move data to CPU, re-scale parameters, and write everything to file
-        test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-        test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-        test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+        # move data to CPU, re-scale parameters, and write everything to file
+        profiles_gen_all = profiles_gen_all.cpu().numpy()
+        profiles_true_all = profiles_true_all.cpu().numpy()
+        parameters_true_all = parameters_true_all.cpu().numpy()
 
-        test_parameters_true_all = utils_rescale_parameters(
-            limits=parameter_limits, parameters=test_parameters_true_all)
+        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
 
         if best_model:
             prefix = 'best'
@@ -180,9 +149,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             prefix = 'test'
 
         utils_save_test_data(
-            parameters=test_parameters_true_all,
-            profiles_true=test_profiles_true_all,
-            profiles_gen=test_profiles_gen_all,
+            parameters=parameters_true_all,
+            profiles_true=profiles_true_all,
+            profiles_gen=profiles_gen_all,
             path=path,
             profile_choice=config.profile_type,
             epoch=current_epoch,
@@ -225,11 +194,11 @@ def main(config):
     # -----------------------------------------------------------------
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
-    if USE_BLOWOUT_FILTER:
+    if config.filter_blowouts:
         H_profiles, T_profiles, global_parameters = filter_blowout_profiles(
             H_profiles, T_profiles, global_parameters)
 
-    if CUT_PARAMTER_SPACE:
+    if config.filter_parameters:
         H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(
             H_profiles, T_profiles, global_parameters)
 
@@ -283,29 +252,20 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    # if config.model == 'MLP2':
     model = LSTM2(config, device)
-    # else:
-    #     model = MLP1(config)
-    # if True:
-    #     return
     if cuda:
         model.cuda()
+
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
-    # for name, param in model.named_parameters():
-    #     if param.requires_grad:
-    #         print(name, param.data)
-    # return
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=config.lr
-        # betas=(config.b1, config.b2)
     )
 
     # -----------------------------------------------------------------
-    # book keeping arraysSCALE_PARAMETERS
+    # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array = np.empty(0)
     val_loss_mse_array = np.empty(0)
@@ -323,7 +283,6 @@ def main(config):
     # -----------------------------------------------------------------
     # Early Stopping Criteria
     # -----------------------------------------------------------------
-
     # number of epochs to try to before ending training
     early_stopping_threshold = 10   # TODO: move this to GLOBALS
     n_epoch_without_improvement = 0
@@ -333,7 +292,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Loss function to use
     # -----------------------------------------------------------------
-    train_loss_func = 'mse'  # 'mse' or 'dtw'
+    train_loss_func = 'MSE'  # 'MSE' or 'DTW'
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -348,8 +307,6 @@ def main(config):
 
         for i, (profiles, parameters) in enumerate(train_loader):
 
-            # in case one batch is smaller (most likely last batch)
-            batch_size = profiles.shape[0]
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
@@ -398,21 +355,18 @@ def main(config):
             best_epoch_dtw = epoch
 
         print(
-            "[Epoch %d/%d] [Train loss: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
+            "[Epoch %d/%d] [Train loss %s: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
             "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs, train_loss, val_loss_mse, val_loss_dtw,
+            % (epoch, config.n_epochs, train_loss_func, train_loss, val_loss_mse, val_loss_dtw,
                best_epoch_mse, best_epoch_dtw)
         )
 
-        if ENABLE_EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
+        if EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
             break
 
-        # check for testing criterion
-        # if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-            # lstm_run_evaluation(epoch, test_loader, model, data_products_path, config, print_results=True, save_results = True, best_model=False)
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
@@ -426,11 +380,6 @@ def main(config):
     #     'optimizer': optimizer.state_dict(),
     #     }
 
-    # saving the best model using default number of epochs and not the best epoch
-    utils_save_model(best_model.state_dict(), data_products_path,
-                     config.profile_type, config.n_epochs)
-    # utils_save_model(best_model_state, data_products_path, config.profile_type, best_epoch)
-
     utils_save_loss(train_loss_array, data_products_path,
                     config.profile_type, config.n_epochs, prefix='train')
     if train_loss_func == 'mse':
@@ -443,11 +392,16 @@ def main(config):
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    # saving best model with best_model = false for now. As we are not exporting the best_epoch
-    best_test_mse, best_test_dtw = lstm_run_evaluation(config.n_epochs, test_loader, best_model, data_products_path,
-                                                       config, print_results=True, save_results=True, best_model=False)
+    best_test_mse, best_test_dtw = lstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
+                                                       config, print_results=True, save_results=True, best_model=True)
 
-    #TODO: save best model results
+    # -----------------------------------------------------------------
+    # Save the best model and the final model
+    # -----------------------------------------------------------------
+    utils_save_model(best_model.state_dict(), data_products_path,
+                     config.profile_type, best_epoch_mse, best_model=True)
+    utils_save_model(model.state_dict(), data_products_path,
+                     config.profile_type, config.n_epochs, best_model=False)
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use
@@ -483,8 +437,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=10, prefix='test')
-        analysis_parameter_space_plot(config, prefix='test')
+        analysis_auto_plot_profiles(config, k=10, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------
@@ -540,14 +494,22 @@ if __name__ == "__main__":
 
     parser.add_argument("--dropout_value", type=float,
                         default=0.25, help="dropout probability, default=0.25 ")
-
     parser.add_argument("--lr", type=float, default=0.0002,
                         help="adam: learning rate, default=0.0002 ")
 
-    parser.add_argument("--b1", type=float, default=0.9,
-                        help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
-    parser.add_argument("--b2", type=float, default=0.999,
-                        help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
+    # use blow out filter?
+    parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
+                        help="use blowout filter on data set (default)")
+    parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
+                        help="do not use blowout filter on data set")
+    parser.set_defaults(filter_blowouts=True)
+
+    # cut parameter space
+    parser.add_argument("--filter_parameters", dest='analysis', action='store_true',
+                        help="use user_config to filter data set by parameters")
+    parser.add_argument("--no-filter_parameters", dest='analysis', action='store_false',
+                        help="do not use user_config to filter data set by parameters (default)")
+    parser.set_defaults(filter_parameters=False)
 
     # momentum?
 

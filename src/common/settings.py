@@ -23,4 +23,3 @@ USE_LOG_PROFILES = True
 # -----------------------------------------------------------------
 EARLY_STOPPING = True
 EARLY_STOPPING_THRESHOLD = 100
-
