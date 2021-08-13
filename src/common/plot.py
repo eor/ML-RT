@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import rc
 try:
-    from parameter_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
+    from settings_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 except ImportError:
-    from common.parameter_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
+    from common.settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 
 try:
     from utils import *
