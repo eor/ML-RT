@@ -22,7 +22,6 @@ from common.soft_dtw import SoftDTW as SoftDTW_CPU
 parameter_limits = list()
 parameter_names_latex = list()
 
-
 # -----------------------------------------------------------------
 #  CUDA available?
 # -----------------------------------------------------------------
@@ -52,7 +51,7 @@ def mlp_loss_function(loss_function, gen_x, real_x, config):
 
     if loss_function == 'DTW' and cuda:
         # profile tensors are of shape [batch size, profile length]
-        # soft dtw wants input of shape [batch size, 1, profile length]
+        # soft DTW expects input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:
             loss = soft_dtw_loss(gen_x.unsqueeze(1), real_x.view(-1, config.profile_len).unsqueeze(1)).mean()
         else:
@@ -64,7 +63,7 @@ def mlp_loss_function(loss_function, gen_x, real_x, config):
 
 
 # -----------------------------------------------------------------
-#   use mlp with test or val set
+#   use MLP with test or validation set
 # -----------------------------------------------------------------
 def mlp_run_evaluation(current_epoch, data_loader, model, path, config,
                        print_results=False, save_results=False, best_model=False):
