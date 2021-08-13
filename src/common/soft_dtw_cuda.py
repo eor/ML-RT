@@ -8,9 +8,8 @@ import math
 
 # credit for this file:
 # https://github.com/keonlee9420/Soft-DTW-Loss
-
-# TODO: delete this file.
-
+# original file name: sdtw_cuda_loss.py
+#
 # ----------------------------------------------------------------------------------------------------------------------
 @cuda.jit
 def compute_softdtw_cuda(D, gamma, bandwidth, max_i, max_j, n_passes, R):
