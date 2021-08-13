@@ -82,9 +82,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         model.cuda()
 
     if save_results:
-        test_profiles_gen_all = torch.tensor([], device=device)
-        test_profiles_true_all = torch.tensor([], device=device)
-        test_parameters_true_all = torch.tensor([], device=device)
+        profiles_gen_all = torch.tensor([], device=device)
+        profiles_true_all = torch.tensor([], device=device)
+        parameters_true_all = torch.tensor([], device=device)
 
     # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
     # we don't have to worry about randomisation of the samples.
@@ -119,12 +119,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
             if save_results:
                 # collate data
-                test_profiles_gen_all = torch.cat(
-                    (test_profiles_gen_all, profiles_gen), 0)
-                test_profiles_true_all = torch.cat(
-                    (test_profiles_true_all, profiles_true), 0)
-                test_parameters_true_all = torch.cat(
-                    (test_parameters_true_all, parameters), 0)
+                profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
+                profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
+                parameters_true_all = torch.cat((parameters_true_all, parameters), 0)
 
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
@@ -135,12 +132,12 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
     if save_results:
         # move data to CPU, re-scale parameters, and write everything to file
-        test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-        test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-        test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+        # move data to CPU, re-scale parameters, and write everything to file
+        profiles_gen_all = profiles_gen_all.cpu().numpy()
+        profiles_true_all = profiles_true_all.cpu().numpy()
+        parameters_true_all = parameters_true_all.cpu().numpy()
 
-        test_parameters_true_all = utils_rescale_parameters(
-            limits=parameter_limits, parameters=test_parameters_true_all)
+        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
 
         if best_model:
             prefix = 'best'
@@ -148,9 +145,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             prefix = 'test'
 
         utils_save_test_data(
-            parameters=test_parameters_true_all,
-            profiles_true=test_profiles_true_all,
-            profiles_gen=test_profiles_gen_all,
+            parameters=parameters_true_all,
+            profiles_true=profiles_true_all,
+            profiles_gen=profiles_gen_all,
             path=path,
             profile_choice=config.profile_type,
             epoch=current_epoch,

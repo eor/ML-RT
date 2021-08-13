@@ -12,6 +12,7 @@ from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
 from common.analysis import *
+from common.utils import utils_save_model
 import common.parameter_settings as ps
 from common.sdtw_cuda_loss import SoftDTW
 # -----------------------------------------------------------------
@@ -67,11 +68,18 @@ else:
     soft_dtw_loss = torch.nn.MSELoss()   # SoftDTW only works for cuda right now :-/
 
 
-def cvae_mse_loss_function(gen_x, real_x, config):
+def cgan_loss_function(func, gen_x, real_x, config):
+    if func == "DTW" and cuda:
+        # profile tensors are of shape [batch size, profile length]
+        # soft dtw wants input of shape [batch size, 1, profile length]
+        if len(gen_x.size()) != 3:
+            loss = soft_dtw_loss(gen_x.unsqueeze(1), real_x.view(-1, config.profile_len).unsqueeze(1)).mean()
+        else:
+            loss = soft_dtw_loss(gen_x, real_x.view(-1, config.profile_len)).mean()
+    else:
+        loss = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
 
-    mse = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
-
-    return mse
+    return loss
 
 
 # -----------------------------------------------------------------
@@ -124,82 +132,9 @@ def cgan_fake_parameters_gen_input(n_parameters, batch_size, global_parameters, 
 
 
 # -----------------------------------------------------------------
-#   use generator with test set
+# Evaluate generator on given dataset (Mostly validation or test set)
 # -----------------------------------------------------------------
-def cgan_run_test(epoch, data_loader, model, path, config, best_model=False):
-    """
-    This function runs the test data set through the generator, saves results as well as ground truth to file
-
-    Args:
-        epoch: current epoch
-        data_loader: data loader used for the inference, most likely the test set
-        path: path to output directory
-        model: generator model
-        config: config object with user supplied parameters
-        best_model: flag for use with best model
-    """
-
-    print("\033[94m\033[1mTesting the Generator now at epoch %d \033[0m" % epoch)
-
-    if cuda:
-        model.cuda()
-
-    test_profiles_gen_all = torch.tensor([], device=device)
-    test_profiles_true_all = torch.tensor([], device=device)
-    test_parameters_true_all = torch.tensor([], device=device)
-
-    # Note: ground truth data could be obtained elsewhere but by getting it from the data loader
-    # we don't have to worry about randomisation of the input data
-
-    model.eval()
-
-    with torch.no_grad():
-        for i, (profiles, parameters) in enumerate(data_loader):
-            batch_size = profiles.shape[0]
-
-            # latent vector: here we sample noise, TODO: use all zeros
-            latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-
-            # configure input
-            test_profiles_true = Variable(profiles.type(FloatTensor))
-            test_parameters = Variable(parameters.type(FloatTensor))
-
-            # inference
-            test_profiles_gen = model(latent_vector, test_parameters)
-
-            # collate data
-            test_profiles_gen_all = torch.cat((test_profiles_gen_all, test_profiles_gen), dim=0)
-            test_profiles_true_all = torch.cat((test_profiles_true_all, test_profiles_true), dim=0)
-            test_parameters_true_all = torch.cat((test_parameters_true_all, test_parameters), dim=0)
-
-    # move data to CPU, re-scale parameters, and write everything to file
-    test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-    test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-    test_parameters_true_all = test_parameters_true_all.cpu().numpy()
-
-    test_parameters_true_all = utils_rescale_parameters(limits=parameter_limits,
-                                                        parameters=test_parameters_true_all)
-
-    if best_model:
-        prefix = 'best'
-    else:
-        prefix = 'test'
-
-    utils_save_test_data(
-        parameters=test_parameters_true_all,
-        profiles_true=test_profiles_true_all,
-        profiles_gen=test_profiles_gen_all,
-        path=path,
-        profile_choice=config.profile_type,
-        epoch=epoch,
-        prefix=prefix
-    )
-
-
-# -----------------------------------------------------------------
-# Evaluate generator on validation set - NEW version
-# -----------------------------------------------------------------
-def cgan_evaluate_generator_new(generator, data_loader, config):
+def cgan_run_evaluation(current_epoch, data_loader, generator, path, config, print_results=False, save_results=False, best_model=False):
     """
     This function runs the validation data set through the generator,
     and computes MSE and DTW (Dynamic Time Warping), the latter if CUDA is available,
@@ -210,15 +145,25 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
         data_loader: data loader used for the inference, most likely the validation set
         config: config object with user supplied parameters
     """
+    if save_results:
+        print("\033[94m\033[1mTesting the CGAN now at epoch %d \033[0m" % current_epoch)
+        # Empty tensors to store generated and real profiles
+        profiles_gen_all = torch.tensor([], device=device)
+        profiles_true_all = torch.tensor([], device=device)
+        parameters_true_all = torch.tensor([], device=device)
 
-    # set generator to evaluation mode (!Important)
+    if cuda:
+        generator.cuda()
+
+    # set generator to evaluation mode
     generator.eval()
 
-    val_loss_dtw = 0.0
-    val_loss_mse = 0.0
+    loss_dtw = 0.0
+    loss_mse = 0.0
 
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
+
             # obtain batch size
             batch_size = profiles.size()[0]
 
@@ -230,29 +175,51 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
             # obtain predictions from generator using real_parameters
             gen_profiles = generator(latent_vector, true_parameters)
 
-            # compute loss via soft dtw
-            if cuda:
-
-                # profile tensors are of shape [batch size, profile length]
-                # soft dtw wants input of shape [batch size, 1, profile length]
-
-                loss_dtw = soft_dtw_loss(true_profiles.unsqueeze(1), gen_profiles.unsqueeze(1))
-                val_loss_dtw += loss_dtw.mean()
+            # compute loss via DTW:
+            dtw = cgan_loss_function('DTW', gen_profiles, true_profiles, config)
+            loss_dtw += dtw
 
             # compute loss via MSE:
-            loss_mse = cvae_mse_loss_function(true_profiles, gen_profiles, config)
-            val_loss_mse += loss_mse.mean()
+            mse = cgan_loss_function('MSE', gen_profiles, true_profiles, config)
+            loss_mse += mse
 
-    val_loss_mse = val_loss_mse / len(data_loader)
+            if save_results:
+                # collate data
+                profiles_gen_all = torch.cat((profiles_gen_all, gen_profiles), dim=0)
+                profiles_true_all = torch.cat((profiles_true_all, true_profiles), dim=0)
+                parameters_true_all = torch.cat((parameters_true_all, true_parameters), dim=0)
 
-    if not cuda:
+    # compute mean over all batches
+    loss_mse = loss_mse / len(data_loader)
+    loss_dtw = loss_dtw / len(data_loader)
 
-        return val_loss_mse, val_loss_mse
+    if print_results:
+        print("results: MSE: %e DTW %e" % (loss_mse, loss_dtw))
 
-    else:
+    if save_results:
+        # move data to CPU, re-scale parameters, and write everything to file
+        profiles_gen_all = profiles_gen_all.cpu().numpy()
+        profiles_true_all = profiles_true_all.cpu().numpy()
+        parameters_true_all = parameters_true_all.cpu().numpy()
 
-        val_loss_dtw = val_loss_dtw / len(data_loader)
-        return val_loss_mse, val_loss_dtw
+        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
+
+        if best_model:
+            prefix = 'best'
+        else:
+            prefix = 'test'
+
+        utils_save_test_data(
+            parameters=profiles_gen_all,
+            profiles_true=profiles_true_all,
+            profiles_gen=parameters_true_all,
+            path=path,
+            profile_choice=config.profile_type,
+            epoch=current_epoch,
+            prefix=prefix
+        )
+
+    return loss_mse.item(), loss_dtw.item()
 
 
 # -----------------------------------------------------------------
@@ -261,24 +228,24 @@ def cgan_evaluate_generator_new(generator, data_loader, config):
 def cgan_train_generator(generator, discriminator, optimizer, loss, global_parameters, batch_size, config):
     """
     This function runs the generator on a batch of data, and then optimizes it based on it's
-    ability to fool the discriminator 
+    ability to fool the discriminator
 
     Args:
         generator: model that is used to generate data
         discriminator: model that classifies data into generated and original classes
         optimizer: optimizer to be used for training
         loss: loss function
-        global_parameters: 
+        global_parameters:
         batch_size: no. of samples from dataset in the current iteration
         config: config object with user supplied parameters
     """
 
     # adversarial ground truths
     all_ones = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
-    
+
     # set generator to train mode
     generator.train()
-    
+
     # zero the gradients on each iteration
     optimizer.zero_grad()
 
@@ -299,7 +266,7 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
 
     gen_loss.backward()
     optimizer.step()
-    
+
     return gen_profiles, gen_parameters, gen_loss
 
 
@@ -309,11 +276,11 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
 def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_parameters,
                              discriminator, optimizer, loss, batch_size):
     """
-    This function runs the discriminator on the profiles generated by the generator and on the real profiles, 
+    This function runs the discriminator on the profiles generated by the generator and on the real profiles,
     and trains it to classify them into separate classes
 
     Args:
-        real_profiles: actual profiles from dataset 
+        real_profiles: actual profiles from dataset
         real_parameters: parameters corresponding to real_profiles from the dataset
         gen_profiles: generated profiles from the generator
         gen_parameters: fake parameters used to generate the generated_profiles
@@ -345,7 +312,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     # d_loss.backward(retain_graph=True)
     dis_loss.backward()
     optimizer.step()
-    
+
     return dis_loss
 
 
@@ -379,12 +346,15 @@ def main(config):
     global_parameters = np.load(global_parameter_file_path)
 
     # -----------------------------------------------------------------
-    # Filter (blow-out) profiles
+    # Filter profiles
     # -----------------------------------------------------------------
-    if USE_BLOWOUT_FILTER:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles, global_parameters)
+    if config.filter_blowouts:
+        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles,
+                                                                            global_parameters)
 
-    # TODO: insert parameter space filter (see MLP)
+    if config.filter_parameters:
+        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
+                                                                               global_parameters)
 
     # -----------------------------------------------------------------
     # log space?
@@ -456,9 +426,11 @@ def main(config):
     # -----------------------------------------------------------------
     train_loss_array_gen = np.empty(0)
     train_loss_array_dis = np.empty(0)
+    val_loss_mse_gen = np.empty(0)
+    val_loss_dtw_gen = np.empty(0)
 
-    best_mse = np.inf
-    best_dtw = np.inf
+    best_val_mse = np.inf
+    best_val_dtw = np.inf
     best_generator = None
     best_epoch_mse = 0
     best_epoch_dtw = 0
@@ -467,7 +439,7 @@ def main(config):
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
-    for epoch in range(1, config.n_epochs+1):
+    for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss_gen = 0
         epoch_loss_dis = 0
@@ -509,15 +481,18 @@ def main(config):
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
 
-        mse_val, dtw_val = cgan_evaluate_generator_new(generator, val_loader, config)
+        mse_val, dtw_val = cgan_run_evaluation(epoch, val_loader, generator, data_products_path, config, print_results=False, save_results=False, best_model=False)
 
-        if mse_val < best_mse:
-            best_mse = mse_val
+        val_loss_mse_gen = np.append(val_loss_mse_gen, mse_val)
+        val_loss_dtw_gen = np.append(val_loss_dtw_gen, dtw_val)
+
+        if mse_val < best_val_mse:
+            best_val_mse = mse_val
             best_epoch_mse = epoch
             best_generator = copy.deepcopy(generator)
 
-        if dtw_val < best_dtw:
-            best_dtw = dtw_val
+        if dtw_val < best_val_dtw:
+            best_val_dtw = dtw_val
             best_epoch_dtw = epoch
 
         print(
@@ -529,18 +504,48 @@ def main(config):
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-
-            cgan_run_test(epoch, test_loader, generator, data_products_path, config)
+            cgan_run_evaluation(epoch, test_loader, generator, data_products_path, config, print_results=True)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
-    utils_save_model(best_generator.state_dict(), data_products_path, config.profile_type, best_epoch_mse)
+    # -----------------------------------------------------------------
+    # Save the best model and the final model
+    # -----------------------------------------------------------------
+    utils_save_model(best_generator.state_dict(), data_products_path, config.profile_type, best_epoch_mse, best_model=True)
+    utils_save_model(generator.state_dict(), data_products_path, config.profile_type, config.n_epochs, best_model=False)
 
-    # TODO: run testing again with best model
+    # -----------------------------------------------------------------
+    # Evaluate the best model by using the test set
+    # -----------------------------------------------------------------
+    best_test_mse, best_test_dtw = cgan_run_evaluation(best_epoch_mse, test_loader, best_generator, data_products_path,
+                                                       config, print_results=True, save_results=True, best_model=True)
 
     # save training stats
     utils_save_loss(train_loss_array_gen, data_products_path, config.profile_type, config.n_epochs, prefix='G_train')
     utils_save_loss(train_loss_array_dis, data_products_path, config.profile_type, config.n_epochs, prefix='D_train')
+
+    # -----------------------------------------------------------------
+    # Save some results to config object for later use
+    # -----------------------------------------------------------------
+    setattr(config, 'best_epoch', best_epoch_mse)
+    setattr(config, 'best_epoch_mse', best_epoch_mse)
+    setattr(config, 'best_epoch_dtw', best_epoch_dtw)
+
+    setattr(config, 'best_val_mse', best_val_mse)
+    setattr(config, 'best_val_dtw', best_val_dtw)
+
+    setattr(config, 'best_test_mse', best_test_mse)
+    setattr(config, 'best_test_dtw', best_test_dtw)
+
+    # setattr(config, 'stopped_early', stopped_early)
+    # setattr(config, 'epochs_trained', epochs_trained)
+
+    # -----------------------------------------------------------------
+    # Overwrite config object
+    # -----------------------------------------------------------------
+    utils_save_config_to_log(config)
+    utils_save_config_to_file(config)
+
 
     # Fin
     print('\nAll done!')
@@ -612,6 +617,19 @@ if __name__ == "__main__":
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
                         help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
+    # use blow out filter?
+    parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
+                        help="use blowout filter on data set (default)")
+    parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
+                        help="do not use blowout filter on data set")
+    parser.set_defaults(filter_blowouts=True)
+
+    # cut parameter space
+    parser.add_argument("--filter_parameters", dest='analysis', action='store_true',
+                        help="use user_config to filter data set by parameters")
+    parser.add_argument("--no-filter_parameters", dest='analysis', action='store_false',
+                        help="do not use user_config to filter data set by parameters (default)")
+    parser.set_defaults(filter_parameters=False)
 
     # analysis
     parser.add_argument("--analysis", dest='analysis', action='store_true',

@@ -55,6 +55,7 @@ def mlp_loss_function(func, gen_x, real_x, config):
 
     return loss
 
+
 # -----------------------------------------------------------------
 #   use mlp with test or val set
 # -----------------------------------------------------------------
@@ -74,15 +75,15 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
     """
 
     if save_results:
-        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" % current_epoch)
+        print("\033[94m\033[1mTesting the MLP now at epoch %d \033[0m" % current_epoch)
 
     if cuda:
         model.cuda()
 
     if save_results:
-        test_profiles_gen_all = torch.tensor([], device=device)
-        test_profiles_true_all = torch.tensor([], device=device)
-        test_parameters_true_all = torch.tensor([], device=device)
+        profiles_gen_all = torch.tensor([], device=device)
+        profiles_true_all = torch.tensor([], device=device)
+        parameters_true_all = torch.tensor([], device=device)
 
     # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
     # we don't have to worry about randomisation of the samples.
@@ -117,12 +118,9 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
 
             if save_results:
                 # collate data
-                test_profiles_gen_all = torch.cat(
-                    (test_profiles_gen_all, profiles_gen), 0)
-                test_profiles_true_all = torch.cat(
-                    (test_profiles_true_all, profiles_true), 0)
-                test_parameters_true_all = torch.cat(
-                    (test_parameters_true_all, parameters), 0)
+                profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
+                profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
+                parameters_true_all = torch.cat((parameters_true_all, parameters), 0)
 
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
@@ -133,12 +131,11 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
 
     if save_results:
         # move data to CPU, re-scale parameters, and write everything to file
-        test_profiles_gen_all = test_profiles_gen_all.cpu().numpy()
-        test_profiles_true_all = test_profiles_true_all.cpu().numpy()
-        test_parameters_true_all = test_parameters_true_all.cpu().numpy()
+        profiles_gen_all = profiles_gen_all.cpu().numpy()
+        profiles_true_all = profiles_true_all.cpu().numpy()
+        parameters_true_all = parameters_true_all.cpu().numpy()
 
-        test_parameters_true_all = utils_rescale_parameters(
-            limits=parameter_limits, parameters=test_parameters_true_all)
+        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
 
         if best_model:
             prefix = 'best'
@@ -146,9 +143,9 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config, print_re
             prefix = 'test'
 
         utils_save_test_data(
-            parameters=test_parameters_true_all,
-            profiles_true=test_profiles_true_all,
-            profiles_gen=test_profiles_gen_all,
+            parameters=parameters_true_all,
+            profiles_true=profiles_true_all,
+            profiles_gen=profiles_gen_all,
             path=path,
             profile_choice=config.profile_type,
             epoch=current_epoch,
@@ -380,7 +377,11 @@ def main(config):
     #     'optimizer': optimizer.state_dict(),
     #     }
 
-    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch_mse)
+    # -----------------------------------------------------------------
+    # Save the best model and the final model
+    # -----------------------------------------------------------------
+    utils_save_model(best_model.state_dict(), data_products_path, config.profile_type, best_epoch_mse, best_model=True)
+    utils_save_model(model.state_dict(), data_products_path, config.profile_type, config.n_epochs, best_model=False)
 
     utils_save_loss(train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
     if train_loss_func == 'mse':
