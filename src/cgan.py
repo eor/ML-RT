@@ -12,26 +12,10 @@ from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
 from common.analysis import *
+from common.settings import *
 from common.utils import utils_save_model
 import common.parameter_settings as ps
 from common.sdtw_cuda_loss import SoftDTW
-# -----------------------------------------------------------------
-# hard-coded parameters (for now)
-# -----------------------------------------------------------------
-H_PROFILE_FILE = 'data_Hprofiles.npy'
-T_PROFILE_FILE = 'data_Tprofiles.npy'
-GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
-
-SPLIT_FRACTION = (0.80, 0.10, 0.10)  # train, val, test.
-SHUFFLE = True
-SHUFFLE_SEED = 42
-
-SCALE_PARAMETERS = True
-USE_LOG_PROFILES = True
-USE_BLOWOUT_FILTER = True
-
-DATA_PRODUCTS_DIR = 'data_products'
-PLOT_DIR = 'plots'
 
 # -----------------------------------------------------------------
 #  global  variables
@@ -210,9 +194,9 @@ def cgan_run_evaluation(current_epoch, data_loader, generator, path, config, pri
             prefix = 'test'
 
         utils_save_test_data(
-            parameters=profiles_gen_all,
+            parameters=parameters_true_all,
             profiles_true=profiles_true_all,
-            profiles_gen=parameters_true_all,
+            profiles_gen=profiles_gen_all,
             path=path,
             profile_choice=config.profile_type,
             epoch=current_epoch,
@@ -436,6 +420,13 @@ def main(config):
     best_epoch_dtw = 0
 
     # -----------------------------------------------------------------
+    # Early Stopping Criteria
+    # -----------------------------------------------------------------
+    n_epoch_without_improvement = 0
+    stopped_early = False
+    epochs_trained = -1
+
+    # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
@@ -490,6 +481,9 @@ def main(config):
             best_val_mse = mse_val
             best_epoch_mse = epoch
             best_generator = copy.deepcopy(generator)
+            n_epoch_without_improvement = 0
+        else:
+            n_epoch_without_improvement += 1
 
         if dtw_val < best_val_dtw:
             best_val_dtw = dtw_val
@@ -501,6 +495,13 @@ def main(config):
             % (epoch, config.n_epochs, average_loss_dis, average_loss_gen,
                mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
         )
+
+        # early stopping check
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
+            print("\033[96m\033[1m\nStopping Early\033[0m\n")
+            stopped_early = True
+            epochs_trained = epoch
+            break
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
@@ -537,8 +538,8 @@ def main(config):
     setattr(config, 'best_test_mse', best_test_mse)
     setattr(config, 'best_test_dtw', best_test_dtw)
 
-    # setattr(config, 'stopped_early', stopped_early)
-    # setattr(config, 'epochs_trained', epochs_trained)
+    setattr(config, 'stopped_early', stopped_early)
+    setattr(config, 'epochs_trained', epochs_trained)
 
     # -----------------------------------------------------------------
     # Overwrite config object
@@ -558,8 +559,8 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config, gan=True)
-        analysis_auto_plot_profiles(config, k=5, prefix='test')
-        analysis_parameter_space_plot(config, prefix='test')
+        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------
