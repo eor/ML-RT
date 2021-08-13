@@ -1,21 +1,19 @@
 import argparse
+import copy
 
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
-
 import torch.nn.functional as F
-import copy
 
 from models.mlp import *
 from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
 from common.analysis import *
-import common.parameter_settings as ps
-
+import common.settings_parameters as sp
 from common.settings import *
 
-from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
@@ -49,7 +47,9 @@ if cuda:
 else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
+
 def mlp_loss_function(func, gen_x, real_x, config):
+
     if func == 'DTW' and cuda:
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
@@ -290,7 +290,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Loss function to use
     # -----------------------------------------------------------------
-    train_loss_func = 'MSE'  # 'MSE' or 'DTW'
+    train_loss_func = 'MSE'  # 'MSE' or 'DTW'  #TODO: add this as a user option
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -528,12 +528,12 @@ if __name__ == "__main__":
         exit(1)
 
     if my_config.n_parameters == 5:
-        parameter_limits = ps.p5_limits
-        parameter_names_latex = ps.p5_names_latex
+        parameter_limits = sp.p5_limits
+        parameter_names_latex = sp.p5_names_latex
 
     if my_config.n_parameters == 8:
-        parameter_limits = ps.p8_limits
-        parameter_names_latex = ps.p8_names_latex
+        parameter_limits = sp.p8_limits
+        parameter_names_latex = sp.p8_names_latex
 
     if my_config.model not in ['MLP1', 'MLP2']:
         my_config.model = 'MLP1'
