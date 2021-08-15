@@ -29,27 +29,23 @@ class LSTM(nn.Module):
         self.num_layers = 2
         self.linear_model = nn.Sequential(
             nn.Linear(self.input_size, 64),
-#             nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(64, 128),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(128, 256),
-#             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 1024),
-#             nn.BatchNorm1d(1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, self.seq_len),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(self.seq_len, self.seq_len*2)
+            nn.Linear(self.seq_len, self.seq_len * 2),
         )
         # lstm_input
         self.lstm_input = 1
         # Hidden dimensions ?????
         self.lstm_out = 1
-        
+
         self.lstm = nn.LSTM(
             input_size = self.lstm_input,
             hidden_size = self.lstm_out,

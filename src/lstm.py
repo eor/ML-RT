@@ -252,7 +252,7 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = LSTM2(config, device)
+    model = LSTM(config, device)
     if cuda:
         model.cuda()
 
