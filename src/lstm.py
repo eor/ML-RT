@@ -285,7 +285,7 @@ def main(config):
     # Early Stopping Criteria
     # -----------------------------------------------------------------
     # number of epochs to try to before ending training
-    early_stopping_threshold = 10   # TODO: move this to GLOBALS
+    early_stopping_threshold = 25   # TODO: move this to GLOBALS
     n_epoch_without_improvement = 0
     stopped_early = False
     epochs_trained = -1
@@ -478,8 +478,8 @@ if __name__ == "__main__":
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=100,
                         help="number of epochs of training")
-    parser.add_argument("--batch_size", type=int, default=64,
-                        help="size of the batches (default=64)")
+    parser.add_argument("--batch_size", type=int, default=32,
+                        help="size of the batches (default=32)")
 
     parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
                         help="use batch normalisation in network (default)")
