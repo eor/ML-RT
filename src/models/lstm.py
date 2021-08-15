@@ -102,7 +102,7 @@ class LSTM2(nn.Module):
         # If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer
         self.dropout = conf.dropout_value
         # If True, becomes a bidirectional LSTM
-        self.bidirectional = False
+        self.bidirectional = True
         # number of values we want to predict
         self.seq_len = conf.profile_len
         # batch_size
@@ -117,13 +117,22 @@ class LSTM2(nn.Module):
         # self.num_layers = len(self.layer_params) - 1
         self.num_layers = 1
         self.linear_model = nn.Sequential(
-            nn.Linear(self.input_size, 128),
+            nn.Linear(self.input_size, 64),
+#             nn.BatchNorm1d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(64, 128),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(128, 256),
+#             nn.BatchNorm1d(256),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1024),
+            nn.Linear(256, 512),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(1024, self.seq_len)
+            nn.Linear(512, 1024),
+#             nn.BatchNorm1d(1024),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(1024, self.seq_len),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(self.seq_len, self.seq_len*2)
         )
         # lstm_input
         self.lstm_input = 1
@@ -135,13 +144,14 @@ class LSTM2(nn.Module):
             hidden_size = self.lstm_out,
             bias = self.bias,
             batch_first = self.batch_first,
-            bidirectional = self.bidirectional
+            bidirectional = self.bidirectional,
+            num_layers = self.num_layers
         )
         
         if self.bidirectional:
-            self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
+            self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
         else:
-            self.out_layer = nn.Linear(self.seq_len, self.seq_len)
+            self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
         
 
     def forward(self, x):

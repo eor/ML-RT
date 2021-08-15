@@ -261,7 +261,8 @@ def main(config):
     # -----------------------------------------------------------------
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=config.lr
+        lr=config.lr,
+        betas=(config.b1, config.b2)
     )
 
     # -----------------------------------------------------------------
@@ -382,7 +383,7 @@ def main(config):
 
     utils_save_loss(train_loss_array, data_products_path,
                     config.profile_type, config.n_epochs, prefix='train')
-    if train_loss_func == 'mse':
+    if train_loss_func == 'MSE':
         utils_save_loss(val_loss_mse_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
     else:
@@ -477,8 +478,8 @@ if __name__ == "__main__":
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=100,
                         help="number of epochs of training")
-    parser.add_argument("--batch_size", type=int, default=32,
-                        help="size of the batches (default=32)")
+    parser.add_argument("--batch_size", type=int, default=64,
+                        help="size of the batches (default=64)")
 
     parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
                         help="use batch normalisation in network (default)")
@@ -496,6 +497,10 @@ if __name__ == "__main__":
                         default=0.25, help="dropout probability, default=0.25 ")
     parser.add_argument("--lr", type=float, default=0.0002,
                         help="adam: learning rate, default=0.0002 ")
+    parser.add_argument("--b1", type=float, default=0.9,
+                        help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
+    parser.add_argument("--b2", type=float, default=0.999,
+                        help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
 
     # use blow out filter?
     parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
