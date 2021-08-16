@@ -6,16 +6,18 @@ import numpy as np
 import os.path as osp
 
 from models.mlp import *
+from models.cvae import *
 from common.utils import *
-import common.parameter_settings as ps
-from torch.autograd import Variable
+from common.settings import *
+import common.settings_parameters as sp
 
+from torch.autograd import Variable
 
 # -----------------------------------------------------------------
 # hard-coded parameters (for now)
 # -----------------------------------------------------------------
-DATA_PRODUCTS_DIR = 'data_products'
-SCALE_PARAMETERS = True
+# DATA_PRODUCTS_DIR = 'data_products'
+# SCALE_PARAMETERS = True
 
 # -----------------------------------------------------------------
 #  global  variables :-|
@@ -65,7 +67,49 @@ def inference_cvae(run_dir, model_file_name, parameters):
     """
     print('Running inference for the CVAE (decoder)')
 
-    # TODO: implement this function once we save the CVAE models
+    config = utils_load_config(run_dir)
+
+    # determine size of latent vector
+    i = np.shape(parameters)[0]     # is 1 for one parameter vector, [1] should be 5 or 8
+    j = config.latent_dim
+
+    latent_vector = np.zeros((i, j))
+    # TODO enable other modes of filling the latent vector(s), e.g. random numbers, different distributions
+
+    # set up parameters
+    if config.n_parameters == 5:
+        parameter_limits = sp.p5_limits
+
+    if config.n_parameters == 8:
+        parameter_limits = sp.p8_limits
+
+    if SCALE_PARAMETERS:
+        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+
+    # convert numpy arrays to tensors
+    parameters = torch.from_numpy(parameters)
+    latent_vector = torch.from_numpy(latent_vector)
+
+    parameters = Variable(parameters.type(FloatTensor))
+    latent_vector = Variable(latent_vector.type(FloatTensor))
+
+    # concatenate both vector, i.e. condition the latent vector with the parameters
+    cond_z = torch.cat((latent_vector, parameters), 1)
+
+    # prepare the model
+    if config.model == 'CVAE1':
+        model = CVAE1(config)
+    else:
+        print('Error. Check if you are using the right model. Exiting.')
+        exit(1)
+
+    model.eval()
+
+    # run inference
+    with torch.no_grad():
+        output = model.decode(cond_z)
+
+    return output
 
 
 # -----------------------------------------------------------------
@@ -84,15 +128,15 @@ def inference_mlp(run_dir, model_file_name, parameters):
 
     # set up parameters
     if config.n_parameters == 5:
-        parameter_limits = ps.p5_limits
+        parameter_limits = sp.p5_limits
 
     if config.n_parameters == 8:
-        parameter_limits = ps.p8_limits
+        parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
         parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
 
-    # convert
+    # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters)
     parameters = Variable(parameters.type(FloatTensor))
 
