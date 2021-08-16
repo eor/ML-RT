@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import rc
 try:
-    from settings_settings import p5_names_latex, p8_names_latex, p5_limits, p8_limits
+    from settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 except ImportError:
     from common.settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 
 try:
-    from utils import *
+    from utils import utils_compute_mse, utils_compute_dtw
 except ImportError:
-    from common.utils import *
+    from common.utils import utils_compute_mse, utils_compute_dtw
 
 from scipy.ndimage import gaussian_filter
 
@@ -67,7 +67,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 # Plot a single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
-                        profile_type, prefix, file_type='png', parameters=None):
+                        profile_type, prefix, file_type='png', parameters=None, add_errors=True):
 
     # -----------------------------------------------------------------
     # figure setup
@@ -78,7 +78,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
-    
+
     # -----------------------------------------------------------------
     # add parameters as title
     # -----------------------------------------------------------------
@@ -86,7 +86,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         param_names = p5_names_latex
     else:
         param_names = p8_names_latex
-    
+
     if parameters is not None and len(parameters) > 0:
         a = ''
         for j in range(len(param_names)):
@@ -120,25 +120,29 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     ax_array[0].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
     ax_array[0].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
     ax_array[0].tick_params(axis='both', which='both', right=True, top=True)
-    
+
     # -----------------------------------------------------------------
     # second plot (diff / relative error)
     # -----------------------------------------------------------------
-    # addition of small number to denominator to avoid division by zero
-    relative_error = (profile_true - profile_inferred) / (np.fabs(profile_true)+1.0e-6)
-    ax_array[1].plot(relative_error, c='black', label='Relative error', linewidth=0.6)
+    absolute_error = profile_true - profile_inferred
+    ax_array[1].plot(absolute_error, c='black', label='Relative error', linewidth=0.6)
     ax_array[1].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
     ax_array[1].set_ylabel(r'Rel error', fontsize=14)
     ax_array[1].set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=14)
     ax_array[1].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
     ax_array[1].tick_params(axis='both', which='both', right=True, top=True)
 
+    mse = utils_compute_mse(profile_true, profile_inferred)
+    dtw = utils_compute_dtw(profile_true, profile_inferred)
+
+    if add_errors:
+        plt.figtext(0.5, 0.01, 'Computer errors: MSE: %e DTW: %e' % (mse, dtw), fontsize=10, ha='center', bbox={"alpha": 0, "pad": 10})
+
     # -----------------------------------------------------------------
     # get MSE and construct file name
     # -----------------------------------------------------------------
-    mse = (np.square(profile_true - profile_inferred)).mean()
-    mse = np.log10(mse+1.0e-11)
-    file_name = '{:s}_{:s}_profile_epoch_{:d}_logMSE_{:.4e}'.format(profile_type, prefix, n_epoch, mse)
+    log_mse = np.log10(mse + 1.0e-11)
+    file_name = '{:s}_{:s}_profile_epoch_{:d}_logMSE_{:.4e}'.format(profile_type, prefix, n_epoch, log_mse)
     file_name = file_name.replace('.', '_')
     file_name += '.' + file_type
 

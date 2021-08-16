@@ -2,11 +2,11 @@ import numpy as np
 import os
 import pickle
 import torch
+import torch.nn.functional as F
 import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
-from dtaidistance import dtw
-
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
@@ -19,7 +19,7 @@ def utils_scale_parameters(limits, parameters):
         a = limits[i][0]
         b = limits[i][1]
 
-        parameters[:, i] = (parameters[:, i] - a)/(b - a)
+        parameters[:, i] = (parameters[:, i] - a) / (b - a)
 
     return parameters
 
@@ -80,7 +80,7 @@ def utils_join_path(directory, data_file):
     a = osp.join(directory, data_file)
 
     if not osp.exists(a):
-        print('Error: File not found:\n\n  %s\n\nExiting.'%a)
+        print('Error: File not found:\n\n  %s\n\nExiting.' % a)
         exit(1)
 
     return a
@@ -94,7 +94,7 @@ def utils_create_output_dirs(list_of_dirs):
     for x in list_of_dirs:
         if not osp.exists(x):
             os.makedirs(x)
-            print('Created directory:\t%s'%x)
+            print('Created directory:\t%s' % x)
 
 
 # -----------------------------------------------------------------
@@ -308,27 +308,39 @@ def utils_get_user_param_limits(path_user_config='', file_name='user_config.ini'
 # length of each sample, in our case the profile length.
 # -----------------------------------------------------------------
 def utils_compute_mse(original_series, predicted_series):
-    mse = np.mean((original_series - predicted_series)**2, axis=1)
-    return np.mean(mse)
+    if not torch.is_tensor(original_series):
+        original_series = torch.tensor(original_series, device=torch.device("cpu"))
+
+    if not torch.is_tensor(predicted_series):
+        predicted_series = torch.tensor(predicted_series, device=torch.device("cpu"))
+
+    loss = F.mse_loss(input=original_series, target=predicted_series, reduction='mean')
+
+    return loss.item()
 
 
 # -----------------------------------------------------------------
 # Return DTW of the predications and the actual data
 # Input: original data and the predicted data of the shape (X,Y)
 # where, X is the number of samples in a batch and Y is the sequence length of each sample
-# Input must be numpy array with doubles
 # -----------------------------------------------------------------
 def utils_compute_dtw(original_series, predicted_series):
 
-    dtw_distances = []
+    if not torch.is_tensor(original_series):
+        original_series = torch.tensor(original_series, device=torch.device("cpu"))
 
-    if original_series.dtype != np.double:
-        original_series = original_series.astype(np.double)
-    if predicted_series.dtype != np.double:
-        predicted_series = predicted_series.astype(np.double)
+    if not torch.is_tensor(predicted_series):
+        predicted_series = torch.tensor(predicted_series, device=torch.device("cpu"))
 
-    for i in range(len(original_series)):
-        dtw_distances.append(dtw.distance_fast(original_series[i], predicted_series[i]))
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
-    dtw_distances = np.array(dtw_distances)
-    return np.mean(dtw_distances)
+    if len(original_series.size()) != 3:
+        original_series = original_series.unsqueeze(0)
+        original_series = original_series.unsqueeze(1)
+    if len(predicted_series.size()) != 3:
+        predicted_series = predicted_series.unsqueeze(0)
+        predicted_series = predicted_series.unsqueeze(1)
+
+    loss = soft_dtw_loss(original_series, predicted_series).mean()
+
+    return loss.item()
