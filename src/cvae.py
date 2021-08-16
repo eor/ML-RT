@@ -135,7 +135,8 @@ def cvae_train(model, optimizer, train_loader, config):
 # -----------------------------------------------------------------
 #   use CVAE with test or validation set
 # -----------------------------------------------------------------
-def cvae_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
+def cvae_run_evaluation(current_epoch, data_loader, model, path, config,
+                        print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the cae model, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if save_results is True.
@@ -391,7 +392,8 @@ def main(config):
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            cvae_run_evaluation(epoch, test_loader, model, data_products_path, config, print_results=True, save_results=True)
+            cvae_run_evaluation(epoch, test_loader, model, data_products_path, config,
+                                print_results=True, save_results=True)
 
         # early stopping check
         if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CVAE:

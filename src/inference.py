@@ -1,8 +1,6 @@
-import argparse
 import torch
 import torch.nn as nn
 import numpy as np
-
 import os.path as osp
 
 from models.mlp import *
@@ -14,13 +12,7 @@ import common.settings_parameters as sp
 from torch.autograd import Variable
 
 # -----------------------------------------------------------------
-# hard-coded parameters (for now)
-# -----------------------------------------------------------------
-# DATA_PRODUCTS_DIR = 'data_products'
-# SCALE_PARAMETERS = True
-
-# -----------------------------------------------------------------
-#  global  variables :-|
+#  global  variables
 # -----------------------------------------------------------------
 parameter_limits = list()
 
@@ -48,7 +40,7 @@ def inference_cgan(run_dir, model_file_name, parameters):
     Function to use user specified parameters with the CGAN
     trained generator in inference mode.
     
-    Returns and array of generated profiles    
+    Returns an array of one or more generated profiles
     """
 
     print('Running inference for the CGAN generator')
@@ -63,7 +55,7 @@ def inference_cvae(run_dir, model_file_name, parameters):
     """
     Function to use user specified parameters with the CVAE in inference mode.
 
-    Returns and array of generated profiles
+    Returns an array of one or more generated profiles
     """
     print('Running inference for the CVAE (decoder)')
 
@@ -119,7 +111,7 @@ def inference_mlp(run_dir, model_file_name, parameters):
     """
     Function to use user specified parameters with the MLP in inference mode.
 
-    Returns and array of generated profiles
+    Returns an array of one or more generated profiles
     """
 
     print('Running inference for the MLP')
