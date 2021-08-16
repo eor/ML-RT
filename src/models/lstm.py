@@ -5,194 +5,138 @@ import torch
 class LSTM1(nn.Module):
     def __init__(self, conf, device):
         super(LSTM1, self).__init__()
+
         self.input_size = conf.n_parameters
-        # If False, then the layer does not use bias weights b_ih and b_hh
-        self.bias = True
-        # If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature).
-        self.batch_first = True
-        # If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer
-        self.dropout = conf.dropout_value
-        # If True, becomes a bidirectional LSTM
-        self.bidirectional = True
-        # number of values we want to predict
         self.seq_len = conf.profile_len
-        # batch_size
-        # self.batch_size = conf.batch_size
-        self.batch_size = conf.batch_size
         self.device = device
+        self.num_layers = 1
 
-        # layer_params
-        # self.layer_params = [self.lstm_input, 128, 64, 16, self.lstm_out]
-        # self.layer_params = [self.lstm_input, self.lstm_out]
-        # Number of hidden layers
-        # self.num_layers = len(self.layer_params) - 1
-        self.num_layers = 2
+        def block(features_in, features_out):
+            layers = [nn.Linear(features_in, features_out)]
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
+        # Args: expects input of shape: (batch_size, n_parameters)
+        #       output of shape: (batch_size, 2*time_series_length)
         self.linear_model = nn.Sequential(
-            nn.Linear(self.input_size, 64),
-            nn.Linear(64, 128),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(128, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 1024),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(1024, self.seq_len),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(self.seq_len, self.seq_len * 2),
+            *block(self.input_size, 64),
+            *block(64, 128),
+            *block(128, 256),
+            *block(256, 512),
+            *block(512, 1024),
+            *block(1024, self.seq_len),
+            nn.Linear(self.seq_len, self.seq_len * 2)
         )
-        # lstm_input
-        self.lstm_input = 1
-        # Hidden dimensions ?????
-        self.lstm_out = 1
 
-        self.lstm = nn.LSTM(
-            input_size = self.lstm_input,
-            hidden_size = self.lstm_out,
-            bias = self.bias,
-            batch_first = self.batch_first,
-            bidirectional = self.bidirectional,
-            num_layers = self.num_layers
-        )
-        
-        if self.bidirectional:
-            self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
-        else:
-            self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
+        # Args: expects input of shape: (batch_size, time_series_length, input_size)
+        #       output of shape: (batch_size, time_series_length, 2*hidden_size): x2 because, bidirectional_lstm
+        self.lstm = nn.LSTM(input_size=1, hidden_size=1, batch_first=True, bidirectional=True, num_layers=self.num_layers)
 
+        # Args: expects input of shape: (batch_size, 2*2*time_series_length)
+        #       output of shape: (batch_size, time_series_length)
+        self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
 
     def forward(self, x):
-        self.batch_size = x.size()[0]
-        (hidden_state, cell_state) = self.init_hidden_state(n_layers = self.num_layers, batch_size = self.batch_size, hidden_size = self.lstm_out)
+
+        # initialise hidden states for the lstm
+        (hidden_state, cell_state) = self.init_hidden_state(batch_size=x.size()[0])
+
         x = self.linear_model(x)
-        x = torch.unsqueeze(x,dim=2)
-        x, (hidden_state,cell_state) = self.lstm(x, (hidden_state,cell_state))
-        x = torch.squeeze(x,dim=2)
-        if self.bidirectional:
-            x = x.reshape(x.size()[0],-1)
+        # x.size(): (batch_size, 2*time_series_length) => (batch_size, 2*time_series_length, input_size)
+        x = torch.unsqueeze(x, dim=2)
+        x, (hidden_state, cell_state) = self.lstm(x, (hidden_state, cell_state))
+        # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
+        x = x.reshape(x.size()[0], -1)
         x = self.out_layer(x)
         return x
 
-
-    def init_hidden_state(self, n_layers, batch_size, hidden_size):
-        if self.bidirectional:
-            hidden_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
-            cell_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
-        else:
-            hidden_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
-            cell_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
+    def init_hidden_state(self, batch_size):
+        # x2 because, bidirectional lstm
+        hidden_state = torch.zeros(2 * self.num_layers, batch_size, 1, device=self.device)
+        cell_state = torch.zeros(2 * self.num_layers, batch_size, 1, device=self.device)
 
         # Weights initialization
         torch.nn.init.xavier_normal_(hidden_state)
         torch.nn.init.xavier_normal_(cell_state)
 
-        return [hidden_state,cell_state]
-    
-    
+        return (hidden_state, cell_state)
+
+
 class LSTM2(nn.Module):
     def __init__(self, conf, device):
         super(LSTM2, self).__init__()
-        self.input_size = conf.n_parameters        
-        # If False, then the layer does not use bias weights b_ih and b_hh
-        self.bias = True
-        # If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature).
-        self.batch_first = True
-        # If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer
-        self.dropout = conf.dropout_value
+        self.input_size = conf.n_parameters
         # If True, becomes a bidirectional LSTM
         self.bidirectional = True
         # number of values we want to predict
         self.seq_len = conf.profile_len
-        # batch_size
-        # self.batch_size = conf.batch_size
-        self.batch_size = conf.batch_size
         self.device = device
-        
-        self.num_layers = 1
+
+        def block(features_in, features_out):
+            layers = [nn.Linear(features_in, features_out)]
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
+        # Args: expects input of shape: (batch_size, n_parameters)
+        #       output of shape: (batch_size, 2*time_series_length)
         self.linear_model = nn.Sequential(
-            nn.Linear(self.input_size, 64),
-#             nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(64, 128),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(128, 256),
-#             nn.BatchNorm1d(256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 1024),
-#             nn.BatchNorm1d(1024),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(1024, self.seq_len),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(self.seq_len, self.seq_len*2)
+            *block(self.input_size, 64),
+            *block(64, 128),
+            *block(128, 256),
+            *block(256, 512),
+            *block(512, 1024),
+            *block(1024, self.seq_len),
+            nn.Linear(self.seq_len, self.seq_len * 2)
         )
-        # lstm_input
-        self.lstm_input = 1
-        # Hidden dimensions ?????
-        self.lstm_out = 1
-        
-        self.lstm = nn.LSTM(
-            input_size = self.lstm_input,
-            hidden_size = self.lstm_out,
-            bias = self.bias,
-            batch_first = self.batch_first,
-            bidirectional = self.bidirectional,
-            num_layers = self.num_layers
-        )
-        
-        if self.bidirectional:
-            self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
-        else:
-            self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
-        
-        self.lstm_1 = nn.LSTM(
-            input_size = self.lstm_input,
-            hidden_size = self.lstm_out,
-            bias = self.bias,
-            batch_first = self.batch_first,
-            bidirectional = self.bidirectional,
-            num_layers = self.num_layers
-        )
-        
-        if self.bidirectional:
-            self.out_layer_1 = nn.Linear(2 * self.seq_len, self.seq_len)
-        else:
-            self.out_layer_1 = nn.Linear(self.seq_len, self.seq_len)
-        
+
+        # Args: expects input of shape: (batch_size, time_series_length, input_size)
+        #       output of shape: (batch_size, time_series_length, 2*hidden_size): x2 because, bidirectional_lstm
+        self.lstm_1 = nn.LSTM(input_size=1, hidden_size=1, batch_first=True, bidirectional=True)
+
+        # Args: expects input of shape: (batch_size, 2*2*time_series_length)
+        #       output of shape: (batch_size, time_series_length)
+        self.out_layer_1 = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
+
+        # Args: expects input of shape: (batch_size, time_series_length, input_size)
+        #       output of shape: (batch_size, time_series_length, hidden_size): x2 because, bidirectional_lstm
+        self.lstm_2 = nn.LSTM(input_size=1, hidden_size=1, batch_first=True, bidirectional=False)
+
+        # Args: expects input of shape: (batch_size, time_series_length)
+        #       output of shape: (batch_size, time_series_length)
+        self.out_layer_2 = nn.Linear(self.seq_len, self.seq_len)
 
     def forward(self, x):
-        self.batch_size = x.size()[0]
-        (hidden_state, cell_state) = self.init_hidden_state(n_layers = self.num_layers, batch_size = self.batch_size, hidden_size = self.lstm_out)
-        (hidden_state_1, cell_state_1) = self.init_hidden_state(n_layers = self.num_layers, batch_size = self.batch_size, hidden_size = self.lstm_out)
-        
-        x = self.linear_model(x)
-        x = torch.unsqueeze(x,dim=2)
-        x, (hidden_state,cell_state) = self.lstm(x, (hidden_state,cell_state))
-        x = torch.squeeze(x,dim=2)
-        if self.bidirectional:
-            x = x.reshape(x.size()[0],-1)
-        x = self.out_layer(x)
-        x = torch.unsqueeze(x,dim=2)
-        x, (hidden_state_1,cell_state_1) = self.lstm_1(x, (hidden_state_1,cell_state_1))
-        x = torch.squeeze(x,dim=2)
-        if self.bidirectional:
-            x = x.reshape(x.size()[0],-1)
-        x = self.out_layer_1(x)
-        
-        return x
-        
 
-    def init_hidden_state(self, n_layers, batch_size, hidden_size):
-        if self.bidirectional:
-            hidden_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
-            cell_state = torch.zeros(2 * n_layers, batch_size, hidden_size, device=self.device)
+        # initialise hidden states for the the lstm's
+        (hidden_state_1, cell_state_1) = self.init_hidden_state(batch_size=x.size()[0], bidirectional=True)
+        (hidden_state_2, cell_state_2) = self.init_hidden_state(batch_size=x.size()[0], bidirectional=False)
+
+        x = self.linear_model(x)
+        # x.size(): (batch_size, 2*time_series_length) => (batch_size, 2*time_series_length, input_size)
+        x = torch.unsqueeze(x, dim=2)
+        x, (hidden_state_1, cell_state_1) = self.lstm_1(x, (hidden_state_1, cell_state_1))
+        # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
+        x = x.reshape(x.size()[0], -1)
+        x = self.out_layer_1(x)
+        # x.size(): (batch_size, time_series_length) => (batch_size, time_series_length, input_size)
+        x = torch.unsqueeze(x, dim=2)
+        x, (hidden_state_2, cell_state_2) = self.lstm_2(x, (hidden_state_2, cell_state_2))
+        # x.size(): (batch_size, time_series_length, input_size) => (batch_size, time_series_length)
+        x = x.reshape(x.size()[0], -1)
+        x = self.out_layer_2(x)
+
+        return x
+
+    def init_hidden_state(self, batch_size, bidirectional=False):
+        if bidirectional:
+            hidden_state = torch.zeros(2, batch_size, 1, device=self.device)
+            cell_state = torch.zeros(2, batch_size, 1, device=self.device)
         else:
-            hidden_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
-            cell_state = torch.zeros(n_layers, batch_size, hidden_size, device=self.device)
+            hidden_state = torch.zeros(1, batch_size, 1, device=self.device)
+            cell_state = torch.zeros(1, batch_size, 1, device=self.device)
 
         # Weights initialization
         torch.nn.init.xavier_normal_(hidden_state)
         torch.nn.init.xavier_normal_(cell_state)
 
-        return [hidden_state,cell_state]
+        return (hidden_state, cell_state)
