@@ -13,7 +13,7 @@ from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
 from common.analysis import *
-import common.parameter_settings as ps
+import common.settings_parameters as ps
 
 from common.settings import *
 
@@ -394,7 +394,7 @@ def main(config):
             cvae_run_evaluation(epoch, test_loader, model, data_products_path, config, print_results=True, save_results=True)
 
         # early stopping check
-        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CVAE:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
@@ -436,6 +436,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CVAE)
 
     # -----------------------------------------------------------------
     # Overwrite config object

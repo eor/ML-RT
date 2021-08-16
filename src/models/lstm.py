@@ -2,9 +2,9 @@ from torch import nn
 import torch
 
 
-class LSTM(nn.Module):
+class LSTM1(nn.Module):
     def __init__(self, conf, device):
-        super(LSTM, self).__init__()
+        super(LSTM1, self).__init__()
         self.input_size = conf.n_parameters
         # If False, then the layer does not use bias weights b_ih and b_hh
         self.bias = True

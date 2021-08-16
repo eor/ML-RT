@@ -11,10 +11,10 @@ from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
 from common.analysis import *
-import common.parameter_settings as ps
+import common.settings_parameters as ps
 from common.settings import *
 
-from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
@@ -253,7 +253,7 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = LSTM(config, device)
+    model = LSTM1(config, device)
     if cuda:
         model.cuda()
 
@@ -285,8 +285,6 @@ def main(config):
     # -----------------------------------------------------------------
     # Early Stopping Criteria
     # -----------------------------------------------------------------
-    # number of epochs to try to before ending training
-    early_stopping_threshold = 25   # TODO: move this to GLOBALS
     n_epoch_without_improvement = 0
     stopped_early = False
     epochs_trained = -1
@@ -318,8 +316,7 @@ def main(config):
 
             # generate a batch of profiles
             gen_profiles = model(real_parameters)
-            loss = lstm_loss_function(
-                train_loss_func, gen_profiles, real_profiles, config)
+            loss = lstm_loss_function(config.loss_type, gen_profiles, real_profiles, config)
 
             loss.backward()
             optimizer.step()
@@ -363,7 +360,7 @@ def main(config):
                best_epoch_mse, best_epoch_dtw)
         )
 
-        if EARLY_STOPPING and n_epoch_without_improvement >= early_stopping_threshold:
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_LSTM:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
@@ -384,7 +381,7 @@ def main(config):
 
     utils_save_loss(train_loss_array, data_products_path,
                     config.profile_type, config.n_epochs, prefix='train')
-    if train_loss_func == 'MSE':
+    if config.loss_type == 'MSE':
         utils_save_loss(val_loss_mse_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
     else:
@@ -402,8 +399,6 @@ def main(config):
     # -----------------------------------------------------------------
     utils_save_model(best_model.state_dict(), data_products_path,
                      config.profile_type, best_epoch_mse, best_model=True)
-    utils_save_model(model.state_dict(), data_products_path,
-                     config.profile_type, config.n_epochs, best_model=False)
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use
@@ -420,6 +415,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_LSTM)
 
     # -----------------------------------------------------------------
     # Overwrite config object
@@ -473,8 +469,11 @@ if __name__ == "__main__":
                         help="number of RT parameters (5 or 8)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='mlp1', metavar='(string)',
-                        help='Pick a model: MLP1 (default) or MLP2')
+    parser.add_argument('--model', type=str, default='LSTM1', metavar='(string)',
+                        help='Pick a model: LSTM1 (default) or LSTM2')
+
+    parser.add_argument('--loss_type', type=str, default='MSE', metavar='(string)',
+                        help='Pick a loss function: MSE (default) or DTW')
 
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=100,
@@ -547,8 +546,8 @@ if __name__ == "__main__":
         parameter_limits = ps.p8_limits
         parameter_names_latex = ps.p8_names_latex
 
-    if my_config.model not in ['MLP1', 'MLP2']:
-        my_config.model = 'MLP1'            # TODO: change this
+    if my_config.model not in ['LSTM1', 'LSTM2']:
+        my_config.model = 'LSTM1'            # TODO: change this
 
     # print summary
     print("\nUsed parameters:\n")

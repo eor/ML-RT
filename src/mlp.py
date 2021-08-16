@@ -359,7 +359,7 @@ def main(config):
                                                               print_results=True, save_results=True, best_model=False)
 
         # early stopping check
-        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_MLP:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
@@ -414,6 +414,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_MLP)
 
     # -----------------------------------------------------------------
     # Overwrite config object

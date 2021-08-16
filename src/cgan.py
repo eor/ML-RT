@@ -14,7 +14,7 @@ from common.utils import *
 from common.analysis import *
 from common.settings import *
 from common.utils import utils_save_model
-import common.parameter_settings as ps
+import common.settings_parameters as ps
 
 from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
@@ -498,7 +498,7 @@ def main(config):
         )
 
         # early stopping check
-        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD:
+        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CGAN:
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
@@ -541,6 +541,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CGAN)
 
     # -----------------------------------------------------------------
     # Overwrite config object

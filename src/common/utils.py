@@ -19,7 +19,7 @@ def utils_scale_parameters(limits, parameters):
         a = limits[i][0]
         b = limits[i][1]
 
-        parameters[:, i] = (parameters[:, i] - a)/(b - a)
+        parameters[:, i] = (parameters[:, i] - a) / (b - a)
 
     return parameters
 
@@ -80,7 +80,7 @@ def utils_join_path(directory, data_file):
     a = osp.join(directory, data_file)
 
     if not osp.exists(a):
-        print('Error: File not found:\n\n  %s\n\nExiting.'%a)
+        print('Error: File not found:\n\n  %s\n\nExiting.' % a)
         exit(1)
 
     return a
@@ -94,7 +94,7 @@ def utils_create_output_dirs(list_of_dirs):
     for x in list_of_dirs:
         if not osp.exists(x):
             os.makedirs(x)
-            print('Created directory:\t%s'%x)
+            print('Created directory:\t%s' % x)
 
 
 # -----------------------------------------------------------------
