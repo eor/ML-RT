@@ -16,7 +16,7 @@ from common.settings import *
 from common.utils import utils_save_model
 import common.parameter_settings as ps
 
-from common.sdtw_cuda_loss import SoftDTW as SoftDTW_CUDA
+from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
@@ -54,7 +54,7 @@ else:
 
 
 def cgan_loss_function(func, gen_x, real_x, config):
-    if func == "DTW" and cuda:
+    if func == "DTW":
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:
@@ -506,7 +506,7 @@ def main(config):
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-            cgan_run_evaluation(epoch, test_loader, generator, data_products_path, config, print_results=True)
+            cgan_run_evaluation(epoch, test_loader, generator, data_products_path, config, print_results=True, save_results=True)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 

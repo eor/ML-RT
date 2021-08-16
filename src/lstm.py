@@ -47,6 +47,7 @@ if cuda:
 else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
+
 def lstm_loss_function(func, gen_x, real_x, config):
     if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]

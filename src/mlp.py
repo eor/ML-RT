@@ -49,7 +49,7 @@ else:
 
 def mlp_loss_function(loss_function, gen_x, real_x, config):
 
-    if loss_function == 'DTW' and cuda:
+    if loss_function == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft DTW expects input of shape [batch size, 1, profile length]
         if len(gen_x.size()) != 3:

@@ -5,7 +5,7 @@ import torch
 class LSTM(nn.Module):
     def __init__(self, conf, device):
         super(LSTM, self).__init__()
-        self.input_size = conf.n_parameters        
+        self.input_size = conf.n_parameters
         # If False, then the layer does not use bias weights b_ih and b_hh
         self.bias = True
         # If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature).
@@ -20,7 +20,7 @@ class LSTM(nn.Module):
         # self.batch_size = conf.batch_size
         self.batch_size = conf.batch_size
         self.device = device
-        
+
         # layer_params
         # self.layer_params = [self.lstm_input, 128, 64, 16, self.lstm_out]
         # self.layer_params = [self.lstm_input, self.lstm_out]
@@ -59,7 +59,7 @@ class LSTM(nn.Module):
             self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
         else:
             self.out_layer = nn.Linear(2 * self.seq_len, self.seq_len)
-        
+
 
     def forward(self, x):
         self.batch_size = x.size()[0]
@@ -72,7 +72,7 @@ class LSTM(nn.Module):
             x = x.reshape(x.size()[0],-1)
         x = self.out_layer(x)
         return x
-        
+
 
     def init_hidden_state(self, n_layers, batch_size, hidden_size):
         if self.bidirectional:
