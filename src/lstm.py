@@ -1,4 +1,5 @@
 import argparse
+import signal
 
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
@@ -60,6 +61,12 @@ def lstm_loss_function(func, gen_x, real_x, config):
     else:
         loss = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
     return loss
+
+
+def force_stop_signal_handler(sig, frame):
+    global FORCE_STOP
+    FORCE_STOP = True
+    print("\033[96m\033[1m\nTraining will stop after this epoch. Please wait.\033[0m\n")
 
 
 # -----------------------------------------------------------------
@@ -160,7 +167,6 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         )
 
     return loss_mse.item(), loss_dtw.item()
-
 
 # -----------------------------------------------------------------
 #  Main
@@ -296,9 +302,13 @@ def main(config):
     epochs_trained = -1
 
     # -----------------------------------------------------------------
-    # Loss function to use
+    # FORCE STOPPING
     # -----------------------------------------------------------------
-    train_loss_func = 'MSE'  # 'MSE' or 'DTW'
+    global FORCE_STOP
+    FORCE_STOP = False
+    if FORCE_STOP_ENABLED:
+        signal.signal(signal.SIGINT, force_stop_signal_handler)
+        print('\n Press Ctrl + C to stop the training anytime and exit while saving the results.\n')
 
     # -----------------------------------------------------------------
     #  Main training loop
@@ -362,11 +372,11 @@ def main(config):
         print(
             "[Epoch %d/%d] [Train loss %s: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
             "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs, train_loss_func, train_loss, val_loss_mse, val_loss_dtw,
+            % (epoch, config.n_epochs, config.loss_type, train_loss, val_loss_mse, val_loss_dtw,
                best_epoch_mse, best_epoch_dtw)
         )
 
-        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_LSTM:
+        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_LSTM):
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
@@ -487,20 +497,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32,
                         help="size of the batches (default=32)")
 
-    parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
-                        help="use batch normalisation in network (default)")
-    parser.add_argument('--no-batch_norm', dest='batch_norm', action='store_false',
-                        help="use batch normalisation in network")
-    parser.set_defaults(batch_norm=True)
-
-    parser.add_argument("--dropout", dest='dropout', action='store_true',
-                        help="use dropout regularisation in network (default)")
-    parser.add_argument("--no-dropout", dest='dropout', action='store_false',
-                        help="do not use dropout regularisation in network")
-    parser.set_defaults(dropout=True)
-
-    parser.add_argument("--dropout_value", type=float,
-                        default=0.25, help="dropout probability, default=0.25 ")
     parser.add_argument("--lr", type=float, default=0.0002,
                         help="adam: learning rate, default=0.0002 ")
     parser.add_argument("--b1", type=float, default=0.9,
