@@ -272,7 +272,9 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
                 # do not draw the panels above the diagonal
                 ax_array[N - 2 - i, j - 1].axis('off')
 
-    # 4. add color bar &  minor adjustments
+    # -----------------------------------------------------------------
+    # add color bar &  minor adjustments
+    # -----------------------------------------------------------------
     cax = f.add_axes((0.07, 0.93, 0.5, 0.03), frameon=True, xticks=[], yticks=[])
     c_bar = f.colorbar(ax, cax, orientation='horizontal')
     c_bar.set_label(
@@ -286,7 +288,9 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # make good use of space
     f.subplots_adjust(hspace=0, wspace=0, left=0.07, bottom=0.07, right=0.95, top=0.98)
 
-    # 5. build file name & save file
+    # -----------------------------------------------------------------
+    # build file name & save file
+    # -----------------------------------------------------------------
     if prefix:
         file_name = '%s_%s_parameter_space_MSE_%d_epochs.%s' % (profile_type, prefix, n_epoch, file_type)
     else:
