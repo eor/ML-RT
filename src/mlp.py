@@ -1,5 +1,6 @@
 import argparse
 import copy
+import signal
 
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
@@ -60,6 +61,12 @@ def mlp_loss_function(loss_function, gen_x, real_x, config):
         loss = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
 
     return loss
+
+
+def force_stop_signal_handler(sig, frame):
+    global FORCE_STOP
+    FORCE_STOP = True
+    print("\033[96m\033[1m\nTraining will stop after this epoch. Please wait.\033[0m\n")
 
 
 # -----------------------------------------------------------------
@@ -286,6 +293,15 @@ def main(config):
     epochs_trained = -1
 
     # -----------------------------------------------------------------
+    # FORCE STOPPING
+    # -----------------------------------------------------------------
+    global FORCE_STOP
+    FORCE_STOP = False
+    if FORCE_STOP_ENABLED:
+        signal.signal(signal.SIGINT, force_stop_signal_handler)
+        print('\n Press Ctrl + C to stop the training anytime and exit while saving the results.\n')
+
+    # -----------------------------------------------------------------
     #  Main training loop
     # -----------------------------------------------------------------
     print("\033[96m\033[1m\nTraining starts now\033[0m")
@@ -359,7 +375,7 @@ def main(config):
                                                               print_results=True, save_results=True, best_model=False)
 
         # early stopping check
-        if EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_MLP:
+        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_MLP):
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch

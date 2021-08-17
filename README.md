@@ -20,12 +20,10 @@ Furthermore, the following Python packages are needed:
 * numpy (1.20.0 or newer)
 * matplotlib
 * numba (used in the Soft DTW implementation)
-* dtaidistance (implementation of DTW for numpy)
-
 
 They can be installed with pip like so:
 ```bash
-pip3 install pytorch numpy matplotlib numba dtaidistance
+pip3 install -r requirements.txt
 ```
 
 ### Training data download

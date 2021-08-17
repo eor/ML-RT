@@ -34,7 +34,7 @@ class LSTM1(nn.Module):
 
         # Args: expects input of shape: (batch_size, 2*2*time_series_length)
         #       output of shape: (batch_size, time_series_length)
-        self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
+        self.out_layer = nn.Linear(2 * 2* self.seq_len, self.seq_len)
 
     def forward(self, x):
 
@@ -93,17 +93,13 @@ class LSTM2(nn.Module):
         #       output of shape: (batch_size, time_series_length, 2*hidden_size): x2 because, bidirectional_lstm
         self.lstm_1 = nn.LSTM(input_size=1, hidden_size=1, batch_first=True, bidirectional=True)
 
-        # Args: expects input of shape: (batch_size, 2*2*time_series_length)
-        #       output of shape: (batch_size, time_series_length)
-        self.out_layer_1 = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
-
         # Args: expects input of shape: (batch_size, time_series_length, input_size)
         #       output of shape: (batch_size, time_series_length, hidden_size): x2 because, bidirectional_lstm
-        self.lstm_2 = nn.LSTM(input_size=1, hidden_size=1, batch_first=True, bidirectional=False)
+        self.lstm_2 = nn.LSTM(input_size=2, hidden_size=1, batch_first=True, bidirectional=False)
 
         # Args: expects input of shape: (batch_size, time_series_length)
         #       output of shape: (batch_size, time_series_length)
-        self.out_layer_2 = nn.Linear(self.seq_len, self.seq_len)
+        self.out_layer_2 = nn.Linear(2*self.seq_len, self.seq_len)
 
     def forward(self, x):
 
@@ -115,11 +111,6 @@ class LSTM2(nn.Module):
         # x.size(): (batch_size, 2*time_series_length) => (batch_size, 2*time_series_length, input_size)
         x = torch.unsqueeze(x, dim=2)
         x, (hidden_state_1, cell_state_1) = self.lstm_1(x, (hidden_state_1, cell_state_1))
-        # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
-        x = x.reshape(x.size()[0], -1)
-        x = self.out_layer_1(x)
-        # x.size(): (batch_size, time_series_length) => (batch_size, time_series_length, input_size)
-        x = torch.unsqueeze(x, dim=2)
         x, (hidden_state_2, cell_state_2) = self.lstm_2(x, (hidden_state_2, cell_state_2))
         # x.size(): (batch_size, time_series_length, input_size) => (batch_size, time_series_length)
         x = x.reshape(x.size()[0], -1)

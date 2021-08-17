@@ -1,0 +1,4 @@
+torch
+numpy==1.20.0
+matplotlib
+numba
