@@ -253,7 +253,13 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = LSTM1(config, device)
+    if config.model == 'LSTM1':
+        model = LSTM1(config, device)
+        print('\n\tusing model LSTM1\n')
+    else:
+        model = LSTM2(config, device)
+        print('\n\tusing model LSTM2\n')
+
     if cuda:
         model.cuda()
 
