@@ -20,21 +20,19 @@
 \definecolor{my_pink}{HTML}{f2e6ff}
 \definecolor{my_purple}{HTML}{6600CC}
 \definecolor{dark_green}{HTML}{0C5600}
+
+
 \begin{document}
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%---------------------------------------------------
 % Block style definitions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Node styles
+%---------------------------------------------------
 \tikzstyle{input_output}=[fill={rgb,255: red,70; green,129; blue,255}, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
 \tikzstyle{hidden_layer_unit}=[fill={rgb,255: red,147; green,255; blue,255}, draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
 \tikzstyle{empty_slot}=[fill=white, draw=black, shape=circle]
 
 \tikzstyle{cell}=[fill=my_pink, draw=my_purple, shape=diamond]
 \tikzstyle{empty_cell}=[fill=white, draw=my_purple, shape=diamond]
-
-
 
 \tikzstyle{test}=[fill={rgb,255: red,75; green,193; blue,56}, draw={rgb,255: red,52; green,117; blue,49}, shape=circle]
 \tikzstyle{parameter_vector}=[fill={rgb,255: red,255; green,0; blue,4}, draw={rgb,255: red,107; green,0; blue,1}, shape=circle]
@@ -44,19 +42,19 @@
 \tikzstyle{ellipsis}=[fill=black, draw=black, shape=circle]
 \tikzstyle{rectangle}=[fill={rgb,255: red,98; green,255; blue,161}, draw=black, shape=rectangle]
 
+%---------------------------------------------------
 % Edge styles
+%---------------------------------------------------
+
 \tikzstyle{block}=[{|-|}]
 
 \tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}]
 \tikzstyle{secondary_concetor}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
 
 
-% \pagestyle{empty}
-
-%\input{RNN.tikz}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%---------------------------------------------------
 % nodes and edges
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%---------------------------------------------------
 
 \begin{tikzpicture}
     \begin{pgfonlayer}{nodelayer}
@@ -162,9 +160,7 @@
         \node [style=none] (105) at (11.0, 6.5) {};
         
         % empty node to give extra padding on the right
-        \node [style=none] (xxx) at (12.0, 0.0) {};
-           
-        
+        \node [style=none] (xxx) at (12.0, 0.0) {};       
         
    
     \end{pgfonlayer}
