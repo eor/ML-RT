@@ -46,11 +46,11 @@
 		\node [style=myText] (84) at (19, 9.5) {\large Decoder};
 		\node [style=myText] (86) at (10, 8.25) {\large Mean};
 		\node [style=myText] (89) at (13, 6.5) {\large Latent vector};
-		\node [style=myText] (91) at (1, -2.75) {\large (1500+5)};
+		\node [style=myText] (91) at (1, -2.75) {\large (1500+8)};
 		\node [style=myText] (93) at (4, -2.75) {\large (1000)};
 		\node [style=myText] (94) at (7, -2.75) {\large (300)};
 		\node [style=myText] (96) at (10, -2.75) {\large (2x20)};
-		\node [style=myText] (97) at (13, -2.75) {\large (20+5)};
+		\node [style=myText] (97) at (13, -2.75) {\large (20+8)};
 		\node [style=myText] (98) at (19, -2.75) {\large (1000)};
 		\node [style=myText] (99) at (22, -2.75) {\large (1500)};
 		\node [style={conditional_vector}] (103) at (13, 2.5) {};
