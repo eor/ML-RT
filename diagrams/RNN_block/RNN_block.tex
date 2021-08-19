@@ -19,6 +19,8 @@
 
 \definecolor{my_pink}{HTML}{f2e6ff}
 \definecolor{my_purple}{HTML}{6600CC}
+
+\definecolor{my_red}{HTML}{990000}
 \definecolor{dark_green}{HTML}{0C5600}
 \definecolor{dark_blue}{HTML}{086565}
 \definecolor{light_blue}{HTML}{B5E8E8}
@@ -47,7 +49,7 @@
 
 
 \tikzstyle{myText}=[fill=white, draw=white, shape=rectangle]
-\tikzstyle{index}=[rectangle, draw=white, fill=white, text=dark_green]
+\tikzstyle{index}=[rectangle, draw=white, fill=white, text=my_red]
 
 
 \tikzstyle{ellipsis}=[fill=black, draw=black, shape=circle]
@@ -56,10 +58,11 @@
 % Edge styles
 \tikzstyle{block}=[{|-|}]
 
-\tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}, line width=0.4mm]
-\tikzstyle{arrow_connector}=[->, >=stealth, draw={rgb,255: red,184; green,184; blue,184}, line width=0.4mm]
+\tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}, line width=0.6mm]
 
-\tikzstyle{internal_connector}=[->, >=stealth, draw=dark_green, line width=0.4mm]
+\tikzstyle{arrow_connector}=[->, >=stealth, draw={rgb,255: red,184; green,184; blue,184}, line width=0.6mm]
+
+\tikzstyle{internal_connector}=[->, >=stealth, draw=my_red, line width=0.6mm]
 
 
 \tikzstyle{secondary_concetor}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
@@ -145,20 +148,20 @@
         \node [style=none] (empty_4b) at (4.25, - 3.0 + \yTwo) {}; 
         
         % invisible dummy nodes for docking the big box
-        \node [style=none] (box_top_left) at (2.0,  3.5 ) {};
-        \node [style=none] (box_bottom_right) at (8.0, - 4.5 + \yTwo) {}; 
+        \node [style=none] (box_top_left) at (2.0,  3.25 ) {};
+        \node [style=none] (box_bottom_right) at (8.0, - 3.5 + \yTwo) {}; 
         
         
         % text 
-        \node [style=myText] (100) at (6.5, -4.0 + \yTwo) {\large Backward};
-        \node [style=myText] (101) at (6.5, -4.0 + \yTwo - 0.5) {\large LSTM};
+        \node [style=myText] (100) at (7.2, -3.0 + \yTwo) {\large Backward};
+        \node [style=myText] (101) at (7.2, -3.0 + \yTwo - 0.5) {\large LSTM};
         
-        \node [style=myText] (102) at (3.75, -4.0 + \yTwo) {\large Forward};
-        \node [style=myText] (103) at (3.75, -4.0 + \yTwo - 0.5) {\large LSTM};
+        \node [style=myText] (102) at (3., +3.25      ) {\large Forward};
+        \node [style=myText] (103) at (3., +3.25 - 0.5) {\large LSTM};
 
         
-        \node [style=myText] (102) at (0.0, -4.0 + \yTwo) {\large Embedding};
-        \node [style=myText] (103) at (0.0, -4.0 + \yTwo - 0.5) {\large layer};
+        \node [style=myText] (102) at (0.0, -3.0 + \yTwo) {\large Embedding};
+        \node [style=myText] (103) at (0.0, -3.0 + \yTwo - 0.5) {\large layer};
         
         % green text 
         \node [style=index] (0_1) at (5.75, -3.35 + \yTwo) {\Large $0$};
