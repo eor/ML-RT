@@ -394,6 +394,8 @@ def main(config):
     # -----------------------------------------------------------------
     if config.gen_model == 'GEN2':
         generator = Generator2(config)
+    elif config.gen_model == 'GEN3':
+        generator = Generator3(config)
     else:
         generator = Generator1(config)
 
@@ -607,7 +609,7 @@ if __name__ == "__main__":
 
     # network model switches
     parser.add_argument('--gen_model', type=str, default='GEN1', metavar='(string)',
-                        help='Pick a generator model: GEN1 (default) or GEN2')
+                        help='Pick a generator model: GEN1 (default), GEN2, or GEN3 (LSTM)')
 
     parser.add_argument('--dis_model', type=str, default='DIS1', metavar='(string)',
                         help='Pick a discriminator model: DIS1 (default) or DIS2')
@@ -675,7 +677,7 @@ if __name__ == "__main__":
     if my_config.n_parameters == 8:
         parameter_limits = ps.p8_limits
 
-    if my_config.gen_model not in ['GEN1', 'GEN2']:
+    if my_config.gen_model not in ['GEN1', 'GEN2', 'GEN3']:
         my_config.model = 'GEN1'
 
     if my_config.dis_model not in ['DIS1', 'DIS2']:
