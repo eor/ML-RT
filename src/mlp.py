@@ -205,8 +205,7 @@ def main(config):
                                                                             global_parameters)
 
     if config.filter_parameters:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
-                                                                               global_parameters)
+        global_parameters, [H_profiles, T_profiles] = filter_cut_parameter_space(global_parameters, [H_profiles, T_profiles])
 
     # -----------------------------------------------------------------
     # log space?

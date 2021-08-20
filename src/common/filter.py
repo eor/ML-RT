@@ -5,7 +5,7 @@ from common.utils import utils_get_user_param_limits
 # -----------------------------------------------------------------
 # Cuts in the parameter space
 # -----------------------------------------------------------------
-def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_config_path=''):
+def filter_cut_parameter_space(global_parameters, profiles, user_config_path=''):
     """
      This function makes cuts to the parameter space according to some user-specified limits.
      The limits could be provided as an argument (2D numpy array) in the same format as the ones
@@ -14,16 +14,16 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_c
 
 
      Args:
-         numpy objects containing the hydrogen, temperature profiles, and parameters
-
+        global_parameters: numpy objects containing the parameters
+        profiles: list of numpy objects containing profiles
      Returns: modified numpy objects
      """
-    
+
     # choose limits to use based on number of parameters
     original_len, n_parameters = global_parameters.shape
     param_limits = utils_get_user_param_limits(user_config_path)
     limits = param_limits['p5_limits'] if n_parameters == 5 else param_limits['p8_limits']
-    
+
     deletion_indices = []
     for i in range(len(limits)):
         lower_limit = limits[i][0]
@@ -37,19 +37,20 @@ def filter_cut_parameter_space(H_profiles, T_profiles, global_parameters, user_c
     deletion_indices = list(set(deletion_indices))
 
     # delete the entries from dataset corresponding to the deletion_indices
-    H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
-    T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
+    for i in range(len(profiles)):
+        profiles[i] = np.delete(profiles[i], deletion_indices, axis=0)
+
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
     print("\nParameter space filter: Deleting a total of %d samples. %d remaining." %
           (len(deletion_indices), len(global_parameters)))
-    return H_profiles, T_profiles, global_parameters
 
+    return global_parameters, profiles
 
 # -----------------------------------------------------------------
 # Blow out filter
 # -----------------------------------------------------------------
-def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, threshold=0.9):
+def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, He1_profiles=None, He2_profiles=None, threshold=0.9):
     """
     This function filters out all blow-out profiles, i.e. removes all hydrogen ionisation profiles
     whose ionisation front is beyond the edge of the computing grid. The same action is
@@ -72,16 +73,22 @@ def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, threshold
     for i in range(0, len(deletion_indices)):
         index = deletion_indices[i]
 
-        #print("Deletions for index %d [%d]:"%(i, index))
-        #print("Parameters:", global_parameters[index,:])
-        #print("Hprofile:", H_profiles[index,:])
-        #print("--------------------------------------------------------------------------------------")
-
+        # print("Deletions for index %d [%d]:"%(i, index))
+        # print("Parameters:", global_parameters[index,:])
+        # print("Hprofile:", H_profiles[index,:])
+        # print("--------------------------------------------------------------------------------------")
+    
+    # [TODO]: verfiy the logic
     H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
     T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
+    if He1_profiles is not None:
+        He1_profiles = np.delete(He1_profiles, deletion_indices, axis=0)
+    if He2_profiles is not None:
+        He2_profiles = np.delete(He2_profiles, deletion_indices, axis=0)
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining."%(len(deletion_indices), len(H_profiles)))
-
-    return H_profiles, T_profiles, global_parameters
-
+    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining." % (len(deletion_indices), len(H_profiles)))
+    if He1_profiles is None or He2_profiles is None:
+        return H_profiles, T_profiles, global_parameters
+    else:
+        return H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters

@@ -193,23 +193,29 @@ def main(config):
     # -----------------------------------------------------------------
     H_profile_file_path = utils_join_path(config.data_dir, H_PROFILE_FILE)
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
-    global_parameter_file_path = utils_join_path(
-        config.data_dir, GLOBAL_PARAMETER_FILE)
+    He1_profile_file_path = utils_join_path(config.data_dir, HE1_PROFILE_FILE)
+    He2_profile_file_path = utils_join_path(config.data_dir, HE2_PROFILE_FILE)
+
+    global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
+    He1_profiles = np.load(He1_profile_file_path)
+    He2_profiles = np.load(He2_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
 
     # -----------------------------------------------------------------
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if config.filter_blowouts:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(
-            H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters = filter_blowout_profiles(
+            H_profiles, T_profiles, global_parameters, He1_profiles=He1_profiles, He2_profiles=He2_profiles)
 
     if config.filter_parameters:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(
-            H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters = filter_cut_parameter_space(
+            H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters)
+        global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles] = filter_cut_parameter_space(
+            global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles])
 
     # -----------------------------------------------------------------
     # log space?
@@ -217,6 +223,8 @@ def main(config):
     if USE_LOG_PROFILES:
         # add a small number to avoid trouble
         H_profiles = np.log10(H_profiles + 1.0e-6)
+        He1_profiles = np.log10(He1_profiles + 1.0e-6)
+        He2_profiles = np.log10(He2_profiles + 1.0e-6)
         T_profiles = np.log10(T_profiles)
 
     # -----------------------------------------------------------------
@@ -233,6 +241,8 @@ def main(config):
         indices = np.random.permutation(indices)
         H_profiles = H_profiles[indices]
         T_profiles = T_profiles[indices]
+        He1_profiles = He1_profiles[indices]
+        He2_profiles = He2_profiles[indices]
         global_parameters = global_parameters[indices]
 
     # -----------------------------------------------------------------
@@ -271,7 +281,7 @@ def main(config):
     if cuda:
         model.cuda()
 
-    
+
     profiles, parameters = next(iter(train_loader))
     writer.add_graph(model, Variable(parameters.type(FloatTensor)))
 
