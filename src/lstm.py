@@ -387,6 +387,9 @@ def main(config):
             epochs_trained = epoch
             break
 
+        if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
+            lstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config, print_results=True, save_results=True)
+
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
@@ -477,7 +480,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=100, help="epoch interval between testing runs")
+                        default=30, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',

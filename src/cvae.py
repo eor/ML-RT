@@ -412,7 +412,7 @@ def main(config):
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            cvae_run_evaluation(epoch, test_loader, model, data_products_path, config,
+            cvae_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config,
                                 print_results=True, save_results=True)
 
         # early stopping check
