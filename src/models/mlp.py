@@ -64,5 +64,3 @@ class MLP2(nn.Module):
     def forward(self, parameters):
 
         return self.model(parameters)
-
-

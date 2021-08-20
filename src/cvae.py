@@ -114,6 +114,9 @@ def cvae_train(model, optimizer, train_loader, config):
 
     for batch_idx, (profiles, parameters) in enumerate(train_loader):
 
+        # select first profile from the dataset as our main profile
+        profiles = profiles[:, 0, :]
+
         # configure input
         real_profiles = Variable(profiles.type(FloatTensor))
         real_parameters = Variable(parameters.type(FloatTensor))
@@ -179,6 +182,9 @@ def cvae_run_evaluation(current_epoch, data_loader, model, path, config,
 
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
+
+            # select first profile from the dataset as our main profile
+            profiles = profiles[:, 0, :]
 
             # configure input
             profiles_true = Variable(profiles.type(FloatTensor))

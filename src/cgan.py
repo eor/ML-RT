@@ -156,6 +156,9 @@ def cgan_run_evaluation(current_epoch, data_loader, generator, path, config, pri
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
 
+            # select first profile from the dataset as our main profile
+            profiles = profiles[:, 0, :]
+
             # obtain batch size
             batch_size = profiles.size()[0]
 
@@ -452,6 +455,9 @@ def main(config):
         epoch_loss_dis = 0
 
         for i, (profiles, parameters) in enumerate(train_loader):
+
+            # select first profile from the dataset as our main profile
+            profiles = profiles[:, 0, :]
 
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))

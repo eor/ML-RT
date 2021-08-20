@@ -17,9 +17,6 @@ from common.settings import *
 
 from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
-from torch.utils.tensorboard import SummaryWriter
-from torchsummary import summary
-writer = SummaryWriter('./tensorboard/')
 
 # -----------------------------------------------------------------
 #  global  variables :-|
@@ -212,8 +209,6 @@ def main(config):
             H_profiles, T_profiles, global_parameters, He1_profiles=He1_profiles, He2_profiles=He2_profiles)
 
     if config.filter_parameters:
-        H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters = filter_cut_parameter_space(
-            H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters)
         global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles] = filter_cut_parameter_space(
             global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles])
 
@@ -245,13 +240,8 @@ def main(config):
         He2_profiles = He2_profiles[indices]
         global_parameters = global_parameters[indices]
 
-    # -----------------------------------------------------------------
-    # we are doing one profile at a time
-    # -----------------------------------------------------------------
-    if config.profile_type == 'H':
-        profiles = H_profiles
-    else:
-        profiles = T_profiles
+    # order must stay same as the profiles are returned and used in the same order through out this script
+    profiles = np.stack((H_profiles, T_profiles, He1_profiles, He2_profiles), axis=1)
 
     # -----------------------------------------------------------------
     # data loaders
@@ -263,8 +253,7 @@ def main(config):
     testing_data = RTdata(profiles, global_parameters,
                           split='test', split_frac=SPLIT_FRACTION)
 
-    train_loader = DataLoader(
-        training_data, batch_size=config.batch_size, shuffle=True)
+    train_loader = DataLoader(training_data, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(validation_data, batch_size=config.batch_size)
     test_loader = DataLoader(testing_data, batch_size=config.batch_size)
 
@@ -273,7 +262,7 @@ def main(config):
     # -----------------------------------------------------------------
     if config.model == 'LSTM1':
         model = CLSTM(config, device)
-        print('\n\tusing model LSTM1\n')
+        print('\n\tusing model CLSTM\n')
     else:
         model = LSTM2(config, device)
         print('\n\tusing model LSTM2\n')
@@ -281,11 +270,6 @@ def main(config):
     if cuda:
         model.cuda()
 
-
-    profiles, parameters = next(iter(train_loader))
-    writer.add_graph(model, Variable(parameters.type(FloatTensor)))
-
-    writer.close()
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
@@ -340,19 +324,33 @@ def main(config):
 
         for i, (profiles, parameters) in enumerate(train_loader):
 
+            h_profiles = profiles[:, 0, :]
+            t_profiles = profiles[:, 1, :]
+            he1_profiles = profiles[:, 2, :]
+            he2_profiles = profiles[:, 3, :]
+
             # configure input
-            real_profiles = Variable(profiles.type(FloatTensor))
+            real_h_profiles = Variable(h_profiles.type(FloatTensor))
+            real_t_profiles = Variable(t_profiles.type(FloatTensor))
+            real_he1_profiles = Variable(he1_profiles.type(FloatTensor))
+            real_he2_profiles = Variable(he2_profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
 
             # zero the gradients on each iteration
             optimizer.zero_grad()
 
             # generate a batch of profiles
-            gen_profiles = model(real_parameters)
-            make_dot(gen_profiles, params=dict(model.named_parameters()))
-            loss = lstm_loss_function(config.loss_type, gen_profiles, real_profiles, config)
+            gen_h_profiles, gen_t_profiles, gen_he1_profiles, gen_he2_profiles = model(real_parameters)
+            loss_h = lstm_loss_function(config.loss_type, gen_h_profiles, real_h_profiles, config)
+            loss_t = lstm_loss_function(config.loss_type, gen_t_profiles, real_t_profiles, config)
+            loss_he1 = lstm_loss_function(config.loss_type, gen_he1_profiles, real_he1_profiles, config)
+            loss_he2 = lstm_loss_function(config.loss_type, gen_he2_profiles, real_he2_profiles, config)
 
-            loss.backward()
+            loss_h.backward()
+            loss_t.backward()
+            loss_he1.backward()
+            loss_he2.backward()
+
             optimizer.step()
             epoch_loss += loss.item()
 

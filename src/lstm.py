@@ -109,6 +109,9 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
     with torch.no_grad():
         for i, (profiles, parameters) in enumerate(data_loader):
 
+            # select first profile from the dataset as our main profile
+            profiles = profiles[:, 0, :]
+
             # configure input
             profiles_true = Variable(profiles.type(FloatTensor))
             parameters = Variable(parameters.type(FloatTensor))
@@ -321,6 +324,9 @@ def main(config):
         model.train()
 
         for i, (profiles, parameters) in enumerate(train_loader):
+
+            # select first profile from the dataset as our main profile
+            profiles = profiles[:, 0, :]
 
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))
