@@ -345,8 +345,7 @@ def main(config):
                                                                             global_parameters)
 
     if config.filter_parameters:
-        H_profiles, T_profiles, global_parameters = filter_cut_parameter_space(H_profiles, T_profiles,
-                                                                               global_parameters)
+        global_parameters, [H_profiles, T_profiles] = filter_cut_parameter_space(global_parameters, [H_profiles, T_profiles])
 
     # -----------------------------------------------------------------
     # log space?
@@ -524,7 +523,7 @@ def main(config):
 
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-            cgan_run_evaluation(epoch, test_loader, generator, data_products_path, config, print_results=True, save_results=True)
+            cgan_run_evaluation(best_epoch_mse, test_loader, best_generator, data_products_path, config, print_results=True, save_results=True)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 

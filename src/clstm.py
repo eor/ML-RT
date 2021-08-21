@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import copy
 
-from models.lstm import *
+from models.clstm import *
 from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
@@ -115,7 +115,6 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
             # inference
             profiles_gen = model(parameters)
-
             # compute loss via soft dtw
             # profile tensors are of shape [batch size, profile length]
             # soft dtw wants input of shape [batch size, 1, profile length]
@@ -191,22 +190,27 @@ def main(config):
     # -----------------------------------------------------------------
     H_profile_file_path = utils_join_path(config.data_dir, H_PROFILE_FILE)
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
-    global_parameter_file_path = utils_join_path(
-        config.data_dir, GLOBAL_PARAMETER_FILE)
+    He1_profile_file_path = utils_join_path(config.data_dir, HE1_PROFILE_FILE)
+    He2_profile_file_path = utils_join_path(config.data_dir, HE2_PROFILE_FILE)
+
+    global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
     H_profiles = np.load(H_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
+    He1_profiles = np.load(He1_profile_file_path)
+    He2_profiles = np.load(He2_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
 
     # -----------------------------------------------------------------
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if config.filter_blowouts:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(
-            H_profiles, T_profiles, global_parameters)
+        H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters = filter_blowout_profiles(
+            H_profiles, T_profiles, global_parameters, He1_profiles=He1_profiles, He2_profiles=He2_profiles)
 
     if config.filter_parameters:
-        global_parameters, [H_profiles, T_profiles] = filter_cut_parameter_space(global_parameters, [H_profiles, T_profiles])
+        global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles] = filter_cut_parameter_space(
+            global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles])
 
     # -----------------------------------------------------------------
     # log space?
@@ -214,6 +218,8 @@ def main(config):
     if USE_LOG_PROFILES:
         # add a small number to avoid trouble
         H_profiles = np.log10(H_profiles + 1.0e-6)
+        He1_profiles = np.log10(He1_profiles + 1.0e-6)
+        He2_profiles = np.log10(He2_profiles + 1.0e-6)
         T_profiles = np.log10(T_profiles)
 
     # -----------------------------------------------------------------
@@ -230,15 +236,12 @@ def main(config):
         indices = np.random.permutation(indices)
         H_profiles = H_profiles[indices]
         T_profiles = T_profiles[indices]
+        He1_profiles = He1_profiles[indices]
+        He2_profiles = He2_profiles[indices]
         global_parameters = global_parameters[indices]
 
-    # -----------------------------------------------------------------
-    # we are doing one profile at a time
-    # -----------------------------------------------------------------
-    if config.profile_type == 'H':
-        profiles = H_profiles
-    else:
-        profiles = T_profiles
+    # order must stay same as the profiles are returned and used in the same order through out this script
+    profiles = np.stack((H_profiles, T_profiles, He1_profiles, He2_profiles), axis=1)
 
     # -----------------------------------------------------------------
     # data loaders
@@ -250,8 +253,7 @@ def main(config):
     testing_data = RTdata(profiles, global_parameters,
                           split='test', split_frac=SPLIT_FRACTION)
 
-    train_loader = DataLoader(
-        training_data, batch_size=config.batch_size, shuffle=True)
+    train_loader = DataLoader(training_data, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(validation_data, batch_size=config.batch_size)
     test_loader = DataLoader(testing_data, batch_size=config.batch_size)
 
@@ -259,8 +261,8 @@ def main(config):
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
     if config.model == 'LSTM1':
-        model = LSTM1(config, device)
-        print('\n\tusing model LSTM1\n')
+        model = CLSTM(config, device)
+        print('\n\tusing model CLSTM\n')
     else:
         model = LSTM2(config, device)
         print('\n\tusing model LSTM2\n')
@@ -320,19 +322,26 @@ def main(config):
         # set model mode
         model.train()
 
-        for i, (profiles, parameters) in enumerate(train_loader):
+        for i, (h_profiles, t_profiles, he1_profiles, he2_profiles, parameters) in enumerate(train_loader):
 
             # configure input
-            real_profiles = Variable(profiles.type(FloatTensor))
+            real_h_profiles = Variable(h_profiles.type(FloatTensor))
+            real_t_profiles = Variable(t_profiles.type(FloatTensor))
+            real_he1_profiles = Variable(he1_profiles.type(FloatTensor))
+            real_he2_profiles = Variable(he2_profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
 
             # zero the gradients on each iteration
             optimizer.zero_grad()
 
             # generate a batch of profiles
-            gen_profiles = model(real_parameters)
-            loss = lstm_loss_function(config.loss_type, gen_profiles, real_profiles, config)
+            gen_h_profiles, gen_t_profiles, gen_he1_profiles, gen_he2_profiles = model(real_parameters)
+            loss_h = lstm_loss_function(config.loss_type, gen_h_profiles, real_h_profiles, config)
+            loss_t = lstm_loss_function(config.loss_type, gen_t_profiles, real_t_profiles, config)
+            loss_he1 = lstm_loss_function(config.loss_type, gen_he1_profiles, real_he1_profiles, config)
+            loss_he2 = lstm_loss_function(config.loss_type, gen_he2_profiles, real_he2_profiles, config)
 
+            loss = loss_h + loss_t + loss_he1 + loss_he2
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
@@ -474,7 +483,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=30, help="epoch interval between testing runs")
+                        default=100, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
