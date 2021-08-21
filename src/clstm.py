@@ -322,12 +322,7 @@ def main(config):
         # set model mode
         model.train()
 
-        for i, (profiles, parameters) in enumerate(train_loader):
-
-            h_profiles = profiles[:, 0, :]
-            t_profiles = profiles[:, 1, :]
-            he1_profiles = profiles[:, 2, :]
-            he2_profiles = profiles[:, 3, :]
+        for i, (h_profiles, t_profiles, he1_profiles, he2_profiles, parameters) in enumerate(train_loader):
 
             # configure input
             real_h_profiles = Variable(h_profiles.type(FloatTensor))
@@ -346,11 +341,8 @@ def main(config):
             loss_he1 = lstm_loss_function(config.loss_type, gen_he1_profiles, real_he1_profiles, config)
             loss_he2 = lstm_loss_function(config.loss_type, gen_he2_profiles, real_he2_profiles, config)
 
-            loss_h.backward()
-            loss_t.backward()
-            loss_he1.backward()
-            loss_he2.backward()
-
+            loss = loss_h + loss_t + loss_he1 + loss_he2
+            loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
 

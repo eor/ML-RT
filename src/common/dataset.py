@@ -52,12 +52,22 @@ class RTdata(Dataset):
         return self.profiles.shape[0]
 
     def __getitem__(self, index):
-        return self.profiles[index], self.parameters[index]
+        out = []
+        for i in range(self.profiles.shape[1]):
+            out.append(self.profiles[index, i])
+        out.append(self.parameters[index])
+
+        return tuple(out)
 
 
 class RTdataWithDerivatives(Dataset):
 
     def __init__(self, profile_data, parameter_data, derivative_data, split='train', split_frac=(0.8, 0.1, 0.1)):
+
+        if len(profile_data.shape) != 3:
+            profile_data = profile_data[:, np.newaxis, :]
+        if len(derivative_data.shape) != 3:
+            derivative_data = derivative_data[:, np.newaxis, :]
 
         train_frac, val_frac, test_frac = split_frac
 
@@ -89,5 +99,13 @@ class RTdataWithDerivatives(Dataset):
         return self.profiles.shape[0]
 
     def __getitem__(self, index):
+        out = []
+        for i in range(self.profiles.shape[1]):
+            out.append(self.profiles[index, i])
 
-        return self.profiles[index], self.parameters[index], self.derivatives[index]
+        out.append(self.parameters[index])
+
+        for i in range(self.derivatives.shape[1]):
+            out.append(self.derivatives[index, i])
+
+        return tuple(out)
