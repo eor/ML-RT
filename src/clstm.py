@@ -49,7 +49,7 @@ else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 
-def lstm_loss_function(func, gen_x, real_x, config):
+def clstm_loss_function(func, gen_x, real_x, config):
     if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
@@ -72,7 +72,7 @@ def force_stop_signal_handler(sig, frame):
 # -----------------------------------------------------------------
 #   use lstm with test or val set
 # -----------------------------------------------------------------
-def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
+def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the lstm, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if in test mode.
@@ -120,19 +120,19 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss via soft dtw
-            dtw_loss_H_II = lstm_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
-            dtw_loss_T = lstm_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
-            dtw_loss_He_II = lstm_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
-            dtw_loss_He_III = lstm_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
+            dtw_loss_H_II = clstm_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
+            dtw_loss_T = clstm_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
+            dtw_loss_He_II = clstm_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
+            dtw_loss_He_III = clstm_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
 
             dtw = dtw_loss_H_II + dtw_loss_T + dtw_loss_He_II + dtw_loss_He_III
             loss_dtw += dtw
 
             # compute loss via MSE:
-            mse_loss_H_II = lstm_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
-            mse_loss_T = lstm_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
-            mse_loss_He_II = lstm_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
-            mse_loss_He_III = lstm_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
+            mse_loss_H_II = clstm_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
+            mse_loss_T = clstm_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
+            mse_loss_He_II = clstm_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
+            mse_loss_He_III = clstm_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
 
             mse = mse_loss_H_II + mse_loss_T + mse_loss_He_II + mse_loss_He_III
             loss_mse += mse
@@ -347,10 +347,10 @@ def main(config):
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss
-            loss_H_II = lstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
-            loss_T = lstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
-            loss_He_II = lstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
-            loss_He_III = lstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
+            loss_H_II = clstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
+            loss_T = clstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
+            loss_He_II = clstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
+            loss_He_III = clstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
 
             loss = loss_H_II + loss_T + loss_He_II + loss_He_III
             loss.backward()
@@ -362,7 +362,7 @@ def main(config):
         train_loss_array = np.append(train_loss_array, train_loss)
 
         # validation & save the best performing model
-        val_loss_mse, val_loss_dtw = lstm_run_evaluation(
+        val_loss_mse, val_loss_dtw = clstm_run_evaluation(
             current_epoch=epoch,
             data_loader=val_loader,
             model=model,
@@ -395,14 +395,14 @@ def main(config):
                best_epoch_mse, best_epoch_dtw)
         )
 
-        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_LSTM):
+        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CLSTM):
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
             break
 
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-            lstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config, print_results=True, save_results=True)
+            clstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config, print_results=True, save_results=True)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
@@ -429,7 +429,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    best_test_mse, best_test_dtw = lstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
+    best_test_mse, best_test_dtw = clstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
                                                        config, print_results=True, save_results=True, best_model=True)
 
     # -----------------------------------------------------------------

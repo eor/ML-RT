@@ -254,7 +254,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Check if data files exist / read data and shuffle / rescale parameters
     # -----------------------------------------------------------------
-    H_profile_file_path = utils_join_path(config.data_dir, H_PROFILE_FILE)
+    H_profile_file_path = utils_join_path(config.data_dir, H_II_PROFILE_FILE)
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
     global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
