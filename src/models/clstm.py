@@ -31,27 +31,27 @@ class CLSTM(nn.Module):
         #       output of shape: (batch_size, time_series_length, 2*hidden_size): x2 because, bidirectional_lstm
         self.lstm = nn.LSTM(input_size=1, hidden_size=4, batch_first=True, bidirectional=True)
 
-        self.lstm_H = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
+        self.lstm_H_II = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
         self.lstm_T = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
-        self.lstm_He1 = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
-        self.lstm_He2 = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
+        self.lstm_He_II = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
+        self.lstm_He_III = nn.LSTM(input_size=8, hidden_size=1, batch_first=True, bidirectional=False)
 
         # Args: expects input of shape: (batch_size, 2*2*time_series_length)
         #       output of shape: (batch_size, time_series_length)
-        self.out_layer_H = nn.Linear(2 * self.seq_len, self.seq_len)
+        self.out_layer_H_II = nn.Linear(2 * self.seq_len, self.seq_len)
         self.out_layer_T = nn.Linear(2 * self.seq_len, self.seq_len)
-        self.out_layer_He1 = nn.Linear(2 * self.seq_len, self.seq_len)
-        self.out_layer_He2 = nn.Linear(2 * self.seq_len, self.seq_len)
+        self.out_layer_He_II = nn.Linear(2 * self.seq_len, self.seq_len)
+        self.out_layer_He_III = nn.Linear(2 * self.seq_len, self.seq_len)
 
     def forward(self, x):
 
         # initialise hidden states for the lstm
         (hidden_state, cell_state) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=4, bidirectional=True)
 
-        (hidden_state_h, cell_state_h) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
-        (hidden_state_t, cell_state_t) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
-        (hidden_state_he1, cell_state_he1) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
-        (hidden_state_he2, cell_state_he2) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
+        (hidden_state_H_II, cell_state_H_II) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
+        (hidden_state_T, cell_state_T) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
+        (hidden_state_He_II, cell_state_He_II) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
+        (hidden_state_He_III, cell_state_He_III) = self.init_hidden_state(batch_size=x.size()[0], hidden_size=1)
 
         x = self.linear_model(x)
         # x.size(): (batch_size, 2*time_series_length) => (batch_size, 2*time_series_length, input_size)
@@ -60,25 +60,25 @@ class CLSTM(nn.Module):
         # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
         # x = x.reshape(x.size()[0], -1)
         # x_h = torch.stack((x[:, :, 0], x[:, :, 4]), dim=2).reshape(x.size()[0], -1)
-        # x_t = torch.stack((x[:, :, 1], x[:, :, 5]), dim=2).reshape(x.size()[0], -1)
+        # x_T = torch.stack((x[:, :, 1], x[:, :, 5]), dim=2).reshape(x.size()[0], -1)
         # x_he1 = torch.stack((x[:, :, 2], x[:, :, 6]), dim=2).reshape(x.size()[0], -1)
         # x_he2 = torch.stack((x[:, :, 3], x[:, :, 7]), dim=2).reshape(x.size()[0], -1)
-        x_h, _ = self.lstm_H(x, (hidden_state_h, cell_state_h))
-        x_t, _ = self.lstm_T(x, (hidden_state_t, cell_state_t))
-        x_he1, _ = self.lstm_He1(x, (hidden_state_he1, cell_state_he1))
-        x_he2, _ = self.lstm_He2(x, (hidden_state_he2, cell_state_he2))
+        x_H_II, _ = self.lstm_H_II(x, (hidden_state_H_II, cell_state_H_II))
+        x_T, _ = self.lstm_T(x, (hidden_state_T, cell_state_T))
+        x_He_II, _ = self.lstm_He_II(x, (hidden_state_He_II, cell_state_He_II))
+        x_He_III, _ = self.lstm_He_III(x, (hidden_state_He_III, cell_state_He_III))
 
-        x_h = x_h.squeeze(dim=2)
-        x_t = x_t.squeeze(dim=2)
-        x_he1 = x_he1.squeeze(dim=2)
-        x_he2 = x_he2.squeeze(dim=2)
+        x_H_II = x_H_II.squeeze(dim=2)
+        x_T = x_T.squeeze(dim=2)
+        x_He_II = x_He_II.squeeze(dim=2)
+        x_He_III = x_He_III.squeeze(dim=2)
 
-        x_h = self.out_layer_H(x_h)
-        x_t = self.out_layer_T(x_t)
-        x_he1 = self.out_layer_He1(x_he1)
-        x_he2 = self.out_layer_He2(x_he2)
+        x_H_II = self.out_layer_H_II(x_H_II)
+        x_T = self.out_layer_T(x_T)
+        x_He_II = self.out_layer_He_II(x_He_II)
+        x_He_III = self.out_layer_He_III(x_He_III)
 
-        return x_h, x_t, x_he1, x_he2
+        return x_H_II, x_T, x_He_II, x_He_III
 
     def init_hidden_state(self, batch_size, hidden_size, bidirectional=False):
         if bidirectional:
@@ -147,16 +147,16 @@ class CLSTM(nn.Module):
 #         # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
 #         # x = x.reshape(x.size()[0], -1)
 #         x_h = x[:, :, 0:2].reshape(x.size()[0], -1)
-#         x_t = x[:, :, 2:4].reshape(x.size()[0], -1)
+#         x_T = x[:, :, 2:4].reshape(x.size()[0], -1)
 #         x_he1 = x[:, :, 4:6].reshape(x.size()[0], -1)
 #         x_he2 = x[:, :, 6:8].reshape(x.size()[0], -1)
 
 #         x_h = self.out_layer_H(x_h)
-#         x_t = self.out_layer_T(x_t)
+#         x_T = self.out_layer_T(x_T)
 #         x_he1 = self.out_layer_He1(x_he1)
 #         x_he2 = self.out_layer_He2(x_he2)
 
-#         return x_h, x_t, x_he1, x_he2
+#         return x_h, x_T, x_he1, x_he2
 
 #     def init_hidden_state(self, batch_size):
 #         # x2 because, bidirectional lstm
