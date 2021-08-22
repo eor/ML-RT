@@ -107,25 +107,34 @@ def lstm_run_evaluation(current_epoch, data_loader, model, path, config, print_r
     loss_mse = 0.0
 
     with torch.no_grad():
-        for i, (profiles, parameters) in enumerate(data_loader):
+        for i, (H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, parameters) in enumerate(data_loader):
 
             # configure input
-            profiles_true = Variable(profiles.type(FloatTensor))
-            parameters = Variable(parameters.type(FloatTensor))
+            real_H_II_profiles = Variable(H_II_profiles.type(FloatTensor))
+            real_T_profiles = Variable(T_profiles.type(FloatTensor))
+            real_He_II_profiles = Variable(He_II_profiles.type(FloatTensor))
+            real_He_III_profiles = Variable(He_III_profiles.type(FloatTensor))
+            real_parameters = Variable(parameters.type(FloatTensor))
 
-            # inference
-            profiles_gen = model(parameters)
+            # generate a batch of profiles
+            gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
+
             # compute loss via soft dtw
-            # profile tensors are of shape [batch size, profile length]
-            # soft dtw wants input of shape [batch size, 1, profile length]
+            dtw_loss_H_II = lstm_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
+            dtw_loss_T = lstm_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
+            dtw_loss_He_II = lstm_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
+            dtw_loss_He_III = lstm_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
 
-            dtw = lstm_loss_function(
-                'DTW', profiles_true, profiles_gen, config)
+            dtw = dtw_loss_H_II + dtw_loss_T + dtw_loss_He_II + dtw_loss_He_III
             loss_dtw += dtw
 
             # compute loss via MSE:
-            mse = lstm_loss_function(
-                'MSE', profiles_true, profiles_gen, config)
+            mse_loss_H_II = lstm_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
+            mse_loss_T = lstm_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
+            mse_loss_He_II = lstm_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
+            mse_loss_He_III = lstm_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
+
+            mse = mse_loss_H_II + mse_loss_T + mse_loss_He_II + mse_loss_He_III
             loss_mse += mse
 
             if save_results:
@@ -336,12 +345,14 @@ def main(config):
 
             # generate a batch of profiles
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
-            loss_h = lstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
-            loss_t = lstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
-            loss_he1 = lstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
-            loss_he2 = lstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
 
-            loss = loss_h + loss_t + loss_he1 + loss_he2
+            # compute loss
+            loss_H_II = lstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
+            loss_T = lstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
+            loss_He_II = lstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
+            loss_He_III = lstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
+
+            loss = loss_H_II + loss_T + loss_He_II + loss_He_III
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
