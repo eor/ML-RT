@@ -47,10 +47,11 @@ def filter_cut_parameter_space(global_parameters, profiles, user_config_path='')
 
     return global_parameters, profiles
 
+
 # -----------------------------------------------------------------
 # Blow out filter
 # -----------------------------------------------------------------
-def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, He1_profiles=None, He2_profiles=None, threshold=0.9):
+def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters, He_II_profiles=None, He_III_profiles=None, threshold=0.9):
     """
     This function filters out all blow-out profiles, i.e. removes all hydrogen ionisation profiles
     whose ionisation front is beyond the edge of the computing grid. The same action is
@@ -65,7 +66,7 @@ def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, He1_profi
     # blow out is a x_{H_{II}} profile for which all array values are above a certain threshold (e.g. < 0.9)
 
     # 0) for each profile find the min value
-    profile_minima = np.min(H_profiles, axis=1)
+    profile_minima = np.min(H_II_profiles, axis=1)
 
     # 1) find all profiles for which the min > threshold
     deletion_indices = np.where(profile_minima > threshold)[0]
@@ -77,18 +78,19 @@ def filter_blowout_profiles(H_profiles, T_profiles, global_parameters, He1_profi
         # print("Parameters:", global_parameters[index,:])
         # print("Hprofile:", H_profiles[index,:])
         # print("--------------------------------------------------------------------------------------")
-    
+
     # [TODO]: verfiy the logic
-    H_profiles = np.delete(H_profiles, deletion_indices, axis=0)
+    H_II_profiles = np.delete(H_II_profiles, deletion_indices, axis=0)
     T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
-    if He1_profiles is not None:
-        He1_profiles = np.delete(He1_profiles, deletion_indices, axis=0)
-    if He2_profiles is not None:
-        He2_profiles = np.delete(He2_profiles, deletion_indices, axis=0)
+    if He_II_profiles is not None:
+        He_II_profiles = np.delete(He_II_profiles, deletion_indices, axis=0)
+    if He_III_profiles is not None:
+        He_III_profiles = np.delete(He_III_profiles, deletion_indices, axis=0)
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining." % (len(deletion_indices), len(H_profiles)))
-    if He1_profiles is None or He2_profiles is None:
-        return H_profiles, T_profiles, global_parameters
+    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining." % (len(deletion_indices), len(H_II_profiles)))
+
+    if He_II_profiles is None or He_III_profiles is None:
+        return H_II_profiles, T_profiles, global_parameters
     else:
-        return H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters
+        return H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, global_parameters

@@ -188,38 +188,38 @@ def main(config):
     # -----------------------------------------------------------------
     # Check if data files exist / read data and shuffle / rescale parameters
     # -----------------------------------------------------------------
-    H_profile_file_path = utils_join_path(config.data_dir, H_PROFILE_FILE)
+    H_II_profile_file_path = utils_join_path(config.data_dir, H_II_PROFILE_FILE)
     T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
-    He1_profile_file_path = utils_join_path(config.data_dir, HE1_PROFILE_FILE)
-    He2_profile_file_path = utils_join_path(config.data_dir, HE2_PROFILE_FILE)
+    He_II_profile_file_path = utils_join_path(config.data_dir, He_II_PROFILE_FILE)
+    He_III_profile_file_path = utils_join_path(config.data_dir, He_III_PROFILE_FILE)
 
     global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
 
-    H_profiles = np.load(H_profile_file_path)
+    H_II_profiles = np.load(H_II_profile_file_path)
     T_profiles = np.load(T_profile_file_path)
-    He1_profiles = np.load(He1_profile_file_path)
-    He2_profiles = np.load(He2_profile_file_path)
+    He_II_profiles = np.load(He_II_profile_file_path)
+    He_III_profiles = np.load(He_III_profile_file_path)
     global_parameters = np.load(global_parameter_file_path)
 
     # -----------------------------------------------------------------
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if config.filter_blowouts:
-        H_profiles, T_profiles, He1_profiles, He2_profiles, global_parameters = filter_blowout_profiles(
-            H_profiles, T_profiles, global_parameters, He1_profiles=He1_profiles, He2_profiles=He2_profiles)
+        H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, global_parameters = filter_blowout_profiles(
+            H_II_profiles, T_profiles, global_parameters, He_II_profiles=He_II_profiles, He_III_profiles=He_III_profiles)
 
     if config.filter_parameters:
-        global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles] = filter_cut_parameter_space(
-            global_parameters, [H_profiles, T_profiles, He1_profiles, He2_profiles])
+        global_parameters, [H_II_profiles, T_profiles, He_II_profiles, He_III_profiles] = filter_cut_parameter_space(
+            global_parameters, [H_II_profiles, T_profiles, He_II_profiles, He_III_profiles])
 
     # -----------------------------------------------------------------
     # log space?
     # -----------------------------------------------------------------
     if USE_LOG_PROFILES:
         # add a small number to avoid trouble
-        H_profiles = np.log10(H_profiles + 1.0e-6)
-        He1_profiles = np.log10(He1_profiles + 1.0e-6)
-        He2_profiles = np.log10(He2_profiles + 1.0e-6)
+        H_II_profiles = np.log10(H_II_profiles + 1.0e-6)
+        He_II_profiles = np.log10(He_II_profiles + 1.0e-6)
+        He_III_profiles = np.log10(He_III_profiles + 1.0e-6)
         T_profiles = np.log10(T_profiles)
 
     # -----------------------------------------------------------------
@@ -231,17 +231,17 @@ def main(config):
 
     if SHUFFLE:
         np.random.seed(SHUFFLE_SEED)
-        n_samples = H_profiles.shape[0]
+        n_samples = H_II_profiles.shape[0]
         indices = np.arange(n_samples, dtype=np.int32)
         indices = np.random.permutation(indices)
-        H_profiles = H_profiles[indices]
+        H_II_profiles = H_II_profiles[indices]
         T_profiles = T_profiles[indices]
-        He1_profiles = He1_profiles[indices]
-        He2_profiles = He2_profiles[indices]
+        He_II_profiles = He_II_profiles[indices]
+        He_III_profiles = He_III_profiles[indices]
         global_parameters = global_parameters[indices]
 
     # order must stay same as the profiles are returned and used in the same order through out this script
-    profiles = np.stack((H_profiles, T_profiles, He1_profiles, He2_profiles), axis=1)
+    profiles = np.stack((H_II_profiles, T_profiles, He_II_profiles, He_III_profiles), axis=1)
 
     # -----------------------------------------------------------------
     # data loaders
@@ -322,24 +322,24 @@ def main(config):
         # set model mode
         model.train()
 
-        for i, (h_profiles, t_profiles, he1_profiles, he2_profiles, parameters) in enumerate(train_loader):
+        for i, (H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, parameters) in enumerate(train_loader):
 
             # configure input
-            real_h_profiles = Variable(h_profiles.type(FloatTensor))
-            real_t_profiles = Variable(t_profiles.type(FloatTensor))
-            real_he1_profiles = Variable(he1_profiles.type(FloatTensor))
-            real_he2_profiles = Variable(he2_profiles.type(FloatTensor))
+            real_H_II_profiles = Variable(H_II_profiles.type(FloatTensor))
+            real_T_profiles = Variable(T_profiles.type(FloatTensor))
+            real_He_II_profiles = Variable(He_II_profiles.type(FloatTensor))
+            real_He_III_profiles = Variable(He_III_profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
 
             # zero the gradients on each iteration
             optimizer.zero_grad()
 
             # generate a batch of profiles
-            gen_h_profiles, gen_t_profiles, gen_he1_profiles, gen_he2_profiles = model(real_parameters)
-            loss_h = lstm_loss_function(config.loss_type, gen_h_profiles, real_h_profiles, config)
-            loss_t = lstm_loss_function(config.loss_type, gen_t_profiles, real_t_profiles, config)
-            loss_he1 = lstm_loss_function(config.loss_type, gen_he1_profiles, real_he1_profiles, config)
-            loss_he2 = lstm_loss_function(config.loss_type, gen_he2_profiles, real_he2_profiles, config)
+            gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
+            loss_h = lstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
+            loss_t = lstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
+            loss_he1 = lstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
+            loss_he2 = lstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
 
             loss = loss_h + loss_t + loss_he1 + loss_he2
             loss.backward()

@@ -1,10 +1,10 @@
 # -----------------------------------------------------------------
 # file and directory names
 # -----------------------------------------------------------------
-H_PROFILE_FILE = 'data_Hprofiles.npy'
+H_II_PROFILE_FILE = 'data_Hprofiles.npy'
 T_PROFILE_FILE = 'data_Tprofiles.npy'
-HE1_PROFILE_FILE = 'data_Hprofiles.npy'
-HE2_PROFILE_FILE = 'data_Tprofiles.npy'
+He_II_PROFILE_FILE = 'data_Hprofiles.npy'
+He_III_PROFILE_FILE = 'data_Tprofiles.npy'
 GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
 DATA_PRODUCTS_DIR = 'data_products'
