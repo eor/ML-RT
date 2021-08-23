@@ -4,7 +4,7 @@
 
 BASEURL="https://www.astro.rug.nl/~krause/static/ML-RT/053_data_set/"
 
-FILE1="data_H_profiles.npy"
+FILE1="data_HII_profiles.npy"
 FILE2="data_T_profiles.npy"
 FILE3="data_parameters.npy"
 FILE4="data_HeII_profiles.npy"

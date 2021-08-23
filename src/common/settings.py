@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # file and directory names
 # -----------------------------------------------------------------
-H_II_PROFILE_FILE = 'data_H_profiles.npy'
+H_II_PROFILE_FILE = 'data_HII_profiles.npy'
 T_PROFILE_FILE = 'data_T_profiles.npy'
 He_II_PROFILE_FILE = 'data_HeII_profiles.npy'
 He_III_PROFILE_FILE = 'data_HeIII_profiles.npy'
