@@ -5,6 +5,7 @@ import numpy as np
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import matplotlib as mpl
 from matplotlib import rc
 try:
@@ -67,17 +68,77 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 # Plot a single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
-                        profile_type, prefix, file_type='png', parameters=None, add_errors=True):
+                        profile_type, prefix, profile_order=['H', 'T', 'He_II', 'He_III'],
+                        file_type='png', parameters=None, add_errors=True):
+
+    def get_label_Y(profile_type):
+        if profile_type == 'H':
+            return r'$\log_{10}(x_{H_{II}}) $'
+        elif profile_type == 'T':
+            return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K}) $'
+        elif profile_type == 'He_II':
+            return r'$\log_{10}(x_{He_{II}}) $'
+        elif profile_type == 'He_III':
+            return r'$\log_{10}(x_{He_{III}}) $'
+        else:
+            return r'Physical Unit'
+
+    # convert inputs to usable forms
+    if len(profile_true.shape) != 2:
+        profile_true = profile_true[np.newaxis, :]
+    if len(profile_inferred.shape) != 2:
+        profile_inferred = profile_inferred[np.newaxis, :]
+
+    num_plots = profile_true.shape[0]
 
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
-    fig = plt.figure(figsize=(10, 7))
-    gs = fig.add_gridspec(nrows=2, ncols=1, hspace=0, height_ratios=[3, 1])
-    ax_array = gs.subplots(sharex=True, sharey=False)
+    fig = plt.figure(figsize=(10, 8))
+
+    # compute size of grid ie. rows and columns to fit all the plots
+    rows = int(np.sqrt(num_plots))
+    columns = int(num_plots / rows)
+    # outer grid for the plots
+    outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
 
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
+
+    for i in range(num_plots):
+
+        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.2, hspace=0.0, height_ratios=[3, 1])
+
+        ax0 = fig.add_subplot(inner[0])
+        ax1 = fig.add_subplot(inner[1], sharex=ax0)
+
+        # -----------------------------------------------------------------
+        # first plot (true and inferred profiles)
+        # -----------------------------------------------------------------
+        ax0.plot(profile_true[i], c='green', label='Truth')
+        ax0.plot(profile_inferred[i], c='orange', label='Reconstruction')
+        # if profile_type is set to combined, get Y_label using profile_order,
+        # else, use profile_type directly.
+        if profile_type == 'C':
+            ax0.set_ylabel(get_label_Y(profile_order[i]), fontsize=12)
+        else:
+            ax0.set_ylabel(get_label_Y(profile_type), fontsize=12)
+        ax0.legend(loc='upper right', frameon=False)
+        ax0.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+        ax0.set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
+        ax0.tick_params(axis='both', which='both', right=True, top=True)
+        fig.add_subplot(ax0)
+
+        # -----------------------------------------------------------------
+        # second plot (diff / relative error)
+        # -----------------------------------------------------------------
+        absolute_error = profile_true[i] - profile_inferred[i]
+        ax1.plot(absolute_error, c='black', label='Absolute error', linewidth=0.6)
+        ax1.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+        ax1.set_ylabel(r'Abs error', fontsize=12)
+        ax1.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=12)
+        ax1.set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
+        ax1.tick_params(axis='both', which='both', right=True, top=True)
 
     # -----------------------------------------------------------------
     # add parameters as title
@@ -103,35 +164,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     fig.suptitle(a, fontsize=12)
 
-    # -----------------------------------------------------------------
-    # first plot (true and inferred profiles)
-    # -----------------------------------------------------------------
-    ax_array[0].plot(profile_true, c='green', label='Truth')
-    ax_array[0].plot(profile_inferred, c='orange', label='Reconstruction')
-
-    if profile_type == 'H':
-        ax_array[0].set_ylabel(r'$\log_{10}(x_{H_{II}}) $', fontsize=14)
-    elif profile_type == 'T':
-        ax_array[0].set_ylabel(r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K}) $', fontsize=14)
-    else:
-        ax_array[0].set_ylabel(r'Physical Unit', fontsize=14)
-
-    ax_array[0].legend(loc='upper right', frameon=False)
-    ax_array[0].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-    ax_array[0].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
-    ax_array[0].tick_params(axis='both', which='both', right=True, top=True)
-
-    # -----------------------------------------------------------------
-    # second plot (diff / relative error)
-    # -----------------------------------------------------------------
-    absolute_error = profile_true - profile_inferred
-    ax_array[1].plot(absolute_error, c='black', label='Relative error', linewidth=0.6)
-    ax_array[1].grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-    ax_array[1].set_ylabel(r'Rel error', fontsize=14)
-    ax_array[1].set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=14)
-    ax_array[1].set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
-    ax_array[1].tick_params(axis='both', which='both', right=True, top=True)
-
     mse = utils_compute_mse(profile_true, profile_inferred)
     dtw = utils_compute_dtw(profile_true, profile_inferred)
 
@@ -147,12 +179,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     file_name += '.' + file_type
 
     plt.savefig(os.path.join(output_dir, file_name))
-
-    # -----------------------------------------------------------------
-    # clean up, necessary when making lots of plots
-    # -----------------------------------------------------------------
-    for ax in ax_array:
-        ax.clear()
     plt.close('all')
 
 
