@@ -168,5 +168,3 @@ class CLSTM(nn.Module):
 #         torch.nn.init.xavier_normal_(cell_state)
 
 #         return (hidden_state, cell_state)
-
-

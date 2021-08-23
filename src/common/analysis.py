@@ -94,7 +94,11 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
     # 2. compute MSE
-    mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+    if config.profile_type == 'C':
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=(2, 1))
+    else:
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+
     mse_array = np.log10(mse_array + 1e-11)
 
     # 3. find k lowest and largest MSE values and their respective indexes

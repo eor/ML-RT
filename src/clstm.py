@@ -138,10 +138,13 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             loss_mse += mse
 
             if save_results:
+                # shape of profile_gen and profile_true: (num_samples, num_profiles, length_of_profiles)
+                profiles_gen = torch.stack((gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles), dim=1)
+                profiles_true = torch.stack((real_H_II_profiles, real_T_profiles, real_He_II_profiles, real_He_III_profiles), dim=1)
                 # collate data
                 profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
                 profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
-                parameters_true_all = torch.cat((parameters_true_all, parameters), 0)
+                parameters_true_all = torch.cat((parameters_true_all, real_parameters), 0)
 
     # mean of computed losses
     loss_mse = loss_mse / len(data_loader)
@@ -151,7 +154,6 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
         print("Results: MSE: %e DTW %e" % (loss_mse, loss_dtw))
 
     if save_results:
-        # move data to CPU, re-scale parameters, and write everything to file
         # move data to CPU, re-scale parameters, and write everything to file
         profiles_gen_all = profiles_gen_all.cpu().numpy()
         profiles_true_all = profiles_true_all.cpu().numpy()
@@ -164,12 +166,13 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
         else:
             prefix = 'test'
 
+        # use profile type 'C' to save the combined profiles
         utils_save_test_data(
             parameters=parameters_true_all,
             profiles_true=profiles_true_all,
             profiles_gen=profiles_gen_all,
             path=path,
-            profile_choice=config.profile_type,
+            profile_choice='C',
             epoch=current_epoch,
             prefix=prefix
         )
@@ -435,8 +438,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Save the best model and the final model
     # -----------------------------------------------------------------
-    utils_save_model(best_model.state_dict(), data_products_path,
-                     config.profile_type, best_epoch_mse, best_model=True)
+    utils_save_model(best_model.state_dict(), data_products_path, 'C', best_epoch_mse, best_model=True)
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use
@@ -496,10 +498,6 @@ if __name__ == "__main__":
     parser.add_argument("--testing_interval", type=int,
                         default=100, help="epoch interval between testing runs")
 
-    # physics related arguments
-    parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
-                        help='Select H for neutral hydrogen fraction or T for temperature profiles (default: H)')
-
     parser.add_argument("--profile_len", type=int, default=1500,
                         help="number of profile grid points")
 
@@ -549,6 +547,9 @@ if __name__ == "__main__":
     parser.set_defaults(analysis=True)
 
     my_config = parser.parse_args()
+
+    # set profile type in config to combined mode
+    setattr(my_config, 'profile_type', 'C')
 
     # sanity checks
     if my_config.data_dir is None:
