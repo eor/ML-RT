@@ -103,8 +103,9 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
 
     model.eval()
 
-    loss_dtw = 0.0
-    loss_mse = 0.0
+    loss_dtw, loss_mse = 0.0, 0.0
+    loss_dtw_H_II, loss_dtw_T, loss_dtw_He_II, loss_dtw_He_III = 0.0, 0.0, 0.0, 0.0
+    loss_mse_H_II, loss_mse_T, loss_mse_He_II, loss_mse_He_III = 0.0, 0.0, 0.0, 0.0
 
     with torch.no_grad():
         for i, (H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, parameters) in enumerate(data_loader):
@@ -126,7 +127,11 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             dtw_loss_He_III = clstm_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
 
             dtw = dtw_loss_H_II + dtw_loss_T + dtw_loss_He_II + dtw_loss_He_III
-            loss_dtw += dtw
+            loss_dtw += dtw.item()
+            loss_dtw_H_II += dtw_loss_H_II.item()
+            loss_dtw_T += dtw_loss_T.item()
+            loss_dtw_He_II += dtw_loss_He_II.item()
+            loss_dtw_He_III += dtw_loss_He_III.item()
 
             # compute loss via MSE:
             mse_loss_H_II = clstm_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
@@ -135,7 +140,11 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             mse_loss_He_III = clstm_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
 
             mse = mse_loss_H_II + mse_loss_T + mse_loss_He_II + mse_loss_He_III
-            loss_mse += mse
+            loss_mse += mse.item()
+            loss_mse_H_II += mse_loss_H_II.item()
+            loss_mse_T += mse_loss_T.item()
+            loss_mse_He_II += mse_loss_He_II.item()
+            loss_mse_He_III += mse_loss_He_III.item()
 
             if save_results:
                 # shape of profile_gen and profile_true: (num_samples, num_profiles, length_of_profiles)
@@ -147,11 +156,27 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
                 parameters_true_all = torch.cat((parameters_true_all, real_parameters), 0)
 
     # mean of computed losses
-    loss_mse = loss_mse / len(data_loader)
-    loss_dtw = loss_dtw / len(data_loader)
+    loss_mse /= (4 * len(data_loader))
+    loss_dtw /= (4 * len(data_loader))
+
+    loss_dtw_H_II /= len(data_loader)
+    loss_dtw_T /= len(data_loader)
+    loss_dtw_He_II /= len(data_loader)
+    loss_dtw_He_III /= len(data_loader)
+    stacked_dtw_loss = np.stack((loss_dtw_H_II, loss_dtw_T, loss_dtw_He_II, loss_dtw_He_III))
+
+    loss_mse_H_II /= len(data_loader)
+    loss_mse_T /= len(data_loader)
+    loss_mse_He_II /= len(data_loader)
+    loss_mse_He_III /= len(data_loader)
+    stacked_mse_loss = np.stack((loss_mse_H_II, loss_mse_T, loss_mse_He_II, loss_mse_He_III))
 
     if print_results:
-        print("Results: MSE: %e DTW %e" % (loss_mse, loss_dtw))
+        print("Results: AVERAGE MSE: %e DTW %e" % (loss_mse, loss_dtw))
+        print("Results: H_II_profiles MSE: %e DTW %e" % (loss_mse_H_II, loss_dtw_H_II))
+        print("Results: T_profiles MSE: %e DTW %e" % (loss_mse_T, loss_dtw_T))
+        print("Results: He_II_profiles MSE: %e DTW %e" % (loss_mse_He_II, loss_dtw_He_II))
+        print("Results: He_III_profiles MSE: %e DTW %e" % (loss_mse_He_III, loss_dtw_He_III))
 
     if save_results:
         # move data to CPU, re-scale parameters, and write everything to file
@@ -177,7 +202,7 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             prefix=prefix
         )
 
-    return loss_mse.item(), loss_dtw.item()
+    return loss_mse, loss_dtw, stacked_mse_loss, stacked_dtw_loss
 
 # -----------------------------------------------------------------
 #  Main
@@ -294,9 +319,12 @@ def main(config):
     # -----------------------------------------------------------------
     # book keeping arrays
     # -----------------------------------------------------------------
-    train_loss_array = np.empty(0)
-    val_loss_mse_array = np.empty(0)
-    val_loss_dtw_array = np.empty(0)
+    avg_train_loss_array = np.empty(0)
+    combined_train_loss_array = np.empty((0, 4))
+    avg_val_loss_mse_array = np.empty(0)
+    combined_val_loss_mse_array = np.empty((0, 4))
+    avg_val_loss_dtw_array = np.empty(0)
+    combined_val_loss_dtw_array = np.empty((0, 4))
 
     # -----------------------------------------------------------------
     # keep the model with min validation loss
@@ -330,6 +358,10 @@ def main(config):
     for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss = 0
+        epoch_loss_H_II = 0
+        epoch_loss_T = 0
+        epoch_loss_He_II = 0
+        epoch_loss_He_III = 0
 
         # set model mode
         model.train()
@@ -358,14 +390,28 @@ def main(config):
             loss = loss_H_II + loss_T + loss_He_II + loss_He_III
             loss.backward()
             optimizer.step()
+
+            # sum the loss values
             epoch_loss += loss.item()
+            epoch_loss_H_II = loss_H_II.item()
+            epoch_loss_T = loss_T.item()
+            epoch_loss_He_II = loss_He_II.item()
+            epoch_loss_He_III = loss_He_III.item()
+            break
 
         # end-of-epoch book keeping
-        train_loss = epoch_loss / len(train_loader)
-        train_loss_array = np.append(train_loss_array, train_loss)
+        train_loss = epoch_loss / (len(train_loader) * 4)
+        avg_train_loss_array = np.append(avg_train_loss_array, train_loss)
+
+        epoch_loss_H_II /= len(train_loader)
+        epoch_loss_T /= len(train_loader)
+        epoch_loss_He_II /= len(train_loader)
+        epoch_loss_He_III /= len(train_loader)
+        stacked_train_loss = np.stack((epoch_loss_H_II, epoch_loss_T, epoch_loss_He_II, epoch_loss_He_III))
+        combined_train_loss_array = np.concatenate((combined_train_loss_array, stacked_train_loss.reshape(1, -1)), axis=0)
 
         # validation & save the best performing model
-        val_loss_mse, val_loss_dtw = clstm_run_evaluation(
+        val_loss_mse, val_loss_dtw, stacked_loss_mse, stacked_loss_dtw = clstm_run_evaluation(
             current_epoch=epoch,
             data_loader=val_loader,
             model=model,
@@ -376,8 +422,10 @@ def main(config):
             best_model=False
         )
 
-        val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
-        val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
+        avg_val_loss_mse_array = np.append(avg_val_loss_mse_array, val_loss_mse)
+        avg_val_loss_dtw_array = np.append(avg_val_loss_dtw_array, val_loss_dtw)
+        combined_val_loss_mse_array = np.concatenate((combined_val_loss_mse_array, stacked_loss_mse.reshape(1, -1)), axis=0)
+        combined_val_loss_dtw_array = np.concatenate((combined_val_loss_dtw_array, stacked_loss_dtw.reshape(1, -1)), axis=0)
 
         if val_loss_mse < best_loss_mse:
             best_loss_mse = val_loss_mse
@@ -420,20 +468,36 @@ def main(config):
     #     'optimizer': optimizer.state_dict(),
     #     }
 
-    utils_save_loss(train_loss_array, data_products_path,
+    # save train and validation losses
+    utils_save_loss(combined_train_loss_array, data_products_path,
                     config.profile_type, config.n_epochs, prefix='train')
+    utils_save_loss(avg_train_loss_array, data_products_path,
+                    config.profile_type, config.n_epochs, prefix='train_avg')
+
     if config.loss_type == 'MSE':
-        utils_save_loss(val_loss_mse_array, data_products_path,
+        utils_save_loss(combined_val_loss_mse_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
+        utils_save_loss(avg_val_loss_mse_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val_avg')
     else:
-        utils_save_loss(val_loss_dtw_array, data_products_path,
+        utils_save_loss(combined_val_loss_dtw_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
+        utils_save_loss(avg_val_loss_dtw_array, data_products_path,
+                        config.profile_type, config.n_epochs, prefix='val_avg')
 
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    best_test_mse, best_test_dtw = clstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path,
-                                                       config, print_results=True, save_results=True, best_model=True)
+    best_test_mse, best_test_dtw, stacked_test_loss_mse, stacked_test_loss_dtw = clstm_run_evaluation(
+        best_epoch_mse,
+        test_loader,
+        best_model,
+        data_products_path,
+        config,
+        print_results=True,
+        save_results=True,
+        best_model=True
+    )
 
     # -----------------------------------------------------------------
     # Save the best model and the final model
@@ -451,7 +515,16 @@ def main(config):
     setattr(config, 'best_val_dtw', best_loss_dtw)
 
     setattr(config, 'best_test_mse', best_test_mse)
+    setattr(config, 'best_test_mse_H_II', stacked_test_loss_mse[0])
+    setattr(config, 'best_test_mse_T', stacked_test_loss_mse[1])
+    setattr(config, 'best_test_mse_He_II', stacked_test_loss_mse[2])
+    setattr(config, 'best_test_mse_He_III', stacked_test_loss_mse[3])
+
     setattr(config, 'best_test_dtw', best_test_dtw)
+    setattr(config, 'best_test_dtw_H_II', stacked_test_loss_dtw[0])
+    setattr(config, 'best_test_dtw_T', stacked_test_loss_dtw[1])
+    setattr(config, 'best_test_dtw_He_II', stacked_test_loss_dtw[2])
+    setattr(config, 'best_test_dtw_He_III', stacked_test_loss_dtw[3])
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
@@ -473,10 +546,11 @@ def main(config):
     # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
-
-        analysis_loss_plot(config)
+        # [TODO]: to be fixed for CLSTM
+        # analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=10, prefix='best')
-        analysis_parameter_space_plot(config, prefix='best')
+        # [TODO]: to be fixed for CLSTM
+        # analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------

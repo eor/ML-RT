@@ -98,7 +98,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     # compute size of grid ie. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
-    columns = int(num_plots / rows)
+    columns = int(np.ceil(num_plots / rows))
     # outer grid for the plots
     outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
 
