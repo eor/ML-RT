@@ -397,7 +397,6 @@ def main(config):
             epoch_loss_T = loss_T.item()
             epoch_loss_He_II = loss_He_II.item()
             epoch_loss_He_III = loss_He_III.item()
-            break
 
         # end-of-epoch book keeping
         train_loss = epoch_loss / (len(train_loader) * 4)
@@ -570,7 +569,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=100, help="epoch interval between testing runs")
+                        default=40, help="epoch interval between testing runs")
 
     parser.add_argument("--profile_len", type=int, default=1500,
                         help="number of profile grid points")
@@ -603,7 +602,7 @@ if __name__ == "__main__":
                         help="use blowout filter on data set (default)")
     parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
                         help="do not use blowout filter on data set")
-    parser.set_defaults(filter_blowouts=True)
+    parser.set_defaults(filter_blowouts=False)
 
     # cut parameter space
     parser.add_argument("--filter_parameters", dest='analysis', action='store_true',

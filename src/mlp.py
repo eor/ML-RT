@@ -512,7 +512,7 @@ if __name__ == "__main__":
                         help="use blowout filter on data set (default)")
     parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
                         help="do not use blowout filter on data set")
-    parser.set_defaults(filter_blowouts=True)
+    parser.set_defaults(filter_blowouts=False)
 
     # cut parameter space
     parser.add_argument("--filter_parameters", dest='analysis', action='store_true',
