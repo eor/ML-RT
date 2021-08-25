@@ -45,9 +45,12 @@ def analysis_loss_plot(config, gan=False):
     plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
     if not gan:
-
-        train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-        val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        if config.profile_type == 'C':
+            train_loss_file = 'train_avg_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+            val_loss_file = 'val_avg_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        else:
+            train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+            val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, train_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, val_loss_file))
@@ -195,6 +198,7 @@ if __name__ == '__main__':
     # lr = 0.001
     k = 5
     # profile = config.profile_type
+    analysis_loss_plot(config, gan=False)
     analysis_auto_plot_profiles(config, k=10, prefix='best')
-
+    analysis_parameter_space_plot(config, prefix='best')
     print('\n Completed! \n')

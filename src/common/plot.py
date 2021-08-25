@@ -241,7 +241,11 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
-    mse_array = (np.square(profiles_true - profiles_gen)).mean(axis=1)
+    if profile_type == 'C':
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=(2, 1))
+    else:
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+
     # mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
     mse_array = np.log10(mse_array + 1e-11)
 
