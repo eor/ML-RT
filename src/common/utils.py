@@ -6,7 +6,10 @@ import torch.nn.functional as F
 import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
-from common.soft_dtw import SoftDTW as SoftDTW_CPU
+try:
+    from common.soft_dtw import SoftDTW as SoftDTW_CPU
+except ImportError:
+    from soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
@@ -144,10 +147,10 @@ def utils_save_model(state, path, profile_choice, n_epoch, best_model=False, fil
 
     # if no file name is provided, construct one here
     if file_name is None:
-        file_name = 'model_%s_%d_epochs.pth.tar'%(profile_choice, n_epoch)
+        file_name = 'model_%s_%d_epochs.pth.tar' % (profile_choice, n_epoch)
 
         if best_model:
-            file_name = 'best_'+ file_name
+            file_name = 'best_' + file_name
 
     path = osp.join(path, file_name)
     torch.save(state, path)
@@ -231,7 +234,7 @@ def utils_save_config_to_log(config, file_name='log'):
             f.write(line)
 
         time = utils_get_current_timestamp()
-        f.write('\ncurrent time stamp\t'+ time + '\n')
+        f.write('\ncurrent time stamp\t' + time + '\n')
 
 
 # -----------------------------------------------------------------

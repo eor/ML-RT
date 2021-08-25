@@ -31,7 +31,6 @@ PLOT_FILE_TYPE = 'pdf'  # or 'png'
 #  setup for the loss function plots
 # -----------------------------------------------------------------
 def analysis_loss_plot(config, gan=False):
-
     """
     function to load and plot the training and validation loss data
 
@@ -45,16 +44,19 @@ def analysis_loss_plot(config, gan=False):
     plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
     if not gan:
-
-        train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-        val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        if config.profile_type == 'C':
+            train_loss_file = 'train_avg_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+            val_loss_file = 'val_avg_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+        else:
+            train_loss_file = 'train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+            val_loss_file = 'val_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, train_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, val_loss_file))
 
     else:
-        gen_loss_file = 'G_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        gen_loss_file = 'G_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
@@ -190,11 +192,13 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
 
     # F: local example
-    # base = '../test/run_2021_08_01__17_39_48'
-    # config = utils_load_config(base)
-    # # lr = 0.001
-    # k = 5
+    base = '../test/run_2021_08_24__10_09_05'
+    config = utils_load_config(base)
+    # lr = 0.001
+    k = 5
     # profile = config.profile_type
-    # analysis_auto_plot_profiles(config, k=k, prefix='test')
+    analysis_loss_plot(config, gan=False)
+    analysis_auto_plot_profiles(config, k=10, prefix='best')
+    analysis_parameter_space_plot(config, prefix='best')
 
     print('\n Completed! \n')

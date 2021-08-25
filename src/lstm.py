@@ -474,7 +474,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=30, help="epoch interval between testing runs")
+                        default=50, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
@@ -511,7 +511,7 @@ if __name__ == "__main__":
                         help="use blowout filter on data set (default)")
     parser.add_argument("--no-filter_blowouts", dest='analysis', action='store_false',
                         help="do not use blowout filter on data set")
-    parser.set_defaults(filter_blowouts=True)
+    parser.set_defaults(filter_blowouts=False)
 
     # cut parameter space
     parser.add_argument("--filter_parameters", dest='analysis', action='store_true',
@@ -551,7 +551,7 @@ if __name__ == "__main__":
         parameter_names_latex = ps.p8_names_latex
 
     if my_config.model not in ['LSTM1', 'LSTM2']:
-        my_config.model = 'LSTM1'            # TODO: change this
+        my_config.model = 'LSTM1'
 
     # print summary
     print("\nUsed parameters:\n")

@@ -98,7 +98,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     # compute size of grid ie. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
-    columns = int(num_plots / rows)
+    columns = int(np.ceil(num_plots / rows))
     # outer grid for the plots
     outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
 
@@ -115,6 +115,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         # -----------------------------------------------------------------
         # first plot (true and inferred profiles)
         # -----------------------------------------------------------------
+        if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) < 1:
+            ax0.set_ylim(-5, 5)
         ax0.plot(profile_true[i], c='green', label='Truth')
         ax0.plot(profile_inferred[i], c='orange', label='Reconstruction')
         # if profile_type is set to combined, get Y_label using profile_order,
@@ -239,7 +241,11 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
-    mse_array = (np.square(profiles_true - profiles_gen)).mean(axis=1)
+    if profile_type == 'C':
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=(2, 1))
+    else:
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+
     # mse_array = (np.square( 10**(profiles_true) - 10**(profiles_gen))).mean(axis=1)
     mse_array = np.log10(mse_array + 1e-11)
 
