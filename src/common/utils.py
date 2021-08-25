@@ -6,7 +6,10 @@ import torch.nn.functional as F
 import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
-from common.soft_dtw import SoftDTW as SoftDTW_CPU
+try:
+    from common.soft_dtw import SoftDTW as SoftDTW_CPU
+except ImportError:
+    from soft_dtw import SoftDTW as SoftDTW_CPU
 
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters

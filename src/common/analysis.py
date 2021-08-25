@@ -190,11 +190,11 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
 
     # F: local example
-    # base = '../test/run_2021_08_01__17_39_48'
-    # config = utils_load_config(base)
-    # # lr = 0.001
-    # k = 5
+    base = '../test/run_2021_08_24__10_09_05'
+    config = utils_load_config(base)
+    # lr = 0.001
+    k = 5
     # profile = config.profile_type
-    # analysis_auto_plot_profiles(config, k=k, prefix='test')
+    analysis_auto_plot_profiles(config, k=10, prefix='best')
 
     print('\n Completed! \n')
