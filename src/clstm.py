@@ -545,11 +545,9 @@ def main(config):
     # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
-        # [TODO]: to be fixed for CLSTM
-        # analysis_loss_plot(config)
+        analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=10, prefix='best')
-        # [TODO]: to be fixed for CLSTM
-        # analysis_parameter_space_plot(config, prefix='best')
+        analysis_parameter_space_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------
@@ -569,7 +567,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=40, help="epoch interval between testing runs")
+                        default=50, help="epoch interval between testing runs")
 
     parser.add_argument("--profile_len", type=int, default=1500,
                         help="number of profile grid points")
@@ -578,9 +576,6 @@ if __name__ == "__main__":
                         help="number of RT parameters (5 or 8)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='LSTM1', metavar='(string)',
-                        help='Pick a model: LSTM1 (default) or LSTM2')
-
     parser.add_argument('--loss_type', type=str, default='MSE', metavar='(string)',
                         help='Pick a loss function: MSE (default) or DTW')
 
@@ -623,6 +618,7 @@ if __name__ == "__main__":
 
     # set profile type in config to combined mode
     setattr(my_config, 'profile_type', 'C')
+    setattr(my_config, 'model', 'CLSTM')
 
     # sanity checks
     if my_config.data_dir is None:
@@ -643,9 +639,6 @@ if __name__ == "__main__":
     if my_config.n_parameters == 8:
         parameter_limits = ps.p8_limits
         parameter_names_latex = ps.p8_names_latex
-
-    if my_config.model not in ['LSTM1', 'LSTM2']:
-        my_config.model = 'LSTM1'            # TODO: change this
 
     # print summary
     print("\nUsed parameters:\n")

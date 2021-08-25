@@ -115,8 +115,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         # -----------------------------------------------------------------
         # first plot (true and inferred profiles)
         # -----------------------------------------------------------------
-        if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) <1:
-            ax0.set_ylim(-5,5)
+        if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) < 1:
+            ax0.set_ylim(-5, 5)
         ax0.plot(profile_true[i], c='green', label='Truth')
         ax0.plot(profile_inferred[i], c='orange', label='Reconstruction')
         # if profile_type is set to combined, get Y_label using profile_order,

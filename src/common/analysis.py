@@ -31,7 +31,6 @@ PLOT_FILE_TYPE = 'pdf'  # or 'png'
 #  setup for the loss function plots
 # -----------------------------------------------------------------
 def analysis_loss_plot(config, gan=False):
-
     """
     function to load and plot the training and validation loss data
 
@@ -46,18 +45,18 @@ def analysis_loss_plot(config, gan=False):
 
     if not gan:
         if config.profile_type == 'C':
-            train_loss_file = 'train_avg_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-            val_loss_file = 'val_avg_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+            train_loss_file = 'train_avg_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+            val_loss_file = 'val_avg_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
         else:
-            train_loss_file = 'train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-            val_loss_file = 'val_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+            train_loss_file = 'train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+            val_loss_file = 'val_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, train_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, val_loss_file))
 
     else:
-        gen_loss_file = 'G_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
-        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy'%(config.profile_type, config.n_epochs)
+        gen_loss_file = 'G_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
@@ -201,4 +200,5 @@ if __name__ == '__main__':
     analysis_loss_plot(config, gan=False)
     analysis_auto_plot_profiles(config, k=10, prefix='best')
     analysis_parameter_space_plot(config, prefix='best')
+
     print('\n Completed! \n')

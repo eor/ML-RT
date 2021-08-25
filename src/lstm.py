@@ -474,7 +474,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=30, help="epoch interval between testing runs")
+                        default=50, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
@@ -551,7 +551,7 @@ if __name__ == "__main__":
         parameter_names_latex = ps.p8_names_latex
 
     if my_config.model not in ['LSTM1', 'LSTM2']:
-        my_config.model = 'LSTM1'            # TODO: change this
+        my_config.model = 'LSTM1'
 
     # print summary
     print("\nUsed parameters:\n")
