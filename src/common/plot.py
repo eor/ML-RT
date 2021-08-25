@@ -257,6 +257,9 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     else:
         marker_size = 15
 
+    tick_label_size = 11
+    label_size = 18
+
     # -----------------------------------------------------------------
     # set up main plot
     # -----------------------------------------------------------------
@@ -280,8 +283,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
                 if i == 0:
                     # bottom row
-                    ax_array[N - 2 - i, j - 1].tick_params(axis='x', which='major', labelsize=12)
-                    ax_array[N - 2 - i, j - 1].set_xlabel(xlabel=r'$\textrm{%s}$' % p_labels[j], size=20, labelpad=10)
+                    ax_array[N - 2 - i, j - 1].tick_params(axis='x', which='major', labelsize=tick_label_size)
+                    ax_array[N - 2 - i, j - 1].set_xlabel(xlabel=r'$\textrm{%s}$' % p_labels[j], size=label_size, labelpad=10)
 
                     if i != j - 1:
                         # turn of labels and ticks all panels except the leftmost panel
@@ -290,8 +293,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 
                 if i == j - 1:
                     # leftmost panel in each row
-                    ax_array[N - 2 - i, j - 1].tick_params(axis='y', which='major', labelsize=12)
-                    ax_array[N - 2 - i, j - 1].set_ylabel(ylabel=r'$\textrm{%s}$' % p_labels[i], size=20, labelpad=10)
+                    ax_array[N - 2 - i, j - 1].tick_params(axis='y', which='major', labelsize=tick_label_size)
+                    ax_array[N - 2 - i, j - 1].set_ylabel(ylabel=r'$\textrm{%s}$' % p_labels[i], size=label_size, labelpad=10)
 
                 if (i != 0) and (i != j - 1):
                     # turn of labels & ticks for all panels not in the bottom row and not leftmost
