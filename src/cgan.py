@@ -248,8 +248,7 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
                                        global_parameters,
                                        mode=config.gen_parameter_mode)
     gen_parameters = Variable(FloatTensor(p))
-
-    # generate a batch of profiles
+    
     gen_profiles = generator(latent_vector, gen_parameters)
 
     # measures generator's ability to fool the discriminator
@@ -394,7 +393,7 @@ def main(config):
     if config.gen_model == 'GEN2':
         generator = Generator2(config)
     elif config.gen_model == 'GEN3':
-        generator = Generator3(config)
+        generator = Generator3(config, device)
     else:
         generator = Generator1(config)
 

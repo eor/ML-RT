@@ -199,11 +199,13 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
 
     # F: local example
-    base = '../test/paper/run_LSTM1_DTW_30H'
+    base = '../test/paper/run_CVAE1_DTW_31H'
     config = utils_load_config(base)
     k = 5
 #     analysis_loss_plot(config, gan=False)
-    analysis_auto_plot_profiles(config, k=10, base_path=base, prefix='test', epoch=283)
-    analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
+#     analysis_auto_plot_profiles(config, k=10, base_path=base, prefix='test', epoch=283)
+#     analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
+    analysis_auto_plot_profiles(config, k=15, base_path=base, prefix='best')
+    analysis_parameter_space_plot(config, base_path=base, prefix='best')
 
     print('\n Completed! \n')
