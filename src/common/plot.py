@@ -69,7 +69,7 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
                         profile_type, prefix, profile_order=['H', 'T', 'He_II', 'He_III'],
-                        file_type='png', parameters=None, add_errors=True):
+                        file_type='pdf', parameters=None, add_errors=True):
 
     def get_label_Y(profile_type):
         if profile_type == 'H':

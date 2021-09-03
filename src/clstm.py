@@ -297,12 +297,9 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    if config.model == 'LSTM1':
-        model = CLSTM(config, device)
-        print('\n\tusing model CLSTM\n')
-    else:
-        model = LSTM2(config, device)
-        print('\n\tusing model LSTM2\n')
+    model = CLSTM(config, device)
+    print('\n\tusing model CLSTM\n')
+
 
     if cuda:
         model.cuda()
@@ -567,7 +564,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=50, help="epoch interval between testing runs")
+                        default=30, help="epoch interval between testing runs")
 
     parser.add_argument("--profile_len", type=int, default=1500,
                         help="number of profile grid points")

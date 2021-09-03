@@ -76,14 +76,17 @@ def analysis_loss_plot(config, gan=False):
 # -----------------------------------------------------------------
 # Automatically plot test profiles
 # -----------------------------------------------------------------
-def analysis_auto_plot_profiles(config, k=5, prefix='test'):
+def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoch=None):
 
-    # 1. read data
-    data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
-    plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
+    if base_path is not None:
+        data_dir_path = osp.join(base_path, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(base_path, PLOT_DIR)
+    else:
+        data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
     if prefix == 'test':
-        epoch = config.n_epochs
+        epoch = epoch
     elif prefix == 'best':
         epoch = config.best_epoch
 
@@ -151,16 +154,20 @@ def analysis_auto_plot_profiles(config, k=5, prefix='test'):
 # -----------------------------------------------------------------
 #  generate parameter space plots
 # -----------------------------------------------------------------
-def analysis_parameter_space_plot(config, prefix='test'):
+def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=None):
 
     print('Producing parameter space - MSE plot')
 
     # 1. read data
-    data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
-    plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
+    if base_path is not None:
+        data_dir_path = osp.join(base_path, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(base_path, PLOT_DIR)
+    else:
+        data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
 
     if prefix == 'test':
-        epoch = config.n_epochs
+        epoch = epoch
     elif prefix == 'best':
         epoch = config.best_epoch
 
@@ -192,13 +199,11 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
 
     # F: local example
-    base = '../test/run_2021_08_24__10_09_05'
+    base = '../test/paper/run_LSTM1_DTW_30H'
     config = utils_load_config(base)
-    # lr = 0.001
     k = 5
-    # profile = config.profile_type
-    analysis_loss_plot(config, gan=False)
-    analysis_auto_plot_profiles(config, k=10, prefix='best')
-    analysis_parameter_space_plot(config, prefix='best')
+#     analysis_loss_plot(config, gan=False)
+    analysis_auto_plot_profiles(config, k=10, base_path=base, prefix='test', epoch=283)
+    analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
 
     print('\n Completed! \n')
