@@ -52,7 +52,7 @@ else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 
-def cvae_loss_function(loss_function, gen_x, real_x, mu, log_var, config):
+def cvae_loss_function(loss_function, gen_x, real_x, mu, log_var, config, mode='train'):
     """
     Loss function for the CVAE contains two components: 1) MSE or DTW to quantify the difference between
     input and output, adn 2) the KLD to force the autoencoder to be more effective, see also
@@ -79,10 +79,12 @@ def cvae_loss_function(loss_function, gen_x, real_x, mu, log_var, config):
             loss = soft_dtw_loss(gen_x, real_x.view(-1, config.profile_len)).mean()
     else:
         loss = F.mse_loss(input=gen_x, target=real_x.view(-1, config.profile_len), reduction='mean')
+    
+    if mode == 'train':
+        KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+        loss = loss + KLD
 
-    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-
-    return loss + KLD
+    return loss
 
 
 def force_stop_signal_handler(sig, frame):
@@ -125,7 +127,7 @@ def cvae_train(model, optimizer, train_loader, config):
         gen_profiles, mu, log_var = model(real_profiles, real_parameters)
 
         # estimate loss
-        loss = cvae_loss_function(config.loss_type, gen_profiles, real_profiles, mu, log_var, config)
+        loss = cvae_loss_function(config.loss_type, gen_profiles, real_profiles, mu, log_var, config, mode='train')
 
         train_loss += loss.item()    # average loss per batch
 
@@ -188,11 +190,11 @@ def cvae_run_evaluation(current_epoch, data_loader, model, path, config,
             profiles_gen, mu, log_var = model(profiles_true, parameters)
 
             # compute loss via soft dtw
-            dtw = cvae_loss_function('DTW', profiles_true, profiles_gen, mu, log_var, config)
+            dtw = cvae_loss_function('DTW', profiles_true, profiles_gen, mu, log_var, config, mode='eval')
             loss_dtw += dtw
 
             # compute loss via MSE:
-            mse = cvae_loss_function('MSE', profiles_true, profiles_gen, mu, log_var, config)
+            mse = cvae_loss_function('MSE', profiles_true, profiles_gen, mu, log_var, config, mode='eval')
             loss_mse += mse
 
             if save_results:
@@ -472,7 +474,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_auto_plot_profiles(config, k=15, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 

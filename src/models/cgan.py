@@ -104,14 +104,15 @@ class Generator3(nn.Module):
 
         # Args: expects input of shape: (batch_size, 2*2*time_series_length)
         #       output of shape: (batch_size, time_series_length)
-        self.out_layer = nn.Linear(2 * 2* self.seq_len, self.seq_len)
+        self.out_layer = nn.Linear(2 * 2 * self.seq_len, self.seq_len)
 
-    def forward(self, x):
+    def forward(self, noise, parameters):
 
         # initialise hidden states for the lstm
-        (hidden_state, cell_state) = self.init_hidden_state(batch_size=x.size()[0])
+        generator_input = torch.cat((noise, parameters), -1)
 
-        x = self.linear_model(x)
+        (hidden_state, cell_state) = self.init_hidden_state(batch_size=generator_input.size()[0])
+        x = self.linear_model(generator_input)
         # x.size(): (batch_size, 2*time_series_length) => (batch_size, 2*time_series_length, input_size)
         x = torch.unsqueeze(x, dim=2)
         x, (hidden_state, cell_state) = self.lstm(x, (hidden_state, cell_state))
