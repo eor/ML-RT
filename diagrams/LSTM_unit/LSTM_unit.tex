@@ -1,0 +1,295 @@
+% \documentclass[a4paper,landscape]{article}
+
+\documentclass{standalone}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{shapes.geometric}
+
+
+\pgfdeclarelayer{edgelayer}
+\pgfdeclarelayer{nodelayer}
+\pgfsetlayers{main, nodelayer, edgelayer}
+
+\tikzstyle{none}=[inner sep=0pt]
+
+% \input{RNN.tikzstyles}
+
+\definecolor{my_pink}{HTML}{f2e6ff}
+\definecolor{my_purple}{HTML}{6600CC}
+
+\definecolor{my_orange}{HTML}{ffe6b3}
+\definecolor{my_dark_orange}{HTML}{ff9900}
+
+\definecolor{my_dark_green}{HTML}{145214}
+\definecolor{my_light_green}{HTML}{c2f0c2}
+
+
+\definecolor{my_red}{HTML}{990000}
+\definecolor{dark_green}{HTML}{0C5600}
+\definecolor{dark_blue}{HTML}{086565}
+\definecolor{light_blue}{HTML}{B5E8E8}
+
+\def\yOne{-5.5}
+\def\yTwo{-13.0}
+
+\begin{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Block style definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Node styles
+% \tikzstyle{input_output}=[fill={rgb,255: red,70; green,129; blue,255}, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+
+\tikzstyle{hidden_layer_unit}=[fill={rgb,255: red,147; green,255; blue,255}, draw={rgb,255: red,58; green,123; blue,180}, shape=circle, minimum height=18mm]
+
+\tikzstyle{point_operator}=[fill=my_orange, draw=my_dark_orange, shape=circle, minimum height=7mm]
+\tikzstyle{point_operator_oval}=[fill=my_orange, draw=my_dark_orange, shape=ellipse, minimum height=7mm]
+
+\tikzstyle{nn_layer_operator}=[fill=my_light_green, draw=my_dark_green, shape=rectangle, minimum height=7mm]
+
+
+
+\tikzstyle{text_on_pink}=[fill=my_pink, draw=my_pink, shape=rectangle, text=my_red]
+\tikzstyle{text_on_white}=[fill=white, draw=white, shape=rectangle]
+
+
+
+\tikzstyle{ellipsis}=[fill=black, draw=black, shape=circle]
+\tikzstyle{rectangle}=[fill={rgb,255: red,98; green,255; blue,161}, draw=black, shape=rectangle]
+
+% Edge styles
+\tikzstyle{block}=[{|-|}]
+
+\tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}, line width=0.6mm]
+
+\tikzstyle{arrow_connector}=[->, >=stealth, draw={rgb,255: red,184; green,184; blue,184}, line width=0.6mm]
+
+\tikzstyle{red_connector_arrow}=[->, >=stealth, draw=my_red, line width=0.6mm]
+\tikzstyle{red_connector}=[-,  draw=my_red, line width=0.6mm]
+
+
+\tikzstyle{secondary_concetor}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
+
+
+% LSTM cell
+\tikzstyle{LSTM} = [ellipse, draw=my_purple, fill=my_pink, text width=10mm, line width=0.2mm, text=my_purple, text centered, minimum height=9mm]
+
+% \pagestyle{empty}
+
+%\input{RNN.tikz}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% nodes and edges
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tikzpicture}
+
+    \begin{pgfonlayer}{nodelayer}
+    
+    % input and output layers
+    \node [style={hidden_layer_unit}] (xt) at (-4,-4.5) {\huge $x_t$};
+    \node [style={hidden_layer_unit}] (xt1) at (6.5,-4.5) {\huge $x_{t+1}$};
+    \node [style={hidden_layer_unit}] (ht) at (4,4.5) {\huge $h_t$};
+    \node [style={hidden_layer_unit}] (ht-1) at (-6.5,4.5) {\huge $h_{t-1}$};
+    
+    % pointwise operators
+    \node [style={point_operator}] (p1) at (-3, 2.5) {\huge $\times$};
+    \node [style={point_operator}] (p2) at (0, 2.5) {\huge $+$};
+    \node [style={point_operator}] (p3) at (0, 0.0) {\huge $\times$};
+    \node [style={point_operator}] (p4) at (2.5, 0.0) {\huge $\times$};
+    \node [style={point_operator_oval}] (p5) at (2.5, 1.5) {\Large tanh};
+    
+    % network layer operators
+    \node [style={nn_layer_operator}] (n1) at (-3, -1.5) {\huge $\sigma$};
+    \node [style={nn_layer_operator}] (n2) at (-1.5, -1.5) {\huge $\sigma$};
+    \node [style={nn_layer_operator}] (n3) at (0, -1.5) {\LARGE tanh};
+    \node [style={nn_layer_operator}] (n4) at (1.5, -1.5) {\huge $\sigma$};
+
+    % invisible dummy nodes for docking arrows (left ellipse)
+    \node [style=none] (dl1) at (-7.20, 2.5) {};
+    \node [style=none] (dl2) at (-7.20, -2.5) {};
+
+    % invisible dummy nodes for docking arrows (right ellipse)
+    \node [style=none] (dr1) at (7.2, 2.5) {};
+    \node [style=none] (dr2) at (7.2, -2.5) {};    
+    
+    % internal dummy nodes
+    \node [style=none] (di1) at (2.35, 2.5) {};
+    \node [style=none] (di2) at (1.15, -2.5) {};
+    \node [style=none] (di3) at (-0.4, -2.5) {};
+    \node [style=none] (di4) at (-1.9, -2.5) {};
+    \node [style=none] (di5) at (-3.4, -2.5) {};
+    
+    \node [style=none] (di6) at (3.4, -2.5) {};
+    
+    
+    % labels for states
+    \node [style=text_on_white] (ct-1) at (-5.0, 3.0) {\huge $C_{t-1}$};
+    \node [style=text_on_white] (ct)   at (5.0, 3.0) {\huge $C_{t}$};
+
+    \node [style=text_on_white] (h_t)   at (5.0, -3.0) {\huge $h_{t}$};
+    \node [style=text_on_white] (h_t-1) at (-5.0, -3.0) {\huge $h_{t-1}$};
+    
+    % label for gates
+    \node [style=text_on_pink] (g1) at (-3.5, 0.60) {\huge $1$};
+    \node [style=text_on_pink] (g2) at (-0.77, 0.60) {\huge $2$};
+    \node [style=text_on_pink] (g3) at ( 1.5, 0.60) {\huge $3$};
+    
+    
+%         % invisible dummy nodes to connect internal arrows above first cell
+%         \node [style=none] (empty_1b) at (4.25, 3.0) {};
+%         \node [style=none] (empty_1a) at (5.75, 3.0) {};     
+%         
+%         % text 
+%         \node [style=text_on_white] (100) at (7.2, -3.0 + \yTwo) {\huge Backward};
+%         \node [style=text_on_white] (101) at (7.2, -3.0 + \yTwo - 0.5) {\huge LSTM};
+%         
+%         \node [style=text_on_white] (102) at (3., +3.25      ) {\huge Forward};
+%         \node [style=text_on_white] (103) at (3., +3.25 - 0.5) {\huge LSTM};
+% 
+%         
+%         \node [style=text_on_white] (102) at (0.0, -3.0 + \yTwo) {\huge Embedding};
+%         \node [style=text_on_white] (103) at (0.0, -3.0 + \yTwo - 0.5) {\huge layer};
+%         
+%         % green text 
+%         \node [style=index] (0_1) at (5.75, -3.35 + \yTwo) {\Large $0$};
+%         \node [style=index] (0_2) at (4.25, 3.25 ) {\Large $0$};
+        
+        
+    \end{pgfonlayer}
+    \begin{pgfonlayer}{edgelayer}
+    
+    
+        % arrows top row
+        \draw [style={red_connector_arrow}] (dl1) to (p1);
+        \draw [style={red_connector_arrow}] (p1) to (p2);
+        \draw [style={red_connector_arrow}] (p2) to (dr1);        
+        
+        % simple vertical connections
+        \draw [style={red_connector_arrow}] (n1) to (p1);
+        \draw [style={red_connector_arrow}] (p3) to (p2);
+        \draw [style={red_connector_arrow}] (n3) to (p3);
+        \draw [style={red_connector_arrow}] (p5) to (p4);
+        
+        
+        % connections with internal dummy nodes
+        \draw [style={red_connector_arrow}] (di1) to [out = 350, in = 90, looseness = 1] (p5.north);
+        \draw [style={red_connector}] (p4) to [out = 270, in = 180, looseness = 1.2] (di6.center);
+        
+        % other curved internal connections
+        \draw [style={red_connector_arrow}] (n2) to [out = 90, in = 180, looseness = 2] (p3.west);
+        \draw [style={red_connector_arrow}] (n4) to [out = 90, in = 180, looseness = 1.5] (p4.west);
+        
+        % arrows bottom row
+        \draw [style={red_connector}] (dl2) to (di2.center);
+        \draw [style={red_connector_arrow}] (di2.center) to [out = 0, in = 270, looseness = 1.5] (n4.south);
+        \draw [style={red_connector_arrow}] (di3.center) to [out = 0, in = 270, looseness = 1.5] (n3.south);
+        \draw [style={red_connector_arrow}] (di4.center) to [out = 0, in = 270, looseness = 1.5] (n2.south);
+        \draw [style={red_connector_arrow}] (di5.center) to [out = 0, in = 270, looseness = 1.5] (n1.south);
+        
+        
+        
+        % I/O connectors
+        \draw [style={arrow_connector}] (di6.center) to [out = 30, in = 270, looseness = 0.75] (ht.south);
+        \draw [style={arrow_connector}] (xt) to [out = 90, in = 180, looseness = 1] (di5.center);
+        
+        \draw [style={red_connector}] (di6.center) to ([xshift=-3pt]dr2);
+        
+        \draw [style={arrow_connector}] (dl2.center) to [out = 30, in = 270, looseness = 0.75] (ht-1.south);        
+        
+        \draw [style={arrow_connector}] (xt1) to [out = 90, in = 180, looseness = 1] (dr2);
+        
+        
+%     
+%         % cell 1 connectors
+%         \draw [style={main_connector}] (input_1) to (empty_1.center);
+%          
+%         \draw [style={arrow_connector}] (empty_1.center) to [out = 0, in = 180, looseness = 1] (lstm_1a.west);
+%         \draw [style={arrow_connector}] (empty_1.center) to [out = 0, in = 180, looseness = 1] (lstm_1b.west);
+%          
+%         \draw [style={main_connector}] (lstm_1a.east) to [out = 0, in = 180, looseness = 1]  (output_1a);
+%         \draw [style={main_connector}] (lstm_1b.east) to [out = 0, in = 180, looseness = 1]  (output_1b);         
+%         
+%         % cell 2 connectors
+%         \draw [style={main_connector}] (input_2) to (empty_2.center);
+%          
+%         \draw [style={arrow_connector}] (empty_2.center) to [out = 0, in = 180, looseness = 1] (lstm_2a.west);
+%         \draw [style={arrow_connector}] (empty_2.center) to [out = 0, in = 180, looseness = 1] (lstm_2b.west);
+%          
+%         \draw [style={main_connector}] (lstm_2a.east) to [out = 0, in = 180, looseness = 1]  (output_2a);
+%         \draw [style={main_connector}] (lstm_2b.east) to [out = 0, in = 180, looseness = 1]  (output_2b);
+%                 
+%         % cell 3 connectors
+%         \draw [style={main_connector}] (input_3) to (empty_3.center);
+%          
+%         \draw [style={arrow_connector}] (empty_3.center) to [out = 0, in = 180, looseness = 1] (lstm_3a.west);
+%         \draw [style={arrow_connector}] (empty_3.center) to [out = 0, in = 180, looseness = 1] (lstm_3b.west);
+%          
+%         \draw [style={main_connector}] (lstm_3a.east) to [out = 0, in = 180, looseness = 1]  (output_3a);
+%         \draw [style={main_connector}] (lstm_3b.east) to [out = 0, in = 180, looseness = 1]  (output_3b);        
+%         
+%         % 1st set of internal connector (above 1st cell)
+%         \draw [style={internal_connector}] (lstm_1a.north) to (empty_1a);
+%         \draw [style={internal_connector}] (empty_1b) to (lstm_1b.north);
+%         
+%         % 2nd set of internal connector (between 1st and 2nd cell)
+%         \draw [style={internal_connector}] (lstm_2a.north) to (lstm_1a.south);
+%         \draw [style={internal_connector}] (lstm_1b.south) to (lstm_2b.north);
+%         
+%         % 3rd set of internal connector (2nd cell to dummy above ellipsis)
+%         \draw [style={internal_connector}] (empty_2a.north) to (lstm_2a.south);
+%         \draw [style={internal_connector}] (lstm_2b.south) to (empty_2b.north);
+%         
+%         % 4th set of internal connector (dummy below ellipsis to 3rd cell)
+%         \draw [style={internal_connector}] (lstm_3a.north) to (empty_3a.south);
+%         \draw [style={internal_connector}] (empty_3b.north) to (lstm_3b.north);
+% 
+%         % 5th set of internal connector (3rd cell to dummies below)
+%         \draw [style={internal_connector}] (empty_4a.south) to (lstm_3a.south);
+%         \draw [style={internal_connector}] (lstm_3b.south) to (empty_4b.north);        
+%         
+%         
+%                 
+%         % draw box
+%         \draw[orange, line width=0.85mm, dash pattern=on 3mm off 3mm] ($(box_top_left.north west)+(-0.6,0.5)$)  rectangle ($(box_bottom_right.south east)+(0.6,-0.5)$);
+% % 
+%         % draw block limiter
+%         
+%         \draw [style={block}] (100) to (101);
+%         \draw [style={block}] (102) to (103);
+%         \draw [style={block}] (104) to (105);
+
+
+
+
+    \end{pgfonlayer}    
+    
+    % background layer (purple ellipse)
+    \begin{pgfonlayer}{main}
+
+        % main ellipse
+        \draw [draw=my_purple, fill=my_pink] (0,0) ellipse (5cm and 4.0cm);
+        
+        % partial ellipse on the left
+        \begin{scope}[shift = {(-10.5,0)}, local bounding box = LSTMleft]
+            \clip(3.2,4)rectangle(8,-4);
+            \draw[draw=my_purple, fill=my_pink] (0,0) circle [x radius=5cm, y radius=4cm];
+        \end{scope}
+        
+        % partial ellipse on the right
+        \begin{scope}[shift = {(10.5,0)}, local bounding box = LSTMleft]
+            \clip(-8,8)rectangle(-3.2,-4);
+            \draw[draw=my_purple, fill=my_pink] (0,0) circle [x radius=5cm, y radius=4cm];
+        \end{scope}        
+
+    \end{pgfonlayer}
+    
+    
+\end{tikzpicture}
+
+
+
+\end{document}
