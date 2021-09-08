@@ -297,7 +297,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return dis_loss
+    return d_real_loss, d_fake_loss
 
 
 # -----------------------------------------------------------------
@@ -410,7 +410,8 @@ def main(config):
     # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array_gen = np.empty(0)
-    train_loss_array_dis = np.empty(0)
+    train_loss_array_dis_real = np.empty(0)
+    train_loss_array_dis_fake = np.empty(0)
     val_loss_mse_gen = np.empty(0)
     val_loss_dtw_gen = np.empty(0)
 
@@ -443,8 +444,9 @@ def main(config):
     for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss_gen = 0
-        epoch_loss_dis = 0
-
+        epoch_loss_dis_real = 0
+        epoch_loss_dis_fake = 0
+        
         for i, (profiles, parameters) in enumerate(train_loader):
 
             # get batch_size
@@ -470,7 +472,7 @@ def main(config):
                 config=config
             )
 
-            dis_loss = cgan_train_discriminator(
+            dis_real_loss, dis_fake_loss = cgan_train_discriminator(
                 real_profiles=real_profiles,
                 real_parameters=real_parameters,
                 gen_profiles=gen_profiles,
@@ -482,14 +484,18 @@ def main(config):
             )
 
             epoch_loss_gen += gen_loss.item()    # average loss per batch
-            epoch_loss_dis += dis_loss.item()    # average loss per batch
+            epoch_loss_dis_real += dis_real_loss.item()    # average loss per batch
+            epoch_loss_dis_fake += dis_fake_loss.item()    # average loss per batch
 
         # end-of-epoch book keeping
         average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
-        average_loss_dis = epoch_loss_dis / len(train_loader)   # divide by number of batches (!= batch size)
-
+        average_loss_dis_real = epoch_loss_dis_real / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis_fake = epoch_loss_dis_fake / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis = (average_loss_dis_real + average_loss_dis_fake) * 0.5
+        
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
-        train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
+        train_loss_array_dis_real = np.append(train_loss_array_dis_real, average_loss_dis_real)
+        train_loss_array_dis_fake = np.append(train_loss_array_dis_fake, average_loss_dis_fake)
 
         mse_val, dtw_val = cgan_run_evaluation(epoch, val_loader, generator, data_products_path, config, print_results=False, save_results=False, best_model=False)
 
@@ -542,7 +548,8 @@ def main(config):
 
     # save training stats
     utils_save_loss(train_loss_array_gen, data_products_path, config.profile_type, config.n_epochs, prefix='G_train')
-    utils_save_loss(train_loss_array_dis, data_products_path, config.profile_type, config.n_epochs, prefix='D_train')
+    utils_save_loss(train_loss_array_dis_real, data_products_path, config.profile_type, config.n_epochs, prefix='D_train_real')
+    utils_save_loss(train_loss_array_dis_fake, data_products_path, config.profile_type, config.n_epochs, prefix='D_train_fake')
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use

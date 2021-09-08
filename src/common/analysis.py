@@ -53,17 +53,21 @@ def analysis_loss_plot(config, gan=False):
 
         loss_1 = np.load(osp.join(data_dir_path, train_loss_file))
         loss_2 = np.load(osp.join(data_dir_path, val_loss_file))
+        loss_3 = None
 
     else:
         gen_loss_file = 'G_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
-        dis_loss_file = 'D_train_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+        dis_loss_real_file = 'D_train_real_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
+        dis_loss_fake_file = 'D_train_fake_loss_%s_%d_epochs.npy' % (config.profile_type, config.n_epochs)
 
         loss_1 = np.load(osp.join(data_dir_path, gen_loss_file))
-        loss_2 = np.load(osp.join(data_dir_path, dis_loss_file))
+        loss_2 = np.load(osp.join(data_dir_path, dis_loss_real_file))
+        loss_3 = np.load(osp.join(data_dir_path, dis_loss_fake_file))
 
     plot_loss_function(
         lf1=loss_1,
         lf2=loss_2,
+        lf3 = loss_3,
         epoch=config.n_epochs,
         lr=config.lr,
         output_dir=plot_dir_path,

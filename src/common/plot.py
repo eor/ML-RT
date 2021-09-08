@@ -28,7 +28,7 @@ mpl.rc('text', usetex=True)
 # -----------------------------------------------------------------
 #  Plot loss functions (average loss for training & validation)
 # -----------------------------------------------------------------
-def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', file_type='png', gan=False):
+def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='H', file_type='png', gan=False):
 
     print('Producing loss function plot:')
 
@@ -38,7 +38,8 @@ def plot_loss_function(lf1, lf2, epoch, lr, output_dir='./', profile_type='H', f
 
     if gan:
         ax.plot(lf1, lw=1.5, c='orange', label='Generator')
-        ax.plot(lf2, lw=1.5, c='teal', label='Discriminator')
+        ax.plot(lf2, lw=1.5, c='teal', label='Discriminator\_real')
+        ax.plot(lf3, lw=1.5, c='red', label='Discriminator\_fake')
     else:
         ax.plot(lf1, lw=1.5, c='red', label='Training')
         ax.plot(lf2, lw=1.5, c='blue', label='Validation')
