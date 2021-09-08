@@ -1,0 +1,150 @@
+% \documentclass[a4paper,landscape]{article}
+
+\documentclass{standalone}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{shapes.geometric}
+
+
+\pgfdeclarelayer{edgelayer}
+\pgfdeclarelayer{nodelayer}
+\pgfsetlayers{edgelayer,nodelayer,main}
+
+\tikzstyle{none}=[inner sep=0pt]
+
+\definecolor{my_pink}{HTML}{f2e6ff}
+\definecolor{my_purple}{HTML}{6600CC}
+
+\definecolor{my_red}{HTML}{990000}
+\definecolor{dark_green}{HTML}{0C5600}
+\definecolor{dark_blue}{HTML}{086565}
+\definecolor{light_blue}{HTML}{B5E8E8}
+
+\def\yOne{-3.0}
+\def\yTwo{-5.0}
+\def\yThree{-7.0}
+\begin{document}
+
+%---------------------------------------------------
+% Block style definitions
+%---------------------------------------------------
+\tikzstyle{input_output}=[fill={rgb,255: red,70; green,129; blue,255}, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+\tikzstyle{hidden_layer_unit}=[fill={rgb,255: red,147; green,255; blue,255}, draw={rgb,255: red,58; green,123; blue,180}, shape=circle, minimum height=7mm]
+\tikzstyle{empty_slot}=[fill=white, draw=black, shape=circle]
+
+\tikzstyle{cell}=[fill=my_pink, draw=my_purple, shape=diamond]
+\tikzstyle{empty_cell}=[fill=white, draw=my_purple, shape=diamond]
+
+\tikzstyle{test}=[fill={rgb,255: red,75; green,193; blue,56}, draw={rgb,255: red,52; green,117; blue,49}, shape=circle]
+\tikzstyle{parameter_vector}=[fill={rgb,255: red,255; green,0; blue,4}, draw={rgb,255: red,107; green,0; blue,1}, shape=circle]
+
+
+\tikzstyle{myText}=[fill=white, draw=white, shape=rectangle]
+\tikzstyle{ellipsis}=[fill=black, draw=black, shape=circle]
+\tikzstyle{rectangle}=[fill={rgb,255: red,98; green,255; blue,161}, draw=black, shape=rectangle]
+
+
+% RNN cell
+\tikzstyle{RNN} = [ellipse, draw=my_purple, fill=my_pink, text width=10mm, line width=0.2mm, text=my_purple, text centered, minimum height=13mm]
+
+
+%---------------------------------------------------
+% Edge styles
+%---------------------------------------------------
+
+\tikzstyle{block}=[{|-|}]
+\tikzstyle{arrow_connector}=[->, >=stealth, draw={rgb,255: red,184; green,184; blue,184}, line width=0.3mm]
+\tikzstyle{etc_connector}=[dash pattern=on 3pt off 6pt, draw={rgb,255: red,184; green,184; blue,184}, line width=0.3mm]
+
+
+\tikzstyle{big_arrow}=[->, >=stealth, draw={rgb,255: red,0; green,0; blue,0}, line width=0.73mm]
+
+
+\tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}]
+\tikzstyle{secondary_concetor}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
+
+
+%---------------------------------------------------
+% nodes and edges
+%---------------------------------------------------
+
+\begin{tikzpicture}
+    \begin{pgfonlayer}{nodelayer}
+    
+        % looped RNN unit
+        \node [style={hidden_layer_unit}] (1)      at (0.0, 0.0) {$x_{t}$};
+        \node [style={RNN}]               (2)      at (2.5, 0.0) {RNN\\ unit};
+        \node [style={hidden_layer_unit}] (3)      at (5.0, 0.0) {$y_{t}$};
+        \node [style={none}]              (dummy0) at (1.64, 0.05) {};    % dummy to dock the loop arrow
+        \node [style={myText}]            (h)      at (1.3, 1.2) {$h$};
+        
+    
+        % unroll
+        \node [style=none]                (5)      at (2.5, -1.0) {};    % dummy to dock the unroll arrow
+        \node [style=none]                (6)      at (2.5, -2.0) {};    % dummy to dock the unroll arrow
+        \node [style=myText]              (7)      at (3.5, -1.5){unrolled};
+        
+        % first        
+        \node [style={hidden_layer_unit}] (8)      at (0.0, 0.0 + \yOne) {$x_0$};
+        \node [style={RNN}]               (9)      at (2.5, 0.0 + \yOne) {};
+        \node [style={hidden_layer_unit}] (10)     at (5.0, 0.0 + \yOne) {$y_0$};  
+       
+        % second        
+        \node [style={hidden_layer_unit}] (11)     at (0.0, 0.0 + \yTwo) {$x_1$};
+        \node [style={RNN}]               (12)     at (2.5, 0.0 + \yTwo) {};
+        \node [style={hidden_layer_unit}] (13)     at (5.0, 0.0 + \yTwo) {$y_1$};     
+        \node [style={none}]              (dummy1) at (1.64, 0.05 + \yTwo) {};    % dummy to dock the hidden state arrow
+        \node [style={myText}]            (h0)      at (1.3, 1.37 + \yTwo) {$h_0$};
+        
+        % third        
+        \node [style={hidden_layer_unit}] (14)     at (0.0, 0.0 + \yThree) {$x_2$};
+        \node [style={RNN}]               (15)     at (2.5, 0.0 + \yThree) {};
+        \node [style={hidden_layer_unit}] (16)     at (5.0, 0.0 + \yThree) {$y_2$};           
+        \node [style={none}]              (dummy2) at (1.64, 0.05 + \yThree) {};    % dummy to dock the hidden state arrow        
+        \node [style={myText}]            (h1)      at (1.3, 1.37 + \yThree) {$h_1$};
+         
+         % ellipsis
+         \node [style=ellipsis, scale=0.2] (34) at (2.5, -1.25 + \yThree) {};
+         \node [style=ellipsis, scale=0.2] (35) at (2.5, -1.5 + \yThree) {};
+         \node [style=ellipsis, scale=0.2] (36) at (2.5, -1.75 + \yThree) {};
+ 
+        % dummy node to dock etc hidden state arrow
+        \node [style={none}]              (dummy4) at (2.5, -0.95 + \yThree ) {};      
+   
+    \end{pgfonlayer}
+    \begin{pgfonlayer}{edgelayer}
+    
+        % looped RNN unit
+        \draw [style={arrow_connector}] (1) to (2);
+        \draw [style={arrow_connector}] (2) to (3);
+        \draw [style={arrow_connector}] (2.east) to [out = 40, in = 140, looseness = 3] (dummy0.north west);
+    
+        % unroll arrow
+        \draw [style={big_arrow}] (5) to (6);
+    
+        % straight arrows in unrolled units
+        \draw [style={arrow_connector}] (8) to (9);
+        \draw [style={arrow_connector}] (9) to (10);
+        
+        \draw [style={arrow_connector}] (11) to (12);
+        \draw [style={arrow_connector}] (12) to (13);        
+        
+        \draw [style={arrow_connector}] (14) to (15);
+        \draw [style={arrow_connector}] (15) to (16);
+        
+        % curved hidden state arrows
+        \draw [style={arrow_connector}] (9.east)  to [out = 320, in = 140, looseness = 3] (dummy1.north west);
+        \draw [style={arrow_connector}] (12.east) to [out = 320, in = 140, looseness = 3] (dummy2.north west);
+
+        % etc hidden state arrow
+        \draw [style={etc_connector}] (15.east) to [out = 320, in = 0, looseness = 2.6] (dummy4.east);
+
+    \end{pgfonlayer}
+\end{tikzpicture}
+
+
+
+\end{document}
