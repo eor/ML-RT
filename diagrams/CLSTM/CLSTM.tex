@@ -1,0 +1,409 @@
+% \documentclass[a4paper,landscape]{article}
+
+\documentclass{standalone}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{patterns}
+
+\pgfdeclarelayer{edgelayer}
+\pgfdeclarelayer{nodelayer}
+\pgfsetlayers{edgelayer,nodelayer,main}
+
+\tikzstyle{none}=[inner sep=0pt]
+
+% \input{RNN.tikzstyles}
+
+\definecolor{my_pink}{HTML}{f2e6ff}
+\definecolor{my_purple}{HTML}{6600CC}
+\definecolor{dark_green}{HTML}{0C5600}
+
+
+\begin{document}
+
+%---------------------------------------------------
+% Block style definitions
+%---------------------------------------------------
+\tikzstyle{input_output}        = [fill={rgb,255: red,70; green,129; blue,255}, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+\tikzstyle{hidden_layer_unit}   = [fill={rgb,255: red,147; green,255; blue,255}, draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
+
+\tikzstyle{output_1}            = [preaction={fill={rgb,255: red,70 ; green,129; blue,255}}, pattern color=black, pattern=north west lines, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+\tikzstyle{output_2}            = [preaction={fill={rgb,255: red,70 ; green,129; blue,255}}, pattern color=black, pattern=dots, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+\tikzstyle{output_3}            = [preaction={fill={rgb,255: red,70 ; green,129; blue,255}}, pattern color=black, pattern=north east lines, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+\tikzstyle{output_4}            = [preaction={fill={rgb,255: red,70 ; green,129; blue,255}}, pattern color=black, pattern=grid, draw={rgb,255: red,8; green,0; blue,249}, shape=circle]
+
+\tikzstyle{hidden_layer_unit_1} = [preaction={fill={rgb,255: red,147; green,255; blue,255}}, pattern color=black, pattern=north west lines, draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
+\tikzstyle{hidden_layer_unit_2} = [preaction={fill={rgb,255: red,147; green,255; blue,255}}, pattern color=black, pattern=dots,  draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
+\tikzstyle{hidden_layer_unit_3} = [preaction={fill={rgb,255: red,147; green,255; blue,255}}, pattern color=black, pattern=north east lines, draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
+\tikzstyle{hidden_layer_unit_4} = [preaction={fill={rgb,255: red,147; green,255; blue,255}}, pattern color=black, pattern=grid, draw={rgb,255: red,58; green,123; blue,180}, shape=circle]
+
+\tikzstyle{empty_slot}          = [fill=white, draw=black, shape=circle]
+
+\tikzstyle{cell}                = [fill=my_pink, draw=my_purple, shape=diamond]
+\tikzstyle{empty_cell}          = [fill=white, draw=my_purple, shape=diamond]
+
+\tikzstyle{test}                = [fill={rgb,255: red,75; green,193; blue,56}, draw={rgb,255: red,52; green,117; blue,49}, shape=circle]
+
+\tikzstyle{parameter_vector}    = [fill={rgb,255: red,255; green,0; blue,4}, draw={rgb,255: red,107; green,0; blue,1}, shape=circle]
+\tikzstyle{myText}              = [fill=white, draw=white, shape=rectangle]
+\tikzstyle{ellipsis}            = [fill=black, draw=black, shape=circle]
+\tikzstyle{rectangle}           = [fill={rgb,255: red,98; green,255; blue,161}, draw=black, shape=rectangle]
+
+%---------------------------------------------------
+% Edge styles
+%---------------------------------------------------
+
+\tikzstyle{block}=[{|-|}]
+
+\tikzstyle{main_connector}=[-, draw={rgb,255: red,184; green,184; blue,184}]
+\tikzstyle{secondary_connector}=[-, draw={rgb,255: red,176; green,204; blue,229}, dashed]
+\tikzstyle{arrow_connector}=[->, >=stealth, draw={rgb,255: red,184; green,184; blue,184}, line width=0.2mm]
+
+%---------------------------------------------------
+% nodes and edges
+%---------------------------------------------------
+
+\begin{tikzpicture}
+    \begin{pgfonlayer}{nodelayer}
+        % layer 1
+        \node [style={parameter_vector}] (0)      at (1.0, 0) {};
+        \node [style={parameter_vector}] (3)      at (1.0, 3) {};
+        \node [style={parameter_vector}] (4)      at (1.0, 4) {};
+        \node [style={empty_slot}, scale=0.5] (5) at (1.0, 2) {};
+        \node [style={empty_slot}, scale=0.5] (6) at (1.0, 1) {};
+
+        %layer 2
+        \node [style={hidden_layer_unit}] (7)      at (2.5, 4.5) {};
+        \node [style={hidden_layer_unit}] (8)      at (2.5, 3.5) {};
+        \node [style={hidden_layer_unit}] (9)      at (2.5, -0.5) {};
+        \node [style={empty_slot}, scale=0.5] (11) at (2.5, 2.5) {};
+        \node [style={empty_slot}, scale=0.5] (12) at (2.5, 1.5) {};
+        \node [style={empty_slot}, scale=0.5] (13) at (2.5, 0.5) {};
+
+        %ellipsis
+        \node [style=ellipsis, scale=0.3] (34) at (3.5, 2) {};
+        \node [style=ellipsis, scale=0.3] (35) at (4.0, 2) {};
+        \node [style=ellipsis, scale=0.3] (36) at (4.5, 2) {};
+
+        % layer 3 (embedding layer)
+        \node [style={hidden_layer_unit}] (37)     at (5, 4.5) {};
+        \node [style={hidden_layer_unit}] (38)     at (5, 5.5) {};
+        \node [style={hidden_layer_unit}] (39)     at (5, -1.5) {};
+        \node [style={empty_slot}, scale=0.5] (29) at (5, 3.5) {};
+        \node [style={empty_slot}, scale=0.5] (30) at (5, 2.5) {};
+        \node [style={empty_slot}, scale=0.5] (31) at (5, 1.5) {};
+        \node [style={empty_slot}, scale=0.5] (32) at (5, 0.5) {};
+        \node [style={empty_slot}, scale=0.5] (33) at (5, -0.5) {};
+
+        % RNN block
+        \node [style=cell, scale=2.0] (55)         at (7, 5.5) {};
+        \node [style=cell, scale=2.0] (56)         at (7, 4.5) {};
+        \node [style=cell, scale=2.0] (57)         at (7, -1.5) {};
+        \node [style={empty_cell}, scale=0.5] (59) at (7, -0.5) {};
+        \node [style={empty_cell}, scale=0.5] (60) at (7, 0.5) {};
+        \node [style={empty_cell}, scale=0.5] (61) at (7, 1.5) {};
+        \node [style={empty_cell}, scale=0.5] (63) at (7, 3.5) {};
+        \node [style={empty_cell}, scale=0.5] (73) at (7, 2.5) {};
+
+        % RNN output layer (first coloumn)
+        \node [style={hidden_layer_unit_1}] (b11)     at (9, 5.75) {};
+        \node [style={hidden_layer_unit_1}] (b21)     at (9, 5.25) {};
+        \node [style={hidden_layer_unit_1}] (b31)     at (9, 4.75) {};
+        \node [style={hidden_layer_unit_1}] (b41)     at (9, 4.25) {};        
+        \node [style={hidden_layer_unit_1}] (b51)     at (9, -1.25) {};
+        \node [style={hidden_layer_unit_1}] (b61)     at (9, -1.75) {};
+        % empty slots
+        \node [style={empty_slot}, scale=0.5] (e01)   at (9, 3.75) {};
+        \node [style={empty_slot}, scale=0.5] (e11)   at (9, 3.25) {};
+        \node [style={empty_slot}, scale=0.5] (e21)   at (9, 2.75) {};
+        \node [style={empty_slot}, scale=0.5] (e31)   at (9, 2.25) {};
+        \node [style={empty_slot}, scale=0.5] (e41)   at (9, 1.75) {};
+        \node [style={empty_slot}, scale=0.5] (e51)   at (9, 1.25) {};     
+        \node [style={empty_slot}, scale=0.5] (e61)   at (9, 0.75) {};
+        \node [style={empty_slot}, scale=0.5] (e71)   at (9, 0.25) {};
+        \node [style={empty_slot}, scale=0.5] (e81)   at (9, -0.25) {};        
+        \node [style={empty_slot}, scale=0.5] (e91)   at (9, -0.75) {};
+
+        
+        % RNN output layer (second coloumn)
+        \node [style={hidden_layer_unit_2}] (b12)     at (9.5, 5.75) {};
+        \node [style={hidden_layer_unit_2}] (b22)     at (9.5, 5.25) {};
+        \node [style={hidden_layer_unit_2}] (b32)     at (9.5, 4.75) {};
+        \node [style={hidden_layer_unit_2}] (b42)     at (9.5, 4.25) {};        
+        \node [style={hidden_layer_unit_2}] (b52)     at (9.5, -1.25) {};
+        \node [style={hidden_layer_unit_2}] (b62)     at (9.5, -1.75) {};
+        % empty slots                                     
+        \node [style={empty_slot}, scale=0.5] (e02)   at (9.5, 3.75) {};
+        \node [style={empty_slot}, scale=0.5] (e12)   at (9.5, 3.25) {};
+        \node [style={empty_slot}, scale=0.5] (e22)   at (9.5, 2.75) {};
+        \node [style={empty_slot}, scale=0.5] (e32)   at (9.5, 2.25) {};
+        \node [style={empty_slot}, scale=0.5] (e42)   at (9.5, 1.75) {};
+        \node [style={empty_slot}, scale=0.5] (e52)   at (9.5, 1.25) {};     
+        \node [style={empty_slot}, scale=0.5] (e62)   at (9.5, 0.75) {};
+        \node [style={empty_slot}, scale=0.5] (e72)   at (9.5, 0.25) {};
+        \node [style={empty_slot}, scale=0.5] (e82)   at (9.5, -0.25) {};        
+        \node [style={empty_slot}, scale=0.5] (e92)   at (9.5, -0.75) {};
+        
+        % RNN output layer (third coloumn)
+        \node [style={hidden_layer_unit_4}] (b13)     at (10, 5.75) {};
+        \node [style={hidden_layer_unit_4}] (b23)     at (10, 5.25) {};        
+        \node [style={hidden_layer_unit_4}] (b33)     at (10, 4.75) {};        
+        \node [style={hidden_layer_unit_4}] (b43)     at (10, 4.25) {};            
+        \node [style={hidden_layer_unit_4}] (b53)     at (10, -1.25) {};        
+        \node [style={hidden_layer_unit_4}] (b63)     at (10, -1.75) {};        
+        % empty slots                                          
+        \node [style={empty_slot}, scale=0.5] (e03)   at (10, 3.75) {};        
+        \node [style={empty_slot}, scale=0.5] (e13)   at (10, 3.25) {};        
+        \node [style={empty_slot}, scale=0.5] (e23)   at (10, 2.75) {};        
+        \node [style={empty_slot}, scale=0.5] (e33)   at (10, 2.25) {};        
+        \node [style={empty_slot}, scale=0.5] (e43)   at (10, 1.75) {};        
+        \node [style={empty_slot}, scale=0.5] (e53)   at (10, 1.25) {};            
+        \node [style={empty_slot}, scale=0.5] (e63)   at (10, 0.75) {};        
+        \node [style={empty_slot}, scale=0.5] (e73)   at (10, 0.25) {};        
+        \node [style={empty_slot}, scale=0.5] (e83)   at (10, -0.25) {};           
+        \node [style={empty_slot}, scale=0.5] (e93)   at (10, -0.75) {};        
+        
+        % RNN output layer (fourth coloumn)
+        \node [style={hidden_layer_unit_3}] (b14)     at (10.5, 5.75) {};        
+        \node [style={hidden_layer_unit_3}] (b24)     at (10.5, 5.25) {};            
+        \node [style={hidden_layer_unit_3}] (b34)     at (10.5, 4.75) {};            
+        \node [style={hidden_layer_unit_3}] (b44)     at (10.5, 4.25) {};            
+        \node [style={hidden_layer_unit_3}] (b54)     at (10.5, -1.25) {};           
+        \node [style={hidden_layer_unit_3}] (b64)     at (10.5, -1.75) {};           
+        % empty slots                                                  
+        \node [style={empty_slot}, scale=0.5] (e04)   at (10.5, 3.75) {};            
+        \node [style={empty_slot}, scale=0.5] (e14)   at (10.5, 3.25) {};            
+        \node [style={empty_slot}, scale=0.5] (e24)   at (10.5, 2.75) {};            
+        \node [style={empty_slot}, scale=0.5] (e34)   at (10.5, 2.25) {};            
+        \node [style={empty_slot}, scale=0.5] (e44)   at (10.5, 1.75) {};            
+        \node [style={empty_slot}, scale=0.5] (e54)   at (10.5, 1.25) {};            
+        \node [style={empty_slot}, scale=0.5] (e64)   at (10.5, 0.75) {};            
+        \node [style={empty_slot}, scale=0.5] (e74)   at (10.5, 0.25) {};            
+        \node [style={empty_slot}, scale=0.5] (e84)   at (10.5, -0.25) {};           
+        \node [style={empty_slot}, scale=0.5] (e94)   at (10.5, -0.75) {};     
+        
+        
+        % final hidden layer (4x6000 units)
+        %1
+        \node [style={hidden_layer_unit_1}]   (h11)   at (12, 8.5) {};
+        \node [style={hidden_layer_unit_1}]   (h12)   at (12, 8.0) {};
+        \node [style={empty_slot}, scale=0.5] (h13)   at (12, 7.5) {};
+        \node [style={empty_slot}, scale=0.5] (h14)   at (12, 7.0) {};  
+        \node [style={empty_slot}, scale=0.5] (h1x)   at (12, 6.5) {};  
+        \node [style={hidden_layer_unit_1}]   (h15)   at (12, 6.0) {};
+        %2
+        \node [style={hidden_layer_unit_2}]   (h21)   at (12, 5.0) {};
+        \node [style={hidden_layer_unit_2}]   (h22)   at (12, 4.5) {};
+        \node [style={empty_slot}, scale=0.5] (h23)   at (12, 4.0) {};
+        \node [style={empty_slot}, scale=0.5] (h24)   at (12, 3.5) {};  
+        \node [style={empty_slot}, scale=0.5] (h2x)   at (12, 3.0) {};
+        \node [style={hidden_layer_unit_2}]   (h25)   at (12, 2.5) {};        
+        %3
+        \node [style={hidden_layer_unit_3}]   (h31)   at (12, 1.5) {};
+        \node [style={hidden_layer_unit_3}]   (h32)   at (12, 1.0) {};
+        \node [style={empty_slot}, scale=0.5] (h33)   at (12, 0.5) {};
+        \node [style={empty_slot}, scale=0.5] (h34)   at (12, 0.0) {};  
+        \node [style={empty_slot}, scale=0.5] (h3x)   at (12, -0.5) {}; 
+        \node [style={hidden_layer_unit_3}]   (h35)   at (12, -1.0) {};        
+        %4
+        \node [style={hidden_layer_unit_4}]   (h41)   at (12, -2.0) {};
+        \node [style={hidden_layer_unit_4}]   (h42)   at (12, -2.5) {};
+        \node [style={empty_slot}, scale=0.5] (h43)   at (12, -3.0) {};
+        \node [style={empty_slot}, scale=0.5] (h44)   at (12, -3.5) {};
+        \node [style={empty_slot}, scale=0.5] (h4x)   at (12, -4.0) {};  
+        \node [style={hidden_layer_unit_4}]   (h45)   at (12, -4.5) {};        
+
+        
+        % output layer (4x1500 units)
+        %1
+        \node [style={output_1}]                (o11)   at (13.5, 8.25) {};
+        \node [style={output_1}]                (o12)   at (13.5, 7.75) {};
+        \node [style={empty_slot}, scale=0.5]   (o13)   at (13.5, 7.25) {};
+        \node [style={empty_slot}, scale=0.5]   (o14)   at (13.5, 6.75) {};  
+        \node [style={output_1}]                (o15)   at (13.5, 6.25) {};
+        %2                                                   
+        \node [style={output_2}]                (o21)   at (13.5, 4.75) {};
+        \node [style={output_2}]                (o22)   at (13.5, 4.25) {};
+        \node [style={empty_slot}, scale=0.5]   (o23)   at (13.5, 3.75) {};
+        \node [style={empty_slot}, scale=0.5]   (o24)   at (13.5, 3.25) {};  
+        \node [style={output_2}]                (o25)   at (13.5, 2.75) {};        
+        %3                                                   
+        \node [style={output_3}]                (o31)   at (13.5, 1.25) {};
+        \node [style={output_3}]                (o32)   at (13.5, 0.75) {};
+        \node [style={empty_slot}, scale=0.5]   (o33)   at (13.5, 0.25) {};
+        \node [style={empty_slot}, scale=0.5]   (o34)   at (13.5, -0.25) {};  
+        \node [style={output_3}]                (o35)   at (13.5, -0.75) {};        
+        %4                                                   
+        \node [style={output_4}]                (o41)   at (13.5, -2.25) {};
+        \node [style={output_4}]                (o42)   at (13.5, -2.75) {};
+        \node [style={empty_slot}, scale=0.5]   (o43)   at (13.5, -3.25) {};
+        \node [style={empty_slot}, scale=0.5]   (o44)   at (13.5, -3.75) {};  
+        \node [style={output_4}]                (o45)   at (13.5, -4.25) {};             
+        
+        
+        
+        
+        % output layer
+%         \node [style={input_output}] (71)          at (11, -1) {};
+%         \node [style={input_output}] (72)          at (11, 5) {};
+%         \node [style={input_output}] (74)          at (11, 4) {};
+%         \node [style={empty_slot}, scale=0.5] (75) at (11, 2) {};
+%         \node [style={empty_slot}, scale=0.5] (76) at (11, 1) {};
+%         \node [style={empty_slot}, scale=0.5] (77) at (11, 0) {};
+%         \node [style={empty_slot}, scale=0.5] (78) at (11, 3) {};
+        
+        % neuron numbers at the bottom        
+        \node [style=myText] (79) at (1.0, -6.5) {\large (8)};
+        \node [style=myText] (80) at (2.5, -6.5) {\large (64)};
+        \node [style=myText] (81) at (5,   -6.5) {\large (3000)};
+        \node [style=myText] (82) at (7,   -6.5) {\large (3000)};
+        \node [style=myText] (83) at (9.8, -6.5) {\large (6000$\times$4)};
+        \node [style=myText] (84) at (12,  -6.5) {\large (4$\times$6000)};
+        \node [style=myText] (85) at (14,  -6.5) {\large (4$\times$1500)};
+        
+        % description at the bottom 
+        \node [style=myText] (90) at (1.0, -5.5) {\large Parameter};
+        \node [style=myText] (91) at (1.0, -6.0) {\large vector};
+
+        
+        \node [style=myText] (92) at (5, -5.5) {\large Embedding};
+        \node [style=myText] (93) at (5, -6.0) {\large layer};
+
+        \node [style=myText] (94) at (14, -5.5) {\large Profiles};
+        
+        % description at the top   
+        \node [style=myText] (95) at (7.0,  9.5) {\large LSTM block};
+        \node [style=myText] (96) at (3.0,  9.5) {\large MLP block};
+        \node [style=myText] (97) at (11.5, 9.5) {\large 4 MLP blocks};
+        
+        % epmty nodes for docking the lines at the top 
+        \node [style=none] (100) at (0.5,   9.0) {};
+        \node [style=none] (101) at (5.0,   9.0) {};                                           
+        \node [style=none] (102) at (5.5,   9.0) {};        
+        \node [style=none] (103) at (8.25,  9.0) {};                                           
+        \node [style=none] (104) at (8.75,  9.0) {};
+        \node [style=none] (105) at (14.0,  9.0) {};
+        
+        % empty node to give extra padding on the right
+        \node [style=none] (xxx) at (12.0, 0.0) {};       
+        
+   
+    \end{pgfonlayer}
+    \begin{pgfonlayer}{edgelayer}
+        \draw [style={main_connector}] (4) to (7);
+        \draw [style={main_connector}] (4) to (8);
+        \draw [style={main_connector}] (4) to (9);
+        \draw [style={main_connector}] (3) to (7);
+        \draw [style={main_connector}] (3) to (8);
+        \draw [style={main_connector}] (3) to (9);
+        \draw [style={main_connector}] (0) to (9);
+        \draw [style={main_connector}] (0) to (8);
+        \draw [style={main_connector}] (0) to (7);
+        
+        % connections from embedding layer into RNN block
+        \draw [style={main_connector}] (38) to (55);
+        \draw [style={main_connector}] (37) to (56);
+        \draw [style={main_connector}] (39) to (57);
+
+        % connections out of RNN block
+        \draw [style={main_connector}] (55) to (b11);
+        \draw [style={main_connector}] (55) to (b21);
+        \draw [style={main_connector}] (56) to (b31);
+        \draw [style={main_connector}] (56) to (b41);
+        \draw [style={main_connector}] (57) to (b61);
+        \draw [style={main_connector}] (57) to (b51);        
+        
+        % 1: connections between final hidden and output layer
+        \draw [style={main_connector}] (h11) to (o11);
+        \draw [style={main_connector}] (h12) to (o11);
+        \draw [style={main_connector}] (h15) to (o11);        
+        \draw [style={main_connector}] (h11) to (o12);
+        \draw [style={main_connector}] (h12) to (o12);
+        \draw [style={main_connector}] (h15) to (o12);
+        \draw [style={main_connector}] (h11) to (o15);
+        \draw [style={main_connector}] (h12) to (o15);
+        \draw [style={main_connector}] (h15) to (o15);
+        
+        % 2: connections between final hidden and output layer
+        \draw [style={main_connector}] (h21) to (o21);
+        \draw [style={main_connector}] (h22) to (o21);
+        \draw [style={main_connector}] (h25) to (o21);        
+        \draw [style={main_connector}] (h21) to (o22);
+        \draw [style={main_connector}] (h22) to (o22);
+        \draw [style={main_connector}] (h25) to (o22);
+        \draw [style={main_connector}] (h21) to (o25);
+        \draw [style={main_connector}] (h22) to (o25);
+        \draw [style={main_connector}] (h25) to (o25);
+       
+        % 3: connections between final hidden and output layer
+        \draw [style={main_connector}] (h31) to (o31);
+        \draw [style={main_connector}] (h32) to (o31);
+        \draw [style={main_connector}] (h35) to (o31);        
+        \draw [style={main_connector}] (h31) to (o32);
+        \draw [style={main_connector}] (h32) to (o32);
+        \draw [style={main_connector}] (h35) to (o32);
+        \draw [style={main_connector}] (h31) to (o35);
+        \draw [style={main_connector}] (h32) to (o35);
+        \draw [style={main_connector}] (h35) to (o35);
+        
+        % 4: connections between final hidden and output layer
+        \draw [style={main_connector}] (h41) to (o41);
+        \draw [style={main_connector}] (h42) to (o41);
+        \draw [style={main_connector}] (h45) to (o41);        
+        \draw [style={main_connector}] (h41) to (o42);
+        \draw [style={main_connector}] (h42) to (o42);
+        \draw [style={main_connector}] (h45) to (o42);
+        \draw [style={main_connector}] (h41) to (o45);
+        \draw [style={main_connector}] (h42) to (o45);
+        \draw [style={main_connector}] (h45) to (o45);        
+        
+        
+        % draw orange box
+        \draw[orange, line width=0.5mm, dashed] ($(55.north west)+(-0.6,0.5)$)  rectangle ($(57.south east)+(0.6,-0.5)$);
+        
+        % draw boxes around RNN output vectors
+        \draw[black, line width=0.1mm] ($(b11.north west)+(-0.055,0.055)$) rectangle ($(b14.south east)+(0.055,-0.055)$);
+        \draw[black, line width=0.1mm] ($(b21.north west)+(-0.055,0.055)$) rectangle ($(b24.south east)+(0.055,-0.055)$);
+        \draw[black, line width=0.1mm] ($(b31.north west)+(-0.055,0.055)$) rectangle ($(b34.south east)+(0.055,-0.055)$);
+        \draw[black, line width=0.1mm] ($(b41.north west)+(-0.055,0.055)$) rectangle ($(b44.south east)+(0.055,-0.055)$);
+        \draw[black, line width=0.1mm] ($(b51.north west)+(-0.055,0.055)$) rectangle ($(b54.south east)+(0.055,-0.055)$);
+        \draw[black, line width=0.1mm] ($(b61.north west)+(-0.055,0.055)$) rectangle ($(b64.south east)+(0.055,-0.055)$);
+        
+        % draw 4 boxes around the output vectors to show concatination 
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(b11.north west)+(-0.1,0.1)$) rectangle ($(b61.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(b12.north west)+(-0.1,0.1)$) rectangle ($(b62.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(b13.north west)+(-0.1,0.1)$) rectangle ($(b63.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(b14.north west)+(-0.1,0.1)$) rectangle ($(b64.south east)+(0.1,-0.1)$);     
+ 
+        % draw 4 boxes around the final hidden layers
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(h11.north west)+(-0.1,0.1)$) rectangle ($(h15.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(h21.north west)+(-0.1,0.1)$) rectangle ($(h25.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(h31.north west)+(-0.1,0.1)$) rectangle ($(h35.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(h41.north west)+(-0.1,0.1)$) rectangle ($(h45.south east)+(0.1,-0.1)$);
+        
+        % draw 4 boxes around the final hidden layers
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o11.north west)+(-0.1,0.1)$) rectangle ($(o15.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o21.north west)+(-0.1,0.1)$) rectangle ($(o25.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o31.north west)+(-0.1,0.1)$) rectangle ($(o35.south east)+(0.1,-0.1)$);
+        \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o41.north west)+(-0.1,0.1)$) rectangle ($(o45.south east)+(0.1,-0.1)$);
+        
+        % draw block limiters        
+        \draw [style={block}] (100) to (101);
+        \draw [style={block}] (102) to (103);
+        \draw [style={block}] (104) to (105);
+        
+        % curved arrows to show concatination
+        \draw [style={arrow_connector}] ([yshift=1.3pt]b11.north)  to [out = 90, in = 180, looseness = 2] ([xshift=-1.3pt, yshift=-4pt]h11.west);
+        \draw [style={arrow_connector}] ([yshift=1.3pt]b12.north)  to [out = 90, in = 130, looseness = 2] ([xshift=-1.3pt, yshift=+6pt]h21.west);
+        \draw [style={arrow_connector}] ([yshift=-1.3pt]b63.south) to [out = 270, in = 190, looseness = 2] ([xshift=-4pt, yshift=+6pt]h43.west);
+        \draw [style={arrow_connector}] ([yshift=-1.3pt]b64.south) to [out = 290, in = 230, looseness = 2] ([xshift=-4pt, yshift=-16pt]h3x.west);
+
+    \end{pgfonlayer}
+\end{tikzpicture}
+
+
+
+\end{document}
