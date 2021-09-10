@@ -175,19 +175,41 @@ def main():
     """ 
         Main
     """
-    args = parse_args()
-    print(args.source)
-    print(args.destination)
-    if len(args.source) <= 0:
-      print('No files to upload.')
-      os._exit(0)
-
-    if args.destination is None:
-      print('Please specify the destination in google drive.')
-      os._exit(0)
-        
+    args = parse_args()    
+    
     src_folder_names = args.source
     parent_folder_name = args.destination
+    
+    # you can also hard code folders here for ease ;p
+    # must be commented to use command line for specifying paths    
+#     src_folder_names = [
+#     '../test/paper/run_MLP1_DTW_17H',
+#     '../test/paper/run_MLP1_MSE_12H',
+#     '../test/paper/run_CVAE1_DTW_32H',
+#     '../test/paper/run_CVAE1_MSE_42H',
+#     '../test/paper/run_LSTM1_MSE_29H',
+#     '../test/paper/run_LSTM1_DTW_40H',
+#     '../test/paper/run_MLP2_DTW_23T',
+#     '../test/paper/run_MLP2_MSE_25T',
+#     '../test/paper/run_CVAE1_MSE_36T',
+#     '../test/paper/run_CVAE1_DTW_39T',
+#     '../test/paper/run_LSTM1_DTW_3T',
+#     '../test/paper/run_LSTM1_MSE_4T',
+#     '../test/paper/run_CLSTM1_MSE_13C',
+#     '../test/paper/run_CLSTM1_DTW_45C'        
+#     ]
+#     parent_folder_name = 'ML_RT_results'
+    
+    if len(src_folder_names) <= 0:
+      print('\nNo files to upload.\n')
+      os._exit(0)
+
+    if parent_folder_name is None:
+      print('\nPlease specify the destination in google drive.\n')
+      os._exit(0)
+    
+    print('\nAll these folder will be uploaded to google drive:\n', src_folder_names)
+    
     
     # Authenticate to Google API
     drive = authenticate()
@@ -196,7 +218,10 @@ def main():
     parent_folder_id = get_folder_id(drive, 'root', parent_folder_name)
 
     for src_path in src_folder_names:
-        dst_folder_name = os.path.basename(os.path.dirname(src_path))
+        if os.path.isdir(src_path):
+            dst_folder_name = os.path.basename(src_path)
+        else:
+            dst_folder_name = os.path.basename(os.path.dirname(src_path))
 
         # Get destination folder ID
         folder_id = get_folder_id(drive, parent_folder_id, dst_folder_name)
