@@ -155,8 +155,7 @@ class Discriminator1(nn.Module):
             *block(512, 256),
             *block(256, 128),
             *block(128, 64),
-            nn.Linear(64, 1),
-            nn.Sigmoid()
+            nn.Linear(64, 1)
         )
 
     def forward(self, profiles, parameters):
@@ -192,7 +191,6 @@ class Discriminator2(nn.Module):
             *block(conf.profile_len + conf.n_parameters, 1024, use_dropout=False),
             *block(1024, 128),
             nn.Linear(128, 1),
-            nn.Sigmoid()
         )
 
     def forward(self, profiles, parameters):

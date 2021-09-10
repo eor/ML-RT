@@ -217,7 +217,7 @@ def cgan_run_evaluation(current_epoch, data_loader, generator, path, config, pri
 # -----------------------------------------------------------------
 #  Train Generator on a batch of dataset
 # -----------------------------------------------------------------
-def cgan_train_generator(generator, discriminator, optimizer, loss, global_parameters, batch_size, config):
+def cgan_train_generator(generator, discriminator, optimizer, loss, gen_parameters, latent_vector, batch_size, config):
     """
     This function runs the generator on a batch of data, and then optimizes it based on it's
     ability to fool the discriminator
@@ -237,18 +237,11 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
 
     # set generator to train mode
     generator.train()
+    discriminator.eval()
 
     # zero the gradients on each iteration
     optimizer.zero_grad()
 
-    # sample noise and parameters as generator input
-    latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-    p = cgan_fake_parameters_gen_input(config.n_parameters,
-                                       batch_size,
-                                       global_parameters,
-                                       mode=config.gen_parameter_mode)
-    gen_parameters = Variable(FloatTensor(p))
-    
     gen_profiles = generator(latent_vector, gen_parameters)
 
     # measures generator's ability to fool the discriminator
@@ -258,7 +251,7 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, global_param
     gen_loss.backward()
     optimizer.step()
 
-    return gen_profiles, gen_parameters, gen_loss
+    return gen_profiles, gen_loss
 
 
 # -----------------------------------------------------------------
@@ -286,25 +279,25 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     all_zeros = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
 
     discriminator.train()
-
     optimizer.zero_grad()
 
     # Loss for real profiles
     validity_real = discriminator(real_profiles, real_parameters)
     d_real_loss = loss(validity_real, all_ones)
-
+    
     # Loss for fake profiles
     validity_fake = discriminator(gen_profiles.detach(), gen_parameters)
     d_fake_loss = loss(validity_fake, all_zeros)
-
+    
     # Total discriminator loss
     dis_loss = (d_real_loss + d_fake_loss) / 2
-
+    # dis_loss.register_hook(lambda grad: print(grad))
     # d_loss.backward(retain_graph=True)
     dis_loss.backward()
+    # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return dis_loss
+    return d_real_loss, d_fake_loss
 
 
 # -----------------------------------------------------------------
@@ -417,7 +410,8 @@ def main(config):
     # book keeping arrays
     # -----------------------------------------------------------------
     train_loss_array_gen = np.empty(0)
-    train_loss_array_dis = np.empty(0)
+    train_loss_array_dis_real = np.empty(0)
+    train_loss_array_dis_fake = np.empty(0)
     val_loss_mse_gen = np.empty(0)
     val_loss_dtw_gen = np.empty(0)
 
@@ -450,25 +444,35 @@ def main(config):
     for epoch in range(1, config.n_epochs + 1):
 
         epoch_loss_gen = 0
-        epoch_loss_dis = 0
-
+        epoch_loss_dis_real = 0
+        epoch_loss_dis_fake = 0
+        
         for i, (profiles, parameters) in enumerate(train_loader):
+
+            # get batch_size
+            batch_size = profiles.shape[0]
 
             # configure input
             real_profiles = Variable(profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
 
-            gen_profiles, gen_parameters, gen_loss = cgan_train_generator(
+            # sample noise and parameters as generator input
+            latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+            p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
+            gen_parameters = Variable(FloatTensor(p))
+
+            gen_profiles, gen_loss = cgan_train_generator(
                 generator=generator,
                 discriminator=discriminator,
                 optimizer=optimizer_G,
                 loss=adversarial_loss,
-                global_parameters=global_parameters,
-                batch_size=profiles.shape[0],
+                gen_parameters=gen_parameters,
+                latent_vector=latent_vector,
+                batch_size=batch_size,
                 config=config
             )
 
-            dis_loss = cgan_train_discriminator(
+            dis_real_loss, dis_fake_loss = cgan_train_discriminator(
                 real_profiles=real_profiles,
                 real_parameters=real_parameters,
                 gen_profiles=gen_profiles,
@@ -476,18 +480,22 @@ def main(config):
                 discriminator=discriminator,
                 optimizer=optimizer_D,
                 loss=adversarial_loss,
-                batch_size=profiles.shape[0]
+                batch_size=batch_size
             )
 
             epoch_loss_gen += gen_loss.item()    # average loss per batch
-            epoch_loss_dis += dis_loss.item()    # average loss per batch
+            epoch_loss_dis_real += dis_real_loss.item()    # average loss per batch
+            epoch_loss_dis_fake += dis_fake_loss.item()    # average loss per batch
 
         # end-of-epoch book keeping
         average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
-        average_loss_dis = epoch_loss_dis / len(train_loader)   # divide by number of batches (!= batch size)
-
+        average_loss_dis_real = epoch_loss_dis_real / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis_fake = epoch_loss_dis_fake / len(train_loader)   # divide by number of batches (!= batch size)
+        average_loss_dis = (average_loss_dis_real + average_loss_dis_fake) * 0.5
+        
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
-        train_loss_array_dis = np.append(train_loss_array_dis, average_loss_dis)
+        train_loss_array_dis_real = np.append(train_loss_array_dis_real, average_loss_dis_real)
+        train_loss_array_dis_fake = np.append(train_loss_array_dis_fake, average_loss_dis_fake)
 
         mse_val, dtw_val = cgan_run_evaluation(epoch, val_loader, generator, data_products_path, config, print_results=False, save_results=False, best_model=False)
 
@@ -540,7 +548,8 @@ def main(config):
 
     # save training stats
     utils_save_loss(train_loss_array_gen, data_products_path, config.profile_type, config.n_epochs, prefix='G_train')
-    utils_save_loss(train_loss_array_dis, data_products_path, config.profile_type, config.n_epochs, prefix='D_train')
+    utils_save_loss(train_loss_array_dis_real, data_products_path, config.profile_type, config.n_epochs, prefix='D_train_real')
+    utils_save_loss(train_loss_array_dis_fake, data_products_path, config.profile_type, config.n_epochs, prefix='D_train_fake')
 
     # -----------------------------------------------------------------
     # Save some results to config object for later use
@@ -631,9 +640,9 @@ if __name__ == "__main__":
     parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
     parser.add_argument("--latent_dim", type=int, default=10, help="dimensionality of the latent space (default=10)")
-    parser.add_argument("--lr", type=float, default=0.0001, help="adam: learning rate, default=0.0002 ")
-    parser.add_argument("--b1", type=float, default=0.9,
-                        help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
+    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate, default=0.0002 ")
+    parser.add_argument("--b1", type=float, default=0.5,
+                        help="adam: beta1 - decay of first order momentum of gradient, default=0.5")
     parser.add_argument("--b2", type=float, default=0.999,
                         help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
     # use blow out filter?
