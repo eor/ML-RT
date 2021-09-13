@@ -69,19 +69,19 @@
 \begin{tikzpicture}
     \begin{pgfonlayer}{nodelayer}
         % layer 1
-        \node [style={parameter_vector}] (0)      at (1.0, 0) {};
-        \node [style={parameter_vector}] (3)      at (1.0, 3) {};
-        \node [style={parameter_vector}] (4)      at (1.0, 4) {};
-        \node [style={empty_slot}, scale=0.5] (5) at (1.0, 2) {};
-        \node [style={empty_slot}, scale=0.5] (6) at (1.0, 1) {};
+        \node [style={parameter_vector}] (0)      at (1.5, 0) {};
+        \node [style={parameter_vector}] (3)      at (1.5, 3) {};
+        \node [style={parameter_vector}] (4)      at (1.5, 4) {};
+        \node [style={empty_slot}, scale=0.5] (5) at (1.5, 2) {};
+        \node [style={empty_slot}, scale=0.5] (6) at (1.5, 1) {};
 
         %layer 2
-        \node [style={hidden_layer_unit}] (7)      at (2.5, 4.5) {};
-        \node [style={hidden_layer_unit}] (8)      at (2.5, 3.5) {};
-        \node [style={hidden_layer_unit}] (9)      at (2.5, -0.5) {};
-        \node [style={empty_slot}, scale=0.5] (11) at (2.5, 2.5) {};
-        \node [style={empty_slot}, scale=0.5] (12) at (2.5, 1.5) {};
-        \node [style={empty_slot}, scale=0.5] (13) at (2.5, 0.5) {};
+        \node [style={hidden_layer_unit}] (7)      at (3.0, 4.5) {};
+        \node [style={hidden_layer_unit}] (8)      at (3.0, 3.5) {};
+        \node [style={hidden_layer_unit}] (9)      at (3.0, -0.5) {};
+        \node [style={empty_slot}, scale=0.5] (11) at (3.0, 2.5) {};
+        \node [style={empty_slot}, scale=0.5] (12) at (3.0, 1.5) {};
+        \node [style={empty_slot}, scale=0.5] (13) at (3.0, 0.5) {};
 
         %ellipsis
         \node [style=ellipsis, scale=0.3] (34) at (3.5, 2) {};
@@ -256,8 +256,8 @@
 %         \node [style={empty_slot}, scale=0.5] (78) at (11, 3) {};
         
         % neuron numbers at the bottom        
-        \node [style=myText] (79) at (1.0, -6.5) {\large (8)};
-        \node [style=myText] (80) at (2.5, -6.5) {\large (64)};
+        \node [style=myText] (79) at (1.5, -6.5) {\large (8)};
+        \node [style=myText] (80) at (3.0, -6.5) {\large (64)};
         \node [style=myText] (81) at (5,   -6.5) {\large (3000)};
         \node [style=myText] (82) at (7,   -6.5) {\large (3000)};
         \node [style=myText] (83) at (9.8, -6.5) {\large (6000$\times$4)};
@@ -265,8 +265,8 @@
         \node [style=myText] (85) at (14,  -6.5) {\large (4$\times$1500)};
         
         % description at the bottom 
-        \node [style=myText] (90) at (1.0, -5.5) {\large Parameter};
-        \node [style=myText] (91) at (1.0, -6.0) {\large vector};
+        \node [style=myText] (90) at (1.5, -5.5) {\large Parameter};
+        \node [style=myText] (91) at (1.5, -6.0) {\large vector};
 
         
         \node [style=myText] (92) at (5, -5.5) {\large Embedding};
@@ -280,7 +280,7 @@
         \node [style=myText] (97) at (11.5, 9.5) {\large 4 MLP blocks};
         
         % epmty nodes for docking the lines at the top 
-        \node [style=none] (100) at (0.5,   9.0) {};
+        \node [style=none] (100) at (1.0,   9.0) {};
         \node [style=none] (101) at (5.0,   9.0) {};                                           
         \node [style=none] (102) at (5.5,   9.0) {};        
         \node [style=none] (103) at (8.25,  9.0) {};                                           
