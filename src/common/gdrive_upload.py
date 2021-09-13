@@ -24,6 +24,9 @@ usage:
     src_pathX:   relative paths to source directory which you want to upload on drive. Folders will
                  be created with the same name.
 **********************************************************************************************************
+
+Note: if you face a RedirectMissingLocation Error while upoading some files, this is a issue with
+httplib2 version that breaks pydrive. try using `pip install httplib2==0.15.0` to switch it to a stable version.
 '''
 
 # Import Google libraries
@@ -182,7 +185,7 @@ def main():
     
     # you can also hard code folders here for ease ;p
     # must be commented to use command line for specifying paths    
-#     src_folder_names = [
+    src_folder_names = [
 #     '../test/paper/run_MLP1_DTW_17H',
 #     '../test/paper/run_MLP1_MSE_12H',
 #     '../test/paper/run_CVAE1_DTW_32H',
@@ -195,10 +198,10 @@ def main():
 #     '../test/paper/run_CVAE1_DTW_39T',
 #     '../test/paper/run_LSTM1_DTW_3T',
 #     '../test/paper/run_LSTM1_MSE_4T',
-#     '../test/paper/run_CLSTM1_MSE_13C',
-#     '../test/paper/run_CLSTM1_DTW_45C'        
-#     ]
-#     parent_folder_name = 'ML_RT_results'
+    '../test/paper/run_CLSTM1_MSE_13C',
+    '../test/paper/run_CLSTM1_DTW_45C'        
+    ]
+    parent_folder_name = 'ML_RT_results'
     
     if len(src_folder_names) <= 0:
       print('\nNo files to upload.\n')
