@@ -3,7 +3,7 @@ import torch
 
 
 # -----------------------------------------------------------------
-# Generator 1: 4 hidden layers, features BN
+# Generator 1: 4 hidden layers, features BN (Based on MLP (without dropout))
 # -----------------------------------------------------------------
 class Generator1(nn.Module):
     def __init__(self, conf):
@@ -119,7 +119,6 @@ class Generator3(nn.Module):
         # x.size(): (batch_size, 2*time_series_length, 2*input_size) => (batch_size, 2*2*time_series_length)
         x = x.reshape(x.size()[0], -1)
         x = self.out_layer(x)
-        return x
 
     def init_hidden_state(self, batch_size):
         # x2 because, bidirectional lstm
@@ -163,12 +162,16 @@ class Discriminator1(nn.Module):
         # concatenate profile and parameter vector to produce conditioned input
         # Inputs: profile.shape -  [batch_size, profile_len]
         #         parameters.shape - [batch_size, n_parameters]
-
-        discriminator_input = torch.cat((profiles, parameters), 1)
-
-        validity = self.model(discriminator_input)
-
+        
+        # user hasn't passed the already concatenated input, so concat it
+        if parameters is not None:
+            discriminator_input = torch.cat((profiles, parameters), 1)
+            validity = self.model(discriminator_input)
+        else:
+            validity = self.model(profiles)
+            
         return validity
+    
 
 
 # -----------------------------------------------------------------
@@ -190,7 +193,7 @@ class Discriminator2(nn.Module):
         self.model = nn.Sequential(
             *block(conf.profile_len + conf.n_parameters, 1024, use_dropout=False),
             *block(1024, 128),
-            nn.Linear(128, 1),
+            nn.Linear(128, 1)
         )
 
     def forward(self, profiles, parameters):
