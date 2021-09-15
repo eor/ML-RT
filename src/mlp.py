@@ -251,7 +251,9 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    if config.model == 'MLP2':
+    if config.model == 'MLP3':
+        model = MLP3(config)
+    elif config.model == 'MLP2':
         model = MLP2(config)
     else:
         model = MLP1(config)
@@ -548,7 +550,7 @@ if __name__ == "__main__":
         parameter_limits = sp.p8_limits
         parameter_names_latex = sp.p8_names_latex
 
-    if my_config.model not in ['MLP1', 'MLP2']:
+    if my_config.model not in ['MLP1', 'MLP2', 'MLP3']:
         my_config.model = 'MLP1'
 
     if my_config.loss_type not in ['MSE', 'DTW']:
