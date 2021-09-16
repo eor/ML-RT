@@ -203,7 +203,7 @@ if __name__ == '__main__':
     print('Hello there! Let\'s analyse some results\n')
     
     # May be add your own array here.     
-#     best_runs = [
+    best_runs = [
 #     '../test/paper/run_MLP1_DTW_17H',
 #     '../test/paper/run_MLP1_MSE_12H',
 #     '../test/paper/run_CVAE1_DTW_32H',
@@ -217,8 +217,8 @@ if __name__ == '__main__':
 #     '../test/paper/run_LSTM1_DTW_3T',
 #     '../test/paper/run_LSTM1_MSE_4T',
 #     '../test/paper/run_CLSTM1_MSE_13C',
-#     '../test/paper/run_CLSTM1_DTW_45C'        
-#     ]
+    '../test/paper/run_CLSTM1_DTW_45C'        
+    ]
     
     for path in best_runs:
         config = utils_load_config(path)

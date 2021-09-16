@@ -95,20 +95,36 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
-    fig = plt.figure(figsize=(10, 8))
-
+    fig = plt.figure(figsize=(11, 10))
     # compute size of grid ie. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
     columns = int(np.ceil(num_plots / rows))
     # outer grid for the plots
     outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
-
+    
+    # -----------------------------------------------------------------
+    # font settings
+    # -----------------------------------------------------------------
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
+    
+    if profile_type == 'C':
+        font_size_title = 20
+        font_size_ticks = 16
+        font_size_legends = 12
+        font_size_x_y = 18
+        plt.subplots_adjust(top=0.85)  
+
+    else:
+        font_size_title = 28
+        font_size_ticks = 26
+        font_size_legends = 22
+        font_size_x_y = 30
+        plt.subplots_adjust(top=0.82)  
 
     for i in range(num_plots):
 
-        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.2, hspace=0.0, height_ratios=[3, 1])
+        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.1, hspace=0.0, height_ratios=[3, 1])
 
         ax0 = fig.add_subplot(inner[0])
         ax1 = fig.add_subplot(inner[1], sharex=ax0)
@@ -118,18 +134,27 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         # -----------------------------------------------------------------
         if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) < 1:
             ax0.set_ylim(-5, 5)
+        
         ax0.plot(profile_true[i], c='green', label='Truth')
-        ax0.plot(profile_inferred[i], c='orange', label='Reconstruction')
+        ax0.plot(profile_inferred[i], c='orange', label='Inference')
+        
+        mse = utils_compute_mse(profile_true[i], profile_inferred[i])
+        dtw = utils_compute_dtw(profile_true[i], profile_inferred[i])
+    
+        if add_errors:
+            ax0.plot([],[],alpha=.0,label='MSE: %e \n DTW: %e' % (mse, dtw))
+        
+        ax0.legend(loc=0, frameon=False, prop={'size': font_size_legends})
+        
         # if profile_type is set to combined, get Y_label using profile_order,
         # else, use profile_type directly.
         if profile_type == 'C':
-            ax0.set_ylabel(get_label_Y(profile_order[i]), fontsize=12)
+            ax0.set_ylabel(get_label_Y(profile_order[i]), fontsize=font_size_x_y)
         else:
-            ax0.set_ylabel(get_label_Y(profile_type), fontsize=12)
-        ax0.legend(loc='upper right', frameon=False)
+            ax0.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y)
         ax0.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
         ax0.set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
-        ax0.tick_params(axis='both', which='both', right=True, top=True)
+        ax0.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
         fig.add_subplot(ax0)
 
         # -----------------------------------------------------------------
@@ -138,11 +163,10 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         absolute_error = profile_true[i] - profile_inferred[i]
         ax1.plot(absolute_error, c='black', label='Absolute error', linewidth=0.6)
         ax1.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-        ax1.set_ylabel(r'Abs error', fontsize=12)
-        ax1.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=12)
+        ax1.set_ylabel(r'Abs error', fontsize=font_size_x_y)
+        ax1.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y)
         ax1.set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
-        ax1.tick_params(axis='both', which='both', right=True, top=True)
-
+        ax1.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
     # -----------------------------------------------------------------
     # add parameters as title
     # -----------------------------------------------------------------
@@ -154,8 +178,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     if parameters is not None and len(parameters) > 0:
         a = ''
         for j in range(len(param_names)):
-            # add line break after every 4 parameters are added
-            if j != 0 and j % 5 == 0:
+            # add line break after every 3 parameters are added
+            if j != 0 and j % 3 == 0:
                 a += '\n'
             # append the parameter with its name and value to title string
             value = parameters[j]
@@ -165,14 +189,12 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
-    fig.suptitle(a, fontsize=12)
+    fig.suptitle(a, fontsize=font_size_title, y=0.98)
+
+    #         plt.figtext(0.5, 0.01, 'Errors: MSE: %e DTW: %e' % (mse, dtw), fontsize=font_size_title, ha='center', bbox={"alpha": 0, "pad": 10})
 
     mse = utils_compute_mse(profile_true, profile_inferred)
-    dtw = utils_compute_dtw(profile_true, profile_inferred)
-
-    if add_errors:
-        plt.figtext(0.5, 0.01, 'Computer errors: MSE: %e DTW: %e' % (mse, dtw), fontsize=10, ha='center', bbox={"alpha": 0, "pad": 10})
-
+    
     # -----------------------------------------------------------------
     # get MSE and construct file name
     # -----------------------------------------------------------------
