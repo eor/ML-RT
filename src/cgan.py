@@ -248,10 +248,10 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, gen_paramete
     validity = discriminator(gen_profiles, gen_parameters)
     gen_loss = loss('MSE', validity, all_ones, config)
 
-    gen_loss.backward()
+    (0.5 * gen_loss).backward()
     optimizer.step()
 
-    return gen_profiles, torch.sqrt(gen_loss)
+    return gen_profiles, gen_loss
 
 
 # -----------------------------------------------------------------
@@ -291,14 +291,14 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     d_fake_loss = loss('MSE', validity_fake, all_zeros, config)
     
     # Total discriminator loss
-    dis_loss = (d_real_loss + d_fake_loss) / 2
+    dis_loss = (d_real_loss + d_fake_loss) * 0.5    
     # dis_loss.register_hook(lambda grad: print(grad))
     # d_loss.backward(retain_graph=True)
     dis_loss.backward()
     # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return torch.sqrt(d_real_loss), torch.sqrt(d_fake_loss)
+    return d_real_loss, d_fake_loss
 
 
 # -----------------------------------------------------------------
@@ -638,10 +638,10 @@ if __name__ == "__main__":
                         help="Do not use dropout regularisation in discriminator")
     parser.set_defaults(dropout=True)
 
-    parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
+    parser.add_argument("--dropout_value", type=float, default=0.5, help="dropout probability, default=0.25 ")
 
     parser.add_argument("--latent_dim", type=int, default=0, help="dimensionality of the latent space (default=0)")
-    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate, default=0.0002 ")
+    parser.add_argument("--lr", type=float, default=0.00005, help="adam: learning rate, default=0.00005")
     parser.add_argument("--b1", type=float, default=0.5,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.5")
     parser.add_argument("--b2", type=float, default=0.999,

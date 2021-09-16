@@ -356,7 +356,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, generator, global_p
     optimizer.step()
     
     
-    return d_real_loss.item(), d_real_loss.item()
+    return d_real_loss.item(), d_fake_loss.item()
 
 
 # -----------------------------------------------------------------

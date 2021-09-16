@@ -487,13 +487,13 @@ if __name__ == "__main__":
                         help="use batch normalisation in network (default)")
     parser.add_argument('--no-batch_norm', dest='batch_norm', action='store_false',
                         help="use batch normalisation in network")
-    parser.set_defaults(batch_norm=True)
+    parser.set_defaults(batch_norm=False)
 
     parser.add_argument("--dropout", dest='dropout', action='store_true',
                         help="use dropout regularisation in network (default)")
     parser.add_argument("--no-dropout", dest='dropout', action='store_false',
                         help="do not use dropout regularisation in network")
-    parser.set_defaults(dropout=True)
+    parser.set_defaults(dropout=False)
 
     parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
