@@ -39,7 +39,7 @@ def inference_cgan(run_dir, model_file_name, parameters):
     """
     Function to use user specified parameters with the CGAN
     trained generator in inference mode.
-    
+
     Returns an array of one or more generated profiles
     """
 
@@ -180,7 +180,7 @@ def inference_test_run_mlp():
     # save, plot etc
 
     # TODO: utils_save_single_profile(profile, path, file_name)
-    # plots should be done elsewhere by hand  
+    # plots should be done elsewhere by hand
 
 
 # -----------------------------------------------------------------
