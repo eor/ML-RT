@@ -96,31 +96,29 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     # figure setup
     # -----------------------------------------------------------------
     fig = plt.figure(figsize=(11, 10))
+    plt.subplots_adjust(top=0.82)
     # compute size of grid ie. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
     columns = int(np.ceil(num_plots / rows))
     # outer grid for the plots
     outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
-    
+
     # -----------------------------------------------------------------
     # font settings
     # -----------------------------------------------------------------
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
-    
+
     if profile_type == 'C':
-        font_size_title = 20
+        font_size_title = 26
         font_size_ticks = 16
         font_size_legends = 12
         font_size_x_y = 18
-        plt.subplots_adjust(top=0.85)  
-
     else:
-        font_size_title = 28
+        font_size_title = 26
         font_size_ticks = 26
         font_size_legends = 22
         font_size_x_y = 30
-        plt.subplots_adjust(top=0.82)  
 
     for i in range(num_plots):
 
@@ -134,18 +132,18 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         # -----------------------------------------------------------------
         if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) < 1:
             ax0.set_ylim(-5, 5)
-        
+
         ax0.plot(profile_true[i], c='green', label='Truth')
         ax0.plot(profile_inferred[i], c='orange', label='Inference')
-        
+
         mse = utils_compute_mse(profile_true[i], profile_inferred[i])
         dtw = utils_compute_dtw(profile_true[i], profile_inferred[i])
-    
+
         if add_errors:
-            ax0.plot([],[],alpha=.0,label='MSE: %e \n DTW: %e' % (mse, dtw))
-        
+            ax0.plot([], [], alpha=.0, label='MSE: %e \n DTW: %e' % (mse, dtw))
+
         ax0.legend(loc=0, frameon=False, prop={'size': font_size_legends})
-        
+
         # if profile_type is set to combined, get Y_label using profile_order,
         # else, use profile_type directly.
         if profile_type == 'C':
@@ -193,7 +191,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     #         plt.figtext(0.5, 0.01, 'Errors: MSE: %e DTW: %e' % (mse, dtw), fontsize=font_size_title, ha='center', bbox={"alpha": 0, "pad": 10})
 
     mse = utils_compute_mse(profile_true, profile_inferred)
-    
+
     # -----------------------------------------------------------------
     # get MSE and construct file name
     # -----------------------------------------------------------------

@@ -336,7 +336,7 @@ def utils_compute_dtw(original_series, predicted_series):
         predicted_series = torch.tensor(predicted_series, device=torch.device("cpu"))
 
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
-    
+
     if len(original_series.size()) == 1:
         original_series = original_series.unsqueeze(0)
     if len(predicted_series.size()) == 1:

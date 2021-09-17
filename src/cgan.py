@@ -275,7 +275,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     """
 
     # adversarial ground truths
-    # use label smoothing ie. use 0.9 instead of 1 to prevent discriminator from becoming overconfident    
+    # use label smoothing ie. use 0.9 instead of 1 to prevent discriminator from becoming overconfident
     all_ones = Variable(FloatTensor(batch_size, 1).fill_(0.9), requires_grad=False)
     all_zeros = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
 
@@ -285,13 +285,13 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     # Loss for real profiles
     validity_real = discriminator(real_profiles, real_parameters)
     d_real_loss = loss('MSE', validity_real, all_ones, config)
-    
+
     # Loss for fake profiles
     validity_fake = discriminator(gen_profiles.detach(), gen_parameters)
     d_fake_loss = loss('MSE', validity_fake, all_zeros, config)
-    
+
     # Total discriminator loss
-    dis_loss = (d_real_loss + d_fake_loss) * 0.5    
+    dis_loss = (d_real_loss + d_fake_loss) * 0.5
     # dis_loss.register_hook(lambda grad: print(grad))
     # d_loss.backward(retain_graph=True)
     dis_loss.backward()
@@ -447,7 +447,7 @@ def main(config):
         epoch_loss_gen = 0
         epoch_loss_dis_real = 0
         epoch_loss_dis_fake = 0
-        
+
         for i, (profiles, parameters) in enumerate(train_loader):
 
             # get batch_size
@@ -461,7 +461,7 @@ def main(config):
             latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
             p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
             gen_parameters = Variable(FloatTensor(p))
-            
+
             gen_profiles, gen_loss = cgan_train_generator(
                 generator=generator,
                 discriminator=discriminator,
@@ -493,7 +493,7 @@ def main(config):
         average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
         average_loss_dis_real = epoch_loss_dis_real / len(train_loader)   # divide by number of batches (!= batch size)
         average_loss_dis_fake = epoch_loss_dis_fake / len(train_loader)   # divide by number of batches (!= batch size)
-        
+
         train_loss_array_gen = np.append(train_loss_array_gen, average_loss_gen)
         train_loss_array_dis_real = np.append(train_loss_array_dis_real, average_loss_dis_real)
         train_loss_array_dis_fake = np.append(train_loss_array_dis_fake, average_loss_dis_fake)
@@ -574,7 +574,6 @@ def main(config):
     # -----------------------------------------------------------------
     utils_save_config_to_log(config)
     utils_save_config_to_file(config)
-
 
     # Fin
     print('\nAll done!')
