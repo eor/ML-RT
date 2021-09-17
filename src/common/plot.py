@@ -153,8 +153,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         else:
             ax0.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y)
         ax0.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-        ax0.set_xticks(np.arange(0, len(profile_true), step=50), minor=True)
-        ax0.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
+        ax0.tick_params(axis='y', which='both', right=True, top=True, labelsize=font_size_ticks)
         fig.add_subplot(ax0)
 
         # -----------------------------------------------------------------
