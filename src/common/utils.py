@@ -337,9 +337,14 @@ def utils_compute_dtw(original_series, predicted_series):
 
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
-    if len(original_series.size()) != 3:
+    if len(original_series.size()) == 1:
+        original_series = original_series.unsqueeze(0)
+    if len(predicted_series.size()) == 1:
+        predicted_series = predicted_series.unsqueeze(0)
+
+    if len(original_series.size()) == 2:
         original_series = original_series.unsqueeze(1)
-    if len(predicted_series.size()) != 3:
+    if len(predicted_series.size()) == 2:
         predicted_series = predicted_series.unsqueeze(1)
 
     loss = soft_dtw_loss(original_series, predicted_series).mean()

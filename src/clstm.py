@@ -300,7 +300,6 @@ def main(config):
     model = CLSTM(config, device)
     print('\n\tusing model CLSTM\n')
 
-
     if cuda:
         model.cuda()
 

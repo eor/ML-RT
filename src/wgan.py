@@ -4,6 +4,7 @@ import signal
 
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
+from torch.autograd import grad as torch_grad
 
 import torch.nn.functional as F
 import copy
@@ -25,7 +26,6 @@ from common.soft_dtw import SoftDTW as SoftDTW_CPU
 # -----------------------------------------------------------------
 parameter_limits = list()
 parameter_names_latex = list()
-
 
 # -----------------------------------------------------------------
 #  CUDA available?
@@ -72,6 +72,44 @@ def force_stop_signal_handler(sig, frame):
     global FORCE_STOP
     FORCE_STOP = True
     print("\033[96m\033[1m\nTraining will stop after this epoch. Please wait.\033[0m\n")
+
+
+def wgan_gp_gradient_penalty(real_profiles, generated_profiles, real_parameters, generated_parameters, discriminator, config, gp_weight=10):
+
+    batch_size = real_profiles.size()[0]
+
+    # Calculate interpolation
+    alpha_profiles = torch.rand((batch_size, 1), device=device)
+    alpha_parameters = torch.rand((batch_size, 1), device=device)
+    alpha_profiles = alpha_profiles.expand(batch_size, real_profiles.size()[1])
+    alpha_parameters = alpha_parameters.expand(batch_size, real_parameters.size()[1])
+
+    interpolated_profiles = alpha_profiles * real_profiles + (1 - alpha_profiles) * generated_profiles
+    interpolated_parameters = alpha_parameters * real_parameters + (1 - alpha_parameters) * generated_parameters
+    interpolated_profiles = Variable(interpolated_profiles, requires_grad=True)
+    interpolated_parameters = Variable(interpolated_parameters, requires_grad=True)
+
+    interpolated_data = torch.cat((interpolated_profiles, interpolated_parameters), dim=1)
+
+    # Calculate probability of interpolated examples
+    prob_interpolated = discriminator(interpolated_data, None)
+    # Calculate gradients of probabilities with respect to examples
+    gradients = torch_grad(outputs=prob_interpolated,
+                           inputs=interpolated_data,
+                           grad_outputs=torch.ones(prob_interpolated.size(), device=device),
+                           create_graph=True, retain_graph=True)[0]
+
+    # Gradients have shape (batch_size, num_channels, img_width, img_height),
+    # so flatten to easily take norm per example in batch
+    gradients = gradients.view(batch_size, -1)
+    # self.losses['gradient_norm'].append(gradients.norm(2, dim=1).mean().data[0])
+
+    # Derivatives of the gradient close to 0 can cause problems because of
+    # the square root, so manually calculate norm and add epsilon
+    gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=1) + 1e-12)
+
+    # Return gradient penalty
+    return gp_weight * ((gradients_norm - 1) ** 2).mean()
 
 
 # -----------------------------------------------------------------
@@ -217,7 +255,7 @@ def cgan_run_evaluation(current_epoch, data_loader, generator, path, config, pri
 # -----------------------------------------------------------------
 #  Train Generator on a batch of dataset
 # -----------------------------------------------------------------
-def cgan_train_generator(generator, discriminator, optimizer, loss, gen_parameters, latent_vector, batch_size, config):
+def cgan_train_generator(generator, discriminator, optimizer, global_parameters, batch_size, config):
     """
     This function runs the generator on a batch of data, and then optimizes it based on it's
     ability to fool the discriminator
@@ -226,14 +264,13 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, gen_paramete
         generator: model that is used to generate data
         discriminator: model that classifies data into generated and original classes
         optimizer: optimizer to be used for training
-        loss: loss function
         global_parameters:
         batch_size: no. of samples from dataset in the current iteration
         config: config object with user supplied parameters
     """
 
     # adversarial ground truths
-    all_ones = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
+    # -1 class labels are used for real images and +1 class labels
 
     # set generator to train mode
     generator.train()
@@ -242,23 +279,27 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, gen_paramete
     # zero the gradients on each iteration
     optimizer.zero_grad()
 
-    gen_profiles = generator(latent_vector, gen_parameters)
+    # sample noise
+    latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+    p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
+    gen_parameters = Variable(FloatTensor(p))
 
     # measures generator's ability to fool the discriminator
-    validity = discriminator(gen_profiles, gen_parameters)
-    gen_loss = loss('MSE', validity, all_ones, config)
+    gen_profiles = generator(latent_vector, gen_parameters)
+    crtitic_score_gen = discriminator(gen_profiles, gen_parameters)
+    gen_loss = -torch.mean(crtitic_score_gen)
 
-    (0.5 * gen_loss).backward()
+    gen_loss.backward()
     optimizer.step()
 
-    return gen_profiles, gen_loss
+    return gen_profiles, gen_loss.item()
 
 
 # -----------------------------------------------------------------
 #  Train discriminator on profiles generated by the generator
 # -----------------------------------------------------------------
-def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_parameters,
-                             discriminator, optimizer, loss, batch_size, config):
+def cgan_train_discriminator(real_profiles, real_parameters, generator, global_parameters,
+                             discriminator, optimizer, batch_size, config):
     """
     This function runs the discriminator on the profiles generated by the generator and on the real profiles,
     and trains it to classify them into separate classes
@@ -266,39 +307,54 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     Args:
         real_profiles: actual profiles from dataset
         real_parameters: parameters corresponding to real_profiles from the dataset
-        gen_profiles: generated profiles from the generator
-        gen_parameters: fake parameters used to generate the generated_profiles
+        generator: generated model
+        global_parameters: fake parameters used to generate the generated_profiles
         discriminator: model that learns to classify data into generated and original classes
         optimizer: optimizer to be used for training
-        loss: loss function
         batch_size: no. of samples from dataset in the current iteration
+        config: config object with user supplied parameters
     """
 
     # adversarial ground truths
-    # use label smoothing ie. use 0.9 instead of 1 to prevent discriminator from becoming overconfident
-    all_ones = Variable(FloatTensor(batch_size, 1).fill_(0.9), requires_grad=False)
-    all_zeros = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+    # -1 class labels are used for real images and +1 class labels
+    # real_labels = Variable(FloatTensor(batch_size, 1).fill_(-1.0), requires_grad=False)
+    # fake_labels = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
+
+    # sample noise
+    latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
+    p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
+    gen_parameters = Variable(FloatTensor(p))
 
     discriminator.train()
+    generator.eval()
     optimizer.zero_grad()
 
-    # Loss for real profiles
-    validity_real = discriminator(real_profiles, real_parameters)
-    d_real_loss = loss('MSE', validity_real, all_ones, config)
+    # compute loss for real profiles
+    critic_score_real = discriminator(real_profiles, real_parameters)
+    d_real_loss = -torch.mean(critic_score_real)
 
     # Loss for fake profiles
-    validity_fake = discriminator(gen_profiles.detach(), gen_parameters)
-    d_fake_loss = loss('MSE', validity_fake, all_zeros, config)
+    gen_profiles = generator(latent_vector, gen_parameters)
+    critic_score_fake = discriminator(gen_profiles.detach(), gen_parameters)
+    d_fake_loss = torch.mean(critic_score_fake)
 
     # Total discriminator loss
-    dis_loss = (d_real_loss + d_fake_loss) * 0.5
-    # dis_loss.register_hook(lambda grad: print(grad))
-    # d_loss.backward(retain_graph=True)
+    if config.arch == 'WGAN':
+
+        dis_loss = (d_real_loss + d_fake_loss)
+
+        # weight clipping
+        for p in discriminator.parameters():
+            p.data.clamp_(-config.clip_value, config.clip_value)
+    else:
+        gradient_penalty = wgan_gp_gradient_penalty(real_profiles, gen_profiles, real_parameters,
+                                                    gen_parameters, discriminator, config)
+        dis_loss = (d_real_loss + d_fake_loss) + gradient_penalty
+
     dis_loss.backward()
-    # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return d_real_loss, d_fake_loss
+    return d_real_loss.item(), d_fake_loss.item()
 
 
 # -----------------------------------------------------------------
@@ -404,8 +460,8 @@ def main(config):
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
-    optimizer_G = torch.optim.Adam(generator.parameters(), lr=config.lr, betas=(config.b1, config.b2))
-    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=config.lr, betas=(config.b1, config.b2))
+    optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=config.lr)
+    optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=config.lr)
 
     # -----------------------------------------------------------------
     # book keeping arrays
@@ -457,37 +513,33 @@ def main(config):
             real_profiles = Variable(profiles.type(FloatTensor))
             real_parameters = Variable(parameters.type(FloatTensor))
 
-            # sample noise and parameters as generator input
-            latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim))))
-            p = cgan_fake_parameters_gen_input(config.n_parameters, batch_size, global_parameters, mode=config.gen_parameter_mode)
-            gen_parameters = Variable(FloatTensor(p))
+            # train critic more often then the generator
+            # for a single train of generator, train critic config.critic_iter times
+            for d_iter in range(config.critic_iter):
+
+                dis_real_loss, dis_fake_loss = cgan_train_discriminator(
+                    real_profiles=real_profiles,
+                    real_parameters=real_parameters,
+                    global_parameters=global_parameters,
+                    generator=generator,
+                    discriminator=discriminator,
+                    optimizer=optimizer_D,
+                    batch_size=batch_size,
+                    config=config
+                )
 
             gen_profiles, gen_loss = cgan_train_generator(
                 generator=generator,
                 discriminator=discriminator,
                 optimizer=optimizer_G,
-                loss=cgan_loss_function,
-                gen_parameters=gen_parameters,
-                latent_vector=latent_vector,
+                global_parameters=global_parameters,
                 batch_size=batch_size,
                 config=config
             )
 
-            dis_real_loss, dis_fake_loss = cgan_train_discriminator(
-                real_profiles=real_profiles,
-                real_parameters=real_parameters,
-                gen_profiles=gen_profiles,
-                gen_parameters=gen_parameters,
-                discriminator=discriminator,
-                optimizer=optimizer_D,
-                loss=cgan_loss_function,
-                batch_size=batch_size,
-                config=config
-            )
-
-            epoch_loss_gen += gen_loss.item()    # average loss per batch
-            epoch_loss_dis_real += dis_real_loss.item()    # average loss per batch
-            epoch_loss_dis_fake += dis_fake_loss.item()    # average loss per batch
+            epoch_loss_gen += gen_loss            # average loss per batch
+            epoch_loss_dis_real += dis_real_loss  # average loss per batch
+            epoch_loss_dis_fake += dis_fake_loss  # average loss per batch
 
         # end-of-epoch book keeping
         average_loss_gen = epoch_loss_gen / len(train_loader)   # divide by number of batches (!= batch size)
@@ -516,8 +568,8 @@ def main(config):
             best_epoch_dtw = epoch
 
         print(
-            "[Epoch %d/%d] [disc_loss_real: %e] [disc_loss_fake: %e] [Avg_gen_loss: %e] "
-            "[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
+            "[Epoch %d/%d] [disc_loss_real: %e] [disc_loss_fake: %e] [Avg_gen_loss: %e]\n"
+            "\t[Val_score: MSE: %e DTW %e] [Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
             % (epoch, config.n_epochs, average_loss_dis_real, average_loss_dis_fake, average_loss_gen,
                mse_val, dtw_val, best_epoch_mse, best_epoch_dtw)
         )
@@ -621,9 +673,12 @@ if __name__ == "__main__":
     parser.add_argument('--dis_model', type=str, default='DIS1', metavar='(string)',
                         help='Pick a discriminator model: DIS1 (default) or DIS2')
 
+    parser.add_argument('--arch', type=str, default='WGAN_GP', metavar='(string)',
+                        help='architecture to use: WGAN or WGAN_GP (default=WGAN_GP)')
+
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=500, help="number of epochs of training")
-    parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")
+    parser.add_argument("--batch_size", type=int, default=64, help="size of the batches (default=64)")
 
     parser.add_argument("--batch_norm", dest='batch_norm', action='store_true',
                         help="use batch normalisation in generator (default)")
@@ -637,14 +692,15 @@ if __name__ == "__main__":
                         help="Do not use dropout regularisation in discriminator")
     parser.set_defaults(dropout=True)
 
-    parser.add_argument("--dropout_value", type=float, default=0.5, help="dropout probability, default=0.25 ")
+    parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
     parser.add_argument("--latent_dim", type=int, default=0, help="dimensionality of the latent space (default=0)")
+
     parser.add_argument("--lr", type=float, default=0.00005, help="adam: learning rate, default=0.00005")
-    parser.add_argument("--b1", type=float, default=0.5,
-                        help="adam: beta1 - decay of first order momentum of gradient, default=0.5")
-    parser.add_argument("--b2", type=float, default=0.999,
-                        help="adam: beta2 - decay of first order momentum of gradient, default=0.999")
+
+    parser.add_argument("--critic_iter", type=int, default=5, help="no. of times to train discriminator every epoch")
+    parser.add_argument("--clip_value", type=float, default=0.01, help="lower and upper clip value for disc. weights")
+
     # use blow out filter?
     parser.add_argument("--filter_blowouts", dest='analysis', action='store_true',
                         help="use blowout filter on data set (default)")
@@ -689,6 +745,9 @@ if __name__ == "__main__":
 
     if my_config.dis_model not in ['DIS1', 'DIS2']:
         my_config.model = 'DIS1'
+
+    if my_config.arch not in ['WGAN', 'WGAN_GP']:
+        my_config.model = 'WGAN_GP'
 
     # print summary
     print("\nUsed parameters:\n")
