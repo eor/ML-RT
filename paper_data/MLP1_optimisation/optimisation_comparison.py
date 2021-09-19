@@ -18,16 +18,17 @@ mpl.rc('text', usetex=True)
 # -----------------------------------------------------------------
 
 # these colours should be colour-blind friendly
-colours = ['#164EDB', '#F57DE0', '#2BEBF0', '#7CDB91', '#E07838']
+colours = ['#0E0BDB', '#F50098', '#01DB4A', '#00F0E8', '#E0780A']
 
-lines = ['solid', 'dashed', 'dashdot', (0, (5, 2, 1, 2)), 'dotted']
+#lines = ['solid', 'dashed', 'dashdot', (0, (5, 2, 1, 2)), 'dotted']
+lines = ['solid', 'solid', 'solid', 'solid', 'solid']
 
 
 # -----------------------------------------------------------------
 #  Plot loss functions (average loss for training & validation)
 # -----------------------------------------------------------------
 def compare_loss_function(lf_data, lf_labels, lf_colours, lf_lines,
-                          output_dir='./', profile_type='H', file_type='png', lf_type='validation'):
+                          output_dir='./', profile_type='H', file_type='pdf', lf_type='validation'):
 
     print('Producing loss function plot:')
 
@@ -52,7 +53,7 @@ def compare_loss_function(lf_data, lf_labels, lf_colours, lf_lines,
     # ax.legend(loc='upper right', frameon=False)
     ax.legend(loc='best', frameon=False)
 
-    path = os.path.join(output_dir, 'loss_functions_%s_%s.%s' % (lf_type, profile_type, file_type))
+    path = os.path.join(output_dir, 'loss_functions_comparison_%s_%s.%s' % (lf_type, profile_type, file_type))
 
     fig.savefig(path)
     print('Saved plot to:\t%s' % path)
