@@ -18,10 +18,10 @@ mpl.rc('text', usetex=True)
 # -----------------------------------------------------------------
 
 # these colours should be colour-blind friendly
-colours = ['#0E0BDB', '#F50098', '#01DB4A', '#00F0E8', '#E0780A']
+colours = ['#01332B', '#D81B60', '#1E88E5', '#FFC107']
 
 #lines = ['solid', 'dashed', 'dashdot', (0, (5, 2, 1, 2)), 'dotted']
-lines = ['solid', 'solid', 'solid', 'solid', 'solid']
+lines = ['solid', 'solid', 'solid', 'solid']
 
 
 # -----------------------------------------------------------------
