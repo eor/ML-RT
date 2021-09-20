@@ -36,7 +36,7 @@ if torch.cuda.is_available():
 else:
     cuda = False
     device = torch.device("cpu")
-
+    
 
 # -----------------------------------------------------------------
 #  global FloatTensor instance
@@ -251,7 +251,7 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, gen_paramete
     (0.5 * gen_loss).backward()
     optimizer.step()
 
-    return gen_profiles, gen_loss
+    return gen_profiles, torch.sqrt(gen_loss)
 
 
 # -----------------------------------------------------------------
@@ -298,7 +298,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return d_real_loss, d_fake_loss
+    return torch.sqrt(d_real_loss), torch.sqrt(d_fake_loss)
 
 
 # -----------------------------------------------------------------
@@ -346,7 +346,7 @@ def main(config):
     if USE_LOG_PROFILES:
         H_profiles = np.log10(H_profiles + 1.0e-6)  # add a small number to avoid trouble
         T_profiles = np.log10(T_profiles)
-
+     
     # -----------------------------------------------------------------
     # shuffle / rescale parameters
     # -----------------------------------------------------------------
@@ -370,6 +370,12 @@ def main(config):
     else:
         profiles = T_profiles
 
+    # -----------------------------------------------------------------
+    # Dataset info
+    # -----------------------------------------------------------------
+    print('Maximum values in profiles:', np.max(profiles))
+    print('Minimum values in profiles:', np.min(profiles))
+    
     # -----------------------------------------------------------------
     # data loaders
     # -----------------------------------------------------------------
@@ -620,6 +626,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--dis_model', type=str, default='DIS1', metavar='(string)',
                         help='Pick a discriminator model: DIS1 (default) or DIS2')
+    parser.add_argument('--gpu_id', type=str, default='0', metavar='(string)',
+                        help='Pick the gpu to use')
 
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=500, help="number of epochs of training")
@@ -637,7 +645,7 @@ if __name__ == "__main__":
                         help="Do not use dropout regularisation in discriminator")
     parser.set_defaults(dropout=True)
 
-    parser.add_argument("--dropout_value", type=float, default=0.5, help="dropout probability, default=0.25 ")
+    parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
     parser.add_argument("--latent_dim", type=int, default=0, help="dimensionality of the latent space (default=0)")
     parser.add_argument("--lr", type=float, default=0.00005, help="adam: learning rate, default=0.00005")
