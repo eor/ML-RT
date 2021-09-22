@@ -1,0 +1,55 @@
+# Sample config file with default values for all parameters
+# Whenever a parameter is not set, STARDUST will fall back to the
+# respective default value.
+
+
+
+paths = {
+    pathOutDir          = "./";
+    pathSED             = "sed_example_2_IMF+PL_M13.000_z6.000.dat";
+    pathDensity         = "";                               
+    pathID              = "run_2"            /* unique id for log files, tables, etc */
+};
+
+
+simulation = {
+    sourceELow          = 13.6;               /* eV, set to negative value to use limit of SED file, has to be <24.6 */
+    sourceEHigh         = 1e4;                /* eV, set to negative value to use limit of SED file, has be >54.4 */
+    sourceLifetime      = 10.0;               /* Myr */    
+
+    haloMass            = 13.000000;          /* log_10(M/M_sol)*/
+
+    redshiftLow         = 6.000000;           /* for a single redshift run assign the same value to both redshiftLow and redshiftHigh */
+    redshiftHigh        = 6.000000;
+    redshiftStride      = 0.5;
+};
+
+
+settings = { /* general settings */
+
+
+    settingsDebug       = 0;                  /* 1 or 0 */
+
+    settingsRStart      = 0.1;                /* IGM is considered ionized from 0 to this radius in kpc */	
+    settingsRMax        = 1500.0;             /* Maximum radius radially away from source in kpc */
+
+    settingsDeltaR      = 0.1;                /* Spatial resolution of the simulation in kpc */
+    settingsDeltaT      = 0.01;               /* Time resolution in the simulation */
+
+    settingsWriteT      = 10.0;                /* Time interval at which profiles should be written in Myr */
+};
+
+
+cosmology = {
+    cosmoOmegaM         = 0.3089;              # Total matter density 
+    cosmoOmegaL         = 0.6911;              # Dark energy / cosmological constant 
+    cosmoOmegaB         = 0.0486;              # Baryon density
+    cosmoH0             = 67.74 ;              # Hubble parameter [km/sec/Mpc] at z = 0
+    cosmoH100           = 0.6774;              # Hubble / 100
+    cosmoSigma8         = 0.8159;              # power spectrum normalization    
+    cosmoTauThom        = 0.066 ;              # Optical depth of Thomson scattering
+    cosmoTCMB           = 2.731 ;              # CMB temperature [K] at z = 0
+
+}; 
+
+    
