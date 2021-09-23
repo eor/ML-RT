@@ -388,7 +388,7 @@ def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
                  edgecolor=None, legend=False)
 
     ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
-    ax.set_ylabel(r'$\textrm{Density}$', fontsize=25, labelpad=10)
+    ax.set_ylabel(r'$\textrm{Frequency density}$', fontsize=25, labelpad=10)
 
     ax.tick_params(axis='y', which='major', labelsize=15)
     ax.tick_params(axis='x', which='major', labelsize=15)
