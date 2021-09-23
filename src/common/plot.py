@@ -404,13 +404,14 @@ def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
     # ax.legend(loc='best', frameon=False)
 
     if title is not None:
-        f.suptitle(title, fontsize=25, y=0.98)
+        f.suptitle(title, fontsize=25, y=0.95)
 
     path = os.path.join(output_dir, '%s_frequency_density_mse_%d_epochs.%s' % (profile_type, n_epoch, file_type))
 
     f.savefig(path)
     print('Saved plot to:\t%s' % path)
 
+    # TODO implement solution for coupled networks
 
 
 
