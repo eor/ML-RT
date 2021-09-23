@@ -392,8 +392,6 @@ def main(config):
     # -----------------------------------------------------------------
     if config.gen_model == 'GEN2':
         generator = Generator2(config)
-    elif config.gen_model == 'GEN3':
-        generator = Generator3(config, device)
     else:
         generator = Generator1(config)
 
@@ -690,7 +688,7 @@ if __name__ == "__main__":
     if my_config.n_parameters == 8:
         parameter_limits = ps.p8_limits
 
-    if my_config.gen_model not in ['GEN1', 'GEN2', 'GEN3']:
+    if my_config.gen_model not in ['GEN1', 'GEN2']:
         my_config.model = 'GEN1'
 
     if my_config.dis_model not in ['DIS1', 'DIS2']:

@@ -474,7 +474,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=15, prefix='best')
+        analysis_auto_plot_profiles(config, k=25, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 
@@ -492,7 +492,7 @@ if __name__ == "__main__":
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
-    parser.add_argument("--testing_interval", type=int, default=100, help="epoch interval between testing runs")
+    parser.add_argument("--testing_interval", type=int, default=1000, help="epoch interval between testing runs")
 
     # physics related arguments
     parser.add_argument('--profile_type', type=str, default='H', metavar='(string)',
