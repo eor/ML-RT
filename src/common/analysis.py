@@ -229,7 +229,6 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
     else:
         title_string = None
 
-
     plot_error_density_mse(
         profiles_true=profiles_true,
         profiles_gen=profiles_gen,
