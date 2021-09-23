@@ -592,6 +592,7 @@ def main(config):
         analysis_loss_plot(config, gan=True)
         analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
+        analysis_error_density_plot(config, prefix='best')
 
 
 # -----------------------------------------------------------------

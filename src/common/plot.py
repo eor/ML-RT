@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
 from matplotlib import rc
+import seaborn as sns
+
 try:
     from settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 except ImportError:
@@ -355,6 +357,59 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     f.savefig(output_file)
 
     print('\tSaved plot to: {} '.format(output_file))
+
+
+# -----------------------------------------------------------------
+#  visualise error distribution: histogram and density plot
+# -----------------------------------------------------------------
+def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
+                           n_epoch, output_dir='./', prefix='test', file_type='pdf'):
+
+    print('Making error density plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
+
+    # -----------------------------------------------------------------
+    #  compute MSE for each sample
+    # -----------------------------------------------------------------
+    if profile_type == 'C':
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=(2, 1))
+    else:
+        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
+
+    mse_array = np.log10(mse_array + 1e-11)
+
+    # -----------------------------------------------------------------
+    #  set up figure
+    # -----------------------------------------------------------------
+    f, ax = plt.subplots(figsize=(6, 6))
+    rc('font', **{'family': 'serif'})
+    rc('text', usetex=True)
+
+    sns.histplot(mse_array, kde=True, bins=50, color='steelblue', alpha=0.25, ax=ax, stat='density',
+                 edgecolor=None, legend=False)
+
+    ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
+    ax.set_ylabel(r'$\textrm{Density}$', fontsize=25, labelpad=10)
+
+    ax.tick_params(axis='y', which='major', labelsize=15)
+    ax.tick_params(axis='x', which='major', labelsize=15)
+
+    ax.minorticks_on()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+
+    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.25)
+
+    f.subplots_adjust(bottom=0.2, left=0.15)
+
+    # ax.legend(loc='best', frameon=False)
+
+    path = os.path.join(output_dir, '%s_error_density_%d_epochs.%s' % (profile_type, n_epoch, file_type))
+
+    f.savefig(path)
+    print('Saved plot to:\t%s' % path)
+
+
+
 
 
 # -----------------------------------------------------------------

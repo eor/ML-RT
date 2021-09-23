@@ -115,7 +115,7 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
     k_small_list = heapq.nsmallest(k, range(len(mse_array)), mse_array.take)
 
     # 4.  plot profiles for largest MSE
-    print('Producing profile plot(s) for profiles with %d largest MSE' % k)
+    print('Producing profile plot(s) for profiles with %d highest MSE' % k)
     for i in range(len(k_large_list)):
         index = k_large_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -135,7 +135,7 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
         )
 
     # 5.  plot profiles for smallest MSE
-    print('Producing profile plot(s) for profiles with %d smallest MSE' % k)
+    print('Producing profile plot(s) for profiles with %d lowest MSE' % k)
     for i in range(len(k_small_list)):
         index = k_small_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -193,6 +193,49 @@ def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=N
         prefix=prefix,
         file_type='png'
     )
+
+
+# -----------------------------------------------------------------
+#  generate error density plots
+# -----------------------------------------------------------------
+def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=None):
+
+    print('Producing error density - MSE plot')
+
+    # 1. read data
+    if base_path is not None:
+        data_dir_path = osp.join(base_path, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(base_path, PLOT_DIR)
+    else:
+        data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
+        plot_dir_path = osp.join(config.out_dir, PLOT_DIR)
+
+    if prefix == 'test':
+        epoch = epoch
+        if epoch is None:
+            print('Error: no argument provided for epoch to analysis_error_density_plot(). Exiting')
+            exit(1)
+    elif prefix == 'best':
+        epoch = config.best_epoch
+
+    profiles_true_file = prefix + ('_profiles_true_%s_%d_epochs.npy' % (config.profile_type, epoch))
+    profiles_gen_file = prefix + ('_profiles_gen_%s_%d_epochs.npy' % (config.profile_type, epoch))
+
+    profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
+    profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
+
+    plot_error_density_mse(
+        profiles_true=profiles_true,
+        profiles_gen=profiles_gen,
+        profile_type=config.profile_type,
+        n_epoch=epoch,
+        output_dir=plot_dir_path,
+        prefix=prefix,
+        file_type='pdf'
+    )
+
+
+
 
 
 # -----------------------------------------------------------------
