@@ -474,7 +474,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=15, prefix='best')
+        analysis_auto_plot_profiles(config, k=25, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 
