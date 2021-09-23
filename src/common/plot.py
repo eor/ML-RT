@@ -363,7 +363,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 #  visualise error distribution: histogram and density plot
 # -----------------------------------------------------------------
 def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
-                           n_epoch, output_dir='./', prefix='test', file_type='pdf'):
+                           n_epoch, output_dir='./', prefix='test', file_type='pdf', title=None):
 
     print('Making error density plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
 

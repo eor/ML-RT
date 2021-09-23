@@ -198,7 +198,7 @@ def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=N
 # -----------------------------------------------------------------
 #  generate error density plots
 # -----------------------------------------------------------------
-def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=None):
+def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=None, add_title=True):
 
     print('Producing error density - MSE plot')
 
@@ -224,6 +224,12 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
+    if add_title:
+        title_string = "%s - %s" % (config.model, config.loss_type)
+    else:
+        title_string = None
+
+
     plot_error_density_mse(
         profiles_true=profiles_true,
         profiles_gen=profiles_gen,
@@ -231,7 +237,8 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
         n_epoch=epoch,
         output_dir=plot_dir_path,
         prefix=prefix,
-        file_type='pdf'
+        file_type='pdf',
+        title=title_string
     )
 
 
