@@ -88,7 +88,7 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
     """
 
     if save_results:
-        print("\033[94m\033[1mTesting the LSTM now at epoch %d \033[0m" % current_epoch)
+        print("\033[94m\033[1mTesting the CLSTM now at epoch %d \033[0m" % current_epoch)
 
     if cuda:
         model.cuda()
@@ -523,7 +523,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
-    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_LSTM)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CLSTM)
 
     # -----------------------------------------------------------------
     # Overwrite config object
@@ -542,7 +542,7 @@ def main(config):
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
         analysis_loss_plot(config)
-        analysis_auto_plot_profiles(config, k=10, prefix='best')
+        analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 

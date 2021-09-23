@@ -592,7 +592,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config, gan=True)
-        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 
@@ -626,9 +626,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--dis_model', type=str, default='DIS1', metavar='(string)',
                         help='Pick a discriminator model: DIS1 (default) or DIS2')
-    parser.add_argument('--gpu_id', type=str, default='0', metavar='(string)',
-                        help='Pick the gpu to use')
-
+    
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=500, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")
