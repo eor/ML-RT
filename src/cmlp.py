@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import copy
 
-from models.clstm import *
+from models.cmlp import *
 from common.dataset import RTdata
 from common.filter import *
 from common.utils import *
@@ -49,7 +49,7 @@ else:
     soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
 
 
-def clstm_loss_function(func, gen_x, real_x, config):
+def cmlp_loss_function(func, gen_x, real_x, config):
     if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
@@ -72,7 +72,7 @@ def force_stop_signal_handler(sig, frame):
 # -----------------------------------------------------------------
 #   use lstm with test or val set
 # -----------------------------------------------------------------
-def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
+def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the lstm, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if in test mode.
@@ -88,7 +88,7 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
     """
 
     if save_results:
-        print("\033[94m\033[1mTesting the CLSTM now at epoch %d \033[0m" % current_epoch)
+        print("\033[94m\033[1mTesting the CMLP now at epoch %d \033[0m" % current_epoch)
 
     if cuda:
         model.cuda()
@@ -121,10 +121,10 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss via soft dtw
-            dtw_loss_H_II = clstm_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
-            dtw_loss_T = clstm_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
-            dtw_loss_He_II = clstm_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
-            dtw_loss_He_III = clstm_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
+            dtw_loss_H_II = cmlp_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
+            dtw_loss_T = cmlp_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
+            dtw_loss_He_II = cmlp_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
+            dtw_loss_He_III = cmlp_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
 
             dtw = dtw_loss_H_II + dtw_loss_T + dtw_loss_He_II + dtw_loss_He_III
             loss_dtw += dtw.item()
@@ -134,10 +134,10 @@ def clstm_run_evaluation(current_epoch, data_loader, model, path, config, print_
             loss_dtw_He_III += dtw_loss_He_III.item()
 
             # compute loss via MSE:
-            mse_loss_H_II = clstm_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
-            mse_loss_T = clstm_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
-            mse_loss_He_II = clstm_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
-            mse_loss_He_III = clstm_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
+            mse_loss_H_II = cmlp_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
+            mse_loss_T = cmlp_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
+            mse_loss_He_II = cmlp_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
+            mse_loss_He_III = cmlp_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
 
             mse = mse_loss_H_II + mse_loss_T + mse_loss_He_II + mse_loss_He_III
             loss_mse += mse.item()
@@ -297,8 +297,8 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    model = CLSTM(config, device)
-    print('\n\tusing model CLSTM\n')
+    model = CMLP(config, device)
+    print('\n\tusing model CMLP\n')
 
     if cuda:
         model.cuda()
@@ -378,10 +378,10 @@ def main(config):
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss
-            loss_H_II = clstm_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
-            loss_T = clstm_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
-            loss_He_II = clstm_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
-            loss_He_III = clstm_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
+            loss_H_II = cmlp_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
+            loss_T = cmlp_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
+            loss_He_II = cmlp_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
+            loss_He_III = cmlp_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
 
             loss = loss_H_II + loss_T + loss_He_II + loss_He_III
             loss.backward()
@@ -406,7 +406,7 @@ def main(config):
         combined_train_loss_array = np.concatenate((combined_train_loss_array, stacked_train_loss.reshape(1, -1)), axis=0)
 
         # validation & save the best performing model
-        val_loss_mse, val_loss_dtw, stacked_loss_mse, stacked_loss_dtw = clstm_run_evaluation(
+        val_loss_mse, val_loss_dtw, stacked_loss_mse, stacked_loss_dtw = cmlp_run_evaluation(
             current_epoch=epoch,
             data_loader=val_loader,
             model=model,
@@ -441,14 +441,14 @@ def main(config):
                best_epoch_mse, best_epoch_dtw)
         )
 
-        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CLSTM):
+        if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_CMLP):
             print("\033[96m\033[1m\nStopping Early\033[0m\n")
             stopped_early = True
             epochs_trained = epoch
             break
 
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
-            clstm_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config, print_results=True, save_results=True)
+            cmlp_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config, print_results=True, save_results=True)
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
@@ -483,7 +483,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    best_test_mse, best_test_dtw, stacked_test_loss_mse, stacked_test_loss_dtw = clstm_run_evaluation(
+    best_test_mse, best_test_dtw, stacked_test_loss_mse, stacked_test_loss_dtw = cmlp_run_evaluation(
         best_epoch_mse,
         test_loader,
         best_model,
@@ -523,7 +523,7 @@ def main(config):
 
     setattr(config, 'stopped_early', stopped_early)
     setattr(config, 'epochs_trained', epochs_trained)
-    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CLSTM)
+    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CMLP)
 
     # -----------------------------------------------------------------
     # Overwrite config object
@@ -563,7 +563,7 @@ if __name__ == "__main__":
                         help='Path to output directory, used for all plots and data products, default: ./output/')
 
     parser.add_argument("--testing_interval", type=int,
-                        default=30, help="epoch interval between testing runs")
+                        default=200, help="epoch interval between testing runs")
 
     parser.add_argument("--profile_len", type=int, default=1500,
                         help="number of profile grid points")
@@ -576,13 +576,13 @@ if __name__ == "__main__":
                         help='Pick a loss function: MSE (default) or DTW')
 
     # network optimisation
-    parser.add_argument("--n_epochs", type=int, default=100,
+    parser.add_argument("--n_epochs", type=int, default=1500,
                         help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=32,
                         help="size of the batches (default=32)")
 
     parser.add_argument("--lr", type=float, default=0.0002,
-                        help="adam: learning rate, default=0.0002 ")
+                        help="adam: learning rate, default=0.0001")
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
@@ -614,7 +614,7 @@ if __name__ == "__main__":
 
     # set profile type in config to combined mode
     setattr(my_config, 'profile_type', 'C')
-    setattr(my_config, 'model', 'CLSTM')
+    setattr(my_config, 'model', 'CMLP')
 
     # sanity checks
     if my_config.data_dir is None:

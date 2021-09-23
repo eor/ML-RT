@@ -251,7 +251,7 @@ def cgan_train_generator(generator, discriminator, optimizer, loss, gen_paramete
     (0.5 * gen_loss).backward()
     optimizer.step()
 
-    return gen_profiles, gen_loss
+    return gen_profiles, torch.sqrt(gen_loss)
 
 
 # -----------------------------------------------------------------
@@ -298,7 +298,7 @@ def cgan_train_discriminator(real_profiles, real_parameters, gen_profiles, gen_p
     # print(discriminator.model[0].weight.grad)
     optimizer.step()
 
-    return d_real_loss, d_fake_loss
+    return torch.sqrt(d_real_loss), torch.sqrt(d_fake_loss)
 
 
 # -----------------------------------------------------------------
@@ -369,6 +369,12 @@ def main(config):
         profiles = H_profiles
     else:
         profiles = T_profiles
+
+    # -----------------------------------------------------------------
+    # Dataset info
+    # -----------------------------------------------------------------
+    print('Maximum values in profiles:', np.max(profiles))
+    print('Minimum values in profiles:', np.min(profiles))
 
     # -----------------------------------------------------------------
     # data loaders
@@ -584,7 +590,7 @@ def main(config):
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
         analysis_loss_plot(config, gan=True)
-        analysis_auto_plot_profiles(config, k=5, prefix='best')
+        analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
 
 
@@ -635,7 +641,7 @@ if __name__ == "__main__":
                         help="Do not use dropout regularisation in discriminator")
     parser.set_defaults(dropout=True)
 
-    parser.add_argument("--dropout_value", type=float, default=0.5, help="dropout probability, default=0.25 ")
+    parser.add_argument("--dropout_value", type=float, default=0.25, help="dropout probability, default=0.25 ")
 
     parser.add_argument("--latent_dim", type=int, default=0, help="dimensionality of the latent space (default=0)")
     parser.add_argument("--lr", type=float, default=0.00005, help="adam: learning rate, default=0.00005")
