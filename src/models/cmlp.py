@@ -8,7 +8,7 @@ class CMLP(nn.Module):
         def block(features_in, features_out, normalise=False, dropout=False):
 
             layers = [nn.Linear(features_in, features_out)]
-            
+
             if normalise:
                 layers.append(nn.BatchNorm1d(features_out))
 
@@ -25,9 +25,9 @@ class CMLP(nn.Module):
             *block(128, 256),
             *block(256, 512),
             *block(512, 1024),
-            *block(1024, int(4*conf.profile_len)),
+            *block(1024, int(4 * conf.profile_len))
         )
-        
+
         self.out_layer_H_II = nn.Linear(int(conf.profile_len), int(conf.profile_len))
         self.out_layer_T = nn.Linear(int(conf.profile_len), int(conf.profile_len))
         self.out_layer_He_II = nn.Linear(int(conf.profile_len), int(conf.profile_len))
@@ -36,10 +36,10 @@ class CMLP(nn.Module):
     def forward(self, parameters):
         x = self.model(parameters)
 
-        x_H_II = x[:, 0:int(self.conf.profile_len)]
-        x_T = x[:, int(self.conf.profile_len):2*int(self.conf.profile_len)]
-        x_He_II = x[:, 2*int(self.conf.profile_len):3*int(self.conf.profile_len)]
-        x_He_III = x[:, 3*int(self.conf.profile_len):4*int(self.conf.profile_len)]
+        x_H_II = x[:, 0: int(self.conf.profile_len)]
+        x_T = x[:, int(self.conf.profile_len): 2 * int(self.conf.profile_len)]
+        x_He_II = x[:, 2 * int(self.conf.profile_len): 3 * int(self.conf.profile_len)]
+        x_He_III = x[:, 3 * int(self.conf.profile_len): 4 * int(self.conf.profile_len)]
 
         x_H_II = self.out_layer_H_II(x_H_II)
         x_T = self.out_layer_T(x_T)
@@ -47,4 +47,3 @@ class CMLP(nn.Module):
         x_He_III = self.out_layer_He_III(x_He_III)
 
         return x_H_II, x_T, x_He_II, x_He_III
-

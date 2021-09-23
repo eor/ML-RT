@@ -36,7 +36,7 @@ if torch.cuda.is_available():
 else:
     cuda = False
     device = torch.device("cpu")
-    
+
 
 # -----------------------------------------------------------------
 #  global FloatTensor instance
@@ -346,7 +346,7 @@ def main(config):
     if USE_LOG_PROFILES:
         H_profiles = np.log10(H_profiles + 1.0e-6)  # add a small number to avoid trouble
         T_profiles = np.log10(T_profiles)
-     
+
     # -----------------------------------------------------------------
     # shuffle / rescale parameters
     # -----------------------------------------------------------------
@@ -375,7 +375,7 @@ def main(config):
     # -----------------------------------------------------------------
     print('Maximum values in profiles:', np.max(profiles))
     print('Minimum values in profiles:', np.min(profiles))
-    
+
     # -----------------------------------------------------------------
     # data loaders
     # -----------------------------------------------------------------
@@ -624,7 +624,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--dis_model', type=str, default='DIS1', metavar='(string)',
                         help='Pick a discriminator model: DIS1 (default) or DIS2')
-    
+
     # network optimisation
     parser.add_argument("--n_epochs", type=int, default=500, help="number of epochs of training")
     parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")

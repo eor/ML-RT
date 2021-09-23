@@ -98,14 +98,14 @@ class Discriminator1(nn.Module):
         # concatenate profile and parameter vector to produce conditioned input
         # Inputs: profile.shape -  [batch_size, profile_len]
         #         parameters.shape - [batch_size, n_parameters]
-        
+
         # user hasn't passed the already concatenated input, so concat it
         if parameters is not None:
             discriminator_input = torch.cat((profiles, parameters), 1)
             validity = self.model(discriminator_input)
         else:
             validity = self.model(profiles)
-            
+
         return validity
 
 
