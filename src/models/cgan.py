@@ -158,7 +158,6 @@ class Discriminator1(nn.Module):
         )
 
     def forward(self, profiles, parameters):
-
         # concatenate profile and parameter vector to produce conditioned input
         # Inputs: profile.shape -  [batch_size, profile_len]
         #         parameters.shape - [batch_size, n_parameters]
@@ -191,9 +190,10 @@ class Discriminator2(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *block(conf.profile_len + conf.n_parameters, 1024, use_dropout=False),
-            *block(1024, 128),
-            nn.Linear(128, 1)
+            *block(conf.profile_len + conf.n_parameters, 512, use_dropout=False),
+            *block(512, 256),
+            *block(256, 128),
+            *block(128, 1, use_dropout=False)
         )
 
     def forward(self, profiles, parameters):
@@ -202,8 +202,10 @@ class Discriminator2(nn.Module):
         # Inputs: profile.shape -  [batch_size, profile_len]
         #         parameters.shape - [batch_size, n_parameters]
 
-        discriminator_input = torch.cat((profiles, parameters), 1)
-
-        validity = self.model(discriminator_input)
+        if parameters is not None:
+            discriminator_input = torch.cat((profiles, parameters), 1)
+            validity = self.model(discriminator_input)
+        else:
+            validity = self.model(profiles)
 
         return validity
