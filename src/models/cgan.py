@@ -108,7 +108,7 @@ class Discriminator1(nn.Module):
             validity = self.model(profiles)
             
         return validity
-    
+
 
 # -----------------------------------------------------------------
 # Discriminator 2: simpler model, 2 hidden layer, features dropout
