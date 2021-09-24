@@ -88,27 +88,34 @@ def inference_cvae(run_dir, model_file_name, parameters, measure_time=False):
 
     # concatenate both vector, i.e. condition the latent vector with the parameters
     cond_z = torch.cat((latent_vector, parameters), 1)
-
+     
     # prepare the model
     if config.model == 'CVAE1':
         model = CVAE1(config)
     else:
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
+    
+    # move model and input to the available device    
+    model.to(device)
+    cond_z.to(device)
 
     model.eval()
-
+   
     # run inference
     with torch.no_grad():
         output = model.decode(cond_z)
 
     output_time = None
     if measure_time:
-        output_time = {}
-        clock = Clock()
-        avg_time, std_time = clock.get_time(model, [cond_z])
-        output_time['avg_time'] = avg_time
-        output_time['std_time'] = std_time
+        if cuda:
+            output_time = {}
+            clock = Clock()
+            avg_time, std_time = clock.get_time(model.decode, [cond_z])
+            output_time['avg_time'] = avg_time
+            output_time['std_time'] = std_time
+        else:
+            print('\nTime can only be measured when on GPU. skipping. \n')
 
     return output, output_time
 
@@ -138,7 +145,7 @@ def inference_mlp(run_dir, model_file_name, parameters, measure_time=False):
         parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
-    parameters = torch.from_numpy(parameters)
+    parameters = torch.from_numpy(parameters).to(device)
     parameters = Variable(parameters.type(FloatTensor))
 
     # prepare model
@@ -152,7 +159,7 @@ def inference_mlp(run_dir, model_file_name, parameters, measure_time=False):
 
     model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
-
+    model.to(device)
     model.eval()
 
     # run inference
@@ -161,11 +168,14 @@ def inference_mlp(run_dir, model_file_name, parameters, measure_time=False):
 
     output_time = None
     if measure_time:
-        output_time = {}
-        clock = Clock()
-        avg_time, std_time = clock.get_time(model, [parameters])
-        output_time['avg_time'] = avg_time
-        output_time['std_time'] = std_time
+        if cuda:
+            output_time = {}
+            clock = Clock()
+            avg_time, std_time = clock.get_time(model, [parameters])
+            output_time['avg_time'] = avg_time
+            output_time['std_time'] = std_time
+        else:
+            print('\nTime can only be measured when on GPU. skipping. \n')
 
     return output, output_time
 
@@ -180,8 +190,8 @@ def inference_test_run_mlp():
     Returns nothing so far
     """
     # MLP test
-    run_dir = './test/run_2021_09_24__11_24_35/'
-    model_file_name = 'best_model_H_30_epochs.pth.tar'
+    run_dir = './test/MLP_H_run/'
+    model_file_name = 'best_model_H_1105_epochs.pth.tar'
 
     p = np.zeros((1, 5))  # has to be 2D array because of BatchNorm
 
