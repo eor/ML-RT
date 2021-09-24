@@ -225,7 +225,7 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
     if add_title:
-        title_string = "%s - %s" % (config.model, config.loss_type)
+        title_string = "%s - %s - %s" % (config.model, config.loss_type, config.profile_type)
     else:
         title_string = None
 

@@ -365,7 +365,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
                            n_epoch, output_dir='./', prefix='test', file_type='pdf', title=None):
 
-    print('Making error density plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
+    print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
 
     # -----------------------------------------------------------------
     #  compute MSE for each sample
@@ -384,7 +384,15 @@ def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
 
-    sns.histplot(mse_array, kde=True, bins=50, color='steelblue', alpha=0.25, ax=ax, stat='density',
+    # select colour based on profile_type
+    if profile_type == 'H':
+        hist_color = 'steelblue'
+    elif profile_type == 'T':
+        hist_color = 'darkorange'
+    else:
+        hist_color = 'darkgreen'
+
+    sns.histplot(mse_array, kde=True, bins=50, color=hist_color, alpha=0.25, ax=ax, stat='density',
                  edgecolor=None, legend=False)
 
     ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
