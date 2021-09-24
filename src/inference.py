@@ -7,6 +7,7 @@ from models.mlp import *
 from models.cvae import *
 from common.utils import *
 from common.settings import *
+from common.clock import Clock
 import common.settings_parameters as sp
 
 from torch.autograd import Variable
@@ -35,7 +36,7 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  GAN
 # -----------------------------------------------------------------
-def inference_cgan(run_dir, model_file_name, parameters):
+def inference_cgan(run_dir, model_file_name, parameters, measure_time=False):
     """
     Function to use user specified parameters with the CGAN
     trained generator in inference mode.
@@ -51,7 +52,7 @@ def inference_cgan(run_dir, model_file_name, parameters):
 # -----------------------------------------------------------------
 #  CVAE
 # -----------------------------------------------------------------
-def inference_cvae(run_dir, model_file_name, parameters):
+def inference_cvae(run_dir, model_file_name, parameters, measure_time=False):
     """
     Function to use user specified parameters with the CVAE in inference mode.
 
@@ -101,13 +102,21 @@ def inference_cvae(run_dir, model_file_name, parameters):
     with torch.no_grad():
         output = model.decode(cond_z)
 
-    return output
+    output_time = None
+    if measure_time:
+        output_time = {}
+        clock = Clock()
+        avg_time, std_time = clock.get_time(model, [cond_z])
+        output_time['avg_time'] = avg_time
+        output_time['std_time'] = std_time
+
+    return output, output_time
 
 
 # -----------------------------------------------------------------
 #  MLP
 # -----------------------------------------------------------------
-def inference_mlp(run_dir, model_file_name, parameters):
+def inference_mlp(run_dir, model_file_name, parameters, measure_time=False):
     """
     Function to use user specified parameters with the MLP in inference mode.
 
@@ -148,10 +157,17 @@ def inference_mlp(run_dir, model_file_name, parameters):
 
     # run inference
     with torch.no_grad():
-
         output = model(parameters)
 
-    return output
+    output_time = None
+    if measure_time:
+        output_time = {}
+        clock = Clock()
+        avg_time, std_time = clock.get_time(model, [parameters])
+        output_time['avg_time'] = avg_time
+        output_time['std_time'] = std_time
+
+    return output, output_time
 
 
 # -----------------------------------------------------------------
@@ -164,8 +180,8 @@ def inference_test_run_mlp():
     Returns nothing so far
     """
     # MLP test
-    run_dir = './output_mlp/run_2021_07_22__22_51_22/'
-    model_file_name = 'best_model_T_8_epochs.pth.tar'
+    run_dir = './test/run_2021_09_24__11_24_35/'
+    model_file_name = 'best_model_H_30_epochs.pth.tar'
 
     p = np.zeros((1, 5))  # has to be 2D array because of BatchNorm
 
@@ -175,7 +191,9 @@ def inference_test_run_mlp():
     p[0][3] = 1.0  # qsoAlpha
     p[0][4] = 0.2  # starsEscFrac
 
-    profile = inference_mlp(run_dir, model_file_name, p)
+    profile, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
+    if output_time is not None:
+        print('Inference time for %s: %e±%e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
 
     # save, plot etc
 
