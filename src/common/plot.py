@@ -16,9 +16,9 @@ except ImportError:
     from common.settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
 
 try:
-    from utils import utils_compute_mse, utils_compute_dtw
+    from utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
 except ImportError:
-    from common.utils import utils_compute_mse, utils_compute_dtw
+    from common.utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
 
 from scipy.ndimage import gaussian_filter
 
@@ -99,9 +99,11 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     # -----------------------------------------------------------------
     fig = plt.figure(figsize=(11, 10))
     plt.subplots_adjust(top=0.82)
+    
     # compute size of grid ie. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
     columns = int(np.ceil(num_plots / rows))
+    
     # outer grid for the plots
     outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.3)
 
@@ -204,6 +206,85 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     plt.savefig(os.path.join(output_dir, file_name))
     plt.close('all')
+
+
+# -----------------------------------------------------------------
+#  Plot Inference profiles generated using inference.py
+# -----------------------------------------------------------------
+def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
+                        labels=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                        file_type='pdf'):
+    
+    # default font size for the plot    
+    font_size_title = 26
+    font_size_ticks = 26
+    font_size_legends = 22
+    font_size_x_y = 30
+    colors = ['#01332B', '#D81B60', '#1E88E5', '#FFC107','#E31B23', '#005CAB']
+
+
+    fig, ax = plt.subplots(figsize=(11, 10))
+    plt.subplots_adjust(top=0.82)
+    
+    def get_label_Y(profile_type):
+        if profile_type == 'H':
+            return r'$\log_{10}(x_{H_{II}}) $'
+        elif profile_type == 'T':
+            return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K}) $'
+        elif profile_type == 'He_II':
+            return r'$\log_{10}(x_{He_{II}}) $'
+        elif profile_type == 'He_III':
+            return r'$\log_{10}(x_{He_{III}}) $'
+        else:
+            return r'Physical Unit'
+
+    # convert inputs to usable forms
+    if len(profiles.shape) != 2:
+        profiles = profiles[np.newaxis, :]
+
+    print('Producing Inference profile plot:')
+    
+    if len(parameters) == 5:
+        param_names = p5_names_latex
+    else:
+        param_names = p8_names_latex
+
+    if parameters is not None and len(parameters) > 0:
+        a = ''
+        for j in range(len(param_names)):
+            # add line break after every 3 parameters are added
+            if j != 0 and j % 3 == 0:
+                a += '\n'
+            # append the parameter with its name and value to title string
+            value = parameters[j]
+            name = '$' + param_names[j]
+            a = a + name + ' = ' + str(value) + '$'
+            if j == 2:
+                a += '$\mathrm{Myr}$'
+            a += '\, \, \, '
+
+    
+    rc('font', **{'family': 'serif'})
+    rc('text', usetex=True)
+
+    fig.suptitle(a, fontsize=font_size_title, y=0.98)
+
+    ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y, labelpad=10)
+    ax.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y, labelpad=10)
+
+    ax.minorticks_on()
+    ax.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
+
+    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+    for i in range(len(labels)):
+        ax.plot(profiles[i], c=colors[i], label=labels[i])
+    
+    ax.legend(loc='best', frameon=False, prop={'size': font_size_legends})
+    timestamp = utils_get_current_timestamp()
+    path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
+
+    fig.savefig(path)
+    print('Saved plot to:\t%s' % path)
 
 
 # -----------------------------------------------------------------
@@ -420,8 +501,6 @@ def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
     print('Saved plot to:\t%s' % path)
 
     # TODO implement solution for coupled networks
-
-
 
 
 # -----------------------------------------------------------------

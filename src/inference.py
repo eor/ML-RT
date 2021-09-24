@@ -8,6 +8,7 @@ from models.cvae import *
 from common.utils import *
 from common.settings import *
 from common.clock import Clock
+from common.plot import plot_inference_profiles
 import common.settings_parameters as sp
 
 from torch.autograd import Variable
@@ -201,7 +202,7 @@ def inference_test_run_mlp():
     p[0][3] = 1.0  # qsoAlpha
     p[0][4] = 0.2  # starsEscFrac
 
-    profile, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
+    profile_MLP, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
     if output_time is not None:
         print('Inference time for %s: %e±%e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
 
@@ -210,10 +211,50 @@ def inference_test_run_mlp():
     # TODO: utils_save_single_profile(profile, path, file_name)
     # plots should be done elsewhere by hand
 
+def inference_model_comparison():
+    """
+    Function to generate inference profiles using all architectures,
+    plot those and compare the inference time.
+    """
+    
+    # MLP test
+    mlp_run_dir = './test/MLP_H_run/'
+    mlp_model_file_name = 'best_model_H_1105_epochs.pth.tar'
+    
+    # CVAE test
+    cvae_run_dir = './test/paper/run_CVAE1_DTW_31H'
+    cvae_model_file_name = 'best_model_H_3558_epochs.pth.tar'
 
+    p = np.zeros((8))  # has to be 2D array because of BatchNorm
+
+    p[0] = 12.0  # M_halo
+    p[1] = 9.0  # redshift
+    p[2] = 10.0  # source Age
+    p[3] = 1.0  # qsoAlpha
+    p[4] = 1.0  # qsoEfficiency
+    p[5] = 0.5  # starsEscFrac
+    p[6] = 1.5  # starsIMFSlope
+    p[7] = 2.0  # starsIMFMassMinLog
+
+    p_2D = p.copy()
+    p_2D = p_2D[np.newaxis, :]
+    
+    profile_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D, measure_time=True)
+    if output_time_mlp is not None:
+        print('\tInference time for %s: %e±%e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
+    
+    profile_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D, measure_time=True)
+    if output_time_cvae is not None:
+        print('\tInference time for %s: %e±%e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
+
+    profiles = torch.cat((profile_mlp, profile_cvae), dim=0).cpu().numpy() 
+    plot_inference_profiles(profiles, 'H', p, output_dir='./', labels=['MLP','CVAE'])
+
+    
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-    inference_test_run_mlp()
+#     inference_test_run_mlp()
+    inference_model_comparison()
