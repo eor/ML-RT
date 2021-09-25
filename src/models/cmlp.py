@@ -5,22 +5,13 @@ class CMLP(nn.Module):
     def __init__(self, conf, device):
         super(CMLP, self).__init__()
         self.conf = conf
-        def block(features_in, features_out, normalise=False, dropout=False):
-
+        def block(features_in, features_out):
             layers = [nn.Linear(features_in, features_out)]
-
-            if normalise:
-                layers.append(nn.BatchNorm1d(features_out))
-
-            if dropout:
-                layers.append(nn.Dropout(conf.dropout_value))
-
             layers.append(nn.LeakyReLU(0.2, inplace=True))
-
             return layers
 
         self.model = nn.Sequential(
-            *block(conf.n_parameters, 64, normalise=False, dropout=False),
+            *block(conf.n_parameters, 64),
             *block(64, 128),
             *block(128, 256),
             *block(256, 512),

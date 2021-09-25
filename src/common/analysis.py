@@ -253,20 +253,16 @@ if __name__ == '__main__':
     
     # May be add your own array here.     
     best_runs = [
-#     '../test/paper/run_MLP1_DTW_17H',
-#     '../test/paper/run_MLP1_MSE_12H',
-#     '../test/paper/run_CVAE1_DTW_32H',
-#     '../test/paper/run_CVAE1_MSE_42H',
-#     '../test/paper/run_LSTM1_MSE_29H',
-#     '../test/paper/run_LSTM1_DTW_40H',
-#     '../test/paper/run_MLP2_DTW_23T',
-#     '../test/paper/run_MLP2_MSE_25T',
-#     '../test/paper/run_CVAE1_MSE_36T',
-#     '../test/paper/run_CVAE1_DTW_39T',
-#     '../test/paper/run_LSTM1_DTW_3T',
-#     '../test/paper/run_LSTM1_MSE_4T',
-#     '../test/paper/run_CLSTM1_MSE_13C',
-    '../test/paper/run_CLSTM1_DTW_45C'        
+        '../test/paper/run_CGAN_MSE_48H',
+#         '../test/paper/run_LSTM1_MSE_29H',
+#         '../test/paper/run_LSTM1_DTW_40H',
+        '../test/paper/run_CGAN_MSE_46T',
+#         '../test/paper/run_LSTM1_DTW_3T',
+#         '../test/paper/run_LSTM1_MSE_4T',
+        '../test/paper/run_CMLP_MSE_47C',
+        '../test/paper/run_CMLP_DTW_49C',
+#         '../test/paper/run_CLSTM1_MSE_13C',
+#         '../test/paper/run_CLSTM1_DTW_45C'        
     ]
     
     for path in best_runs:
