@@ -231,7 +231,9 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 
     fig, ax = plt.subplots(figsize=(11, 10))
     plt.subplots_adjust(top=0.82)
-    
+    if np.max(profiles) < 1 and np.abs(np.min(profiles)) < 1:
+        ax.set_ylim(-5, 5)
+
     def get_label_Y(profile_type):
         if profile_type == 'H':
             return r'$\log_{10}(x_{H_{II}}) $'

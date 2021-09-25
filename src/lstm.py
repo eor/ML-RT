@@ -258,13 +258,9 @@ def main(config):
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
     # -----------------------------------------------------------------
-    if config.model == 'LSTM1':
-        model = LSTM1(config, device)
-        print('\n\tusing model LSTM1\n')
-    else:
-        model = LSTM2(config, device)
-        print('\n\tusing model LSTM2\n')
-
+    model = LSTM1(config, device)
+    print('\n\tusing model LSTM1\n')
+    
     if cuda:
         model.cuda()
 
@@ -488,9 +484,6 @@ if __name__ == "__main__":
                         help="number of RT parameters (5 or 8)")
 
     # network model switch
-    parser.add_argument('--model', type=str, default='LSTM1', metavar='(string)',
-                        help='Pick a model: LSTM1 (default) or LSTM2')
-
     parser.add_argument('--loss_type', type=str, default='MSE', metavar='(string)',
                         help='Pick a loss function: MSE (default) or DTW')
 
@@ -551,8 +544,7 @@ if __name__ == "__main__":
         parameter_limits = ps.p8_limits
         parameter_names_latex = ps.p8_names_latex
 
-    if my_config.model not in ['LSTM1', 'LSTM2']:
-        my_config.model = 'LSTM1'
+    my_config.model = 'LSTM1'
 
     # print summary
     print("\nUsed parameters:\n")
