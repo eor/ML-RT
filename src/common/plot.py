@@ -1,7 +1,7 @@
 import os
 import os.path as osp
 import numpy as np
-
+import random
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -212,7 +212,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
-                        labels=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                        labels=['Actual', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                         file_type='pdf'):
     
     # default font size for the plot    
@@ -220,7 +220,13 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 30
-    colors = ['#01332B', '#D81B60', '#1E88E5', '#FFC107','#E31B23', '#005CAB']
+    colors = {'Actual':'#CC79A7',
+              'MLP':'#D81B60',
+              'CVAE':'#0072B2',
+              'CGAN':'#F0E442',
+              'LSTM':'#19D4A1',
+              'CMLP':'#E69F00',
+              'CLSTM':'#64D500'}
 
 
     fig, ax = plt.subplots(figsize=(11, 10))
@@ -277,8 +283,12 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 
     ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
     for i in range(len(labels)):
-        ax.plot(profiles[i], c=colors[i], label=labels[i])
-    
+        if labels[i] in colors.keys():
+            ax.plot(profiles[i], c=colors[labels[i]], label=labels[i])
+        else:
+            color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+            ax.plot(profiles[i], c=color, label=labels[i])
+            
     ax.legend(loc='best', frameon=False, prop={'size': font_size_legends})
     timestamp = utils_get_current_timestamp()
     path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
