@@ -6,6 +6,9 @@ import os.path as osp
 from models.mlp import *
 from models.cvae import *
 from models.cgan import *
+from models.cmlp import *
+from models.clstm import *
+
 from common.utils import *
 from common.settings import *
 from common.clock import Clock
@@ -236,6 +239,124 @@ def inference_mlp(run_dir, model_file_name, parameters, profile_type, measure_ti
 
     return output, output_time
 
+# -----------------------------------------------------------------
+#  CMLP
+# -----------------------------------------------------------------
+def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+    """
+    Function to use user specified parameters with the CMLP in inference mode.
+
+    Returns an array of one or more generated profiles
+    """
+
+    print('Running inference for the CMLP')
+
+    config = utils_load_config(run_dir)
+
+    # set up parameters
+    if config.n_parameters == 5:
+        parameter_limits = sp.p5_limits
+
+    if config.n_parameters == 8:
+        parameter_limits = sp.p8_limits
+
+    if SCALE_PARAMETERS:
+        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+
+    # convert numpy arrays to tensors
+    parameters = torch.from_numpy(parameters).to(device)
+    parameters = Variable(parameters.type(FloatTensor))
+
+    model = CMLP(config, device)
+    
+    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
+    model.load_state_dict(torch.load(model_path))
+    model.to(device)
+    model.eval()
+
+    output = {}
+    output_time = None
+
+    # run inference
+    with torch.no_grad():
+        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(parameters)
+        output['H'] = gen_profile_H
+        output['T'] = gen_profile_T
+        output['He_II'] = gen_profile_He_II
+        output['He_III'] = gen_profile_He_III
+
+    output_time = None
+    if measure_time:
+        if cuda:
+            output_time = {}
+            clock = Clock()
+            avg_time, std_time = clock.get_time(model, [parameters])
+            output_time['avg_time'] = avg_time
+            output_time['std_time'] = std_time
+        else:
+            print('\nTime can only be measured when on GPU. skipping. \n')
+
+    return output, output_time
+
+# -----------------------------------------------------------------
+#  CLSTM
+# -----------------------------------------------------------------
+def inference_clstm(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+    """
+    Function to use user specified parameters with the CLSTM in inference mode.
+
+    Returns an array of one or more generated profiles
+    """
+
+    print('Running inference for the CLSTM')
+
+    config = utils_load_config(run_dir)
+
+    # set up parameters
+    if config.n_parameters == 5:
+        parameter_limits = sp.p5_limits
+
+    if config.n_parameters == 8:
+        parameter_limits = sp.p8_limits
+
+    if SCALE_PARAMETERS:
+        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+
+    # convert numpy arrays to tensors
+    parameters = torch.from_numpy(parameters).to(device)
+    parameters = Variable(parameters.type(FloatTensor))
+
+    model = CLSTM(config, device)
+    
+    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
+    model.load_state_dict(torch.load(model_path))
+    model.to(device)
+    model.eval()
+
+    output = {}
+    output_time = None
+
+    # run inference
+    with torch.no_grad():
+        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(parameters)
+        output['H'] = gen_profile_H
+        output['T'] = gen_profile_T
+        output['He_II'] = gen_profile_He_II
+        output['He_III'] = gen_profile_He_III
+
+    output_time = None
+    if measure_time:
+        if cuda:
+            output_time = {}
+            clock = Clock()
+            avg_time, std_time = clock.get_time(model, [parameters])
+            output_time['avg_time'] = avg_time
+            output_time['std_time'] = std_time
+        else:
+            print('\nTime can only be measured when on GPU. skipping. \n')
+
+    return output, output_time
+
 
 # -----------------------------------------------------------------
 #  functions for test runs
@@ -285,34 +406,51 @@ def inference_model_comparison():
     cgan_run_dir = './test/paper/run_CGAN_MSE_48H'
     cgan_model_file_name = 'best_model_H_12774_epochs.pth.tar'
 
+    # CMLP test
+    cmlp_run_dir = './test/paper/run_CMLP_MSE_47C/'
+    cmlp_model_file_name = 'best_model_C_910_epochs.pth.tar'
+     
+    # CLSTM test
+    clstm_run_dir = './test/paper/run_CLSTM1_MSE_7C/'
+    clstm_model_file_name = 'best_model_C_242_epochs.pth.tar'
+   
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
 
-    p[0] = 11.059892  # M_halo
-    p[1] = 8.01383  # redshift
-    p[2] = 12.708037  # source Age
-    p[3] = 1.1189648   # qsoAlpha
-    p[4] = 0.17644234  # qsoEfficiency
-    p[5] = 0.63438463  # starsEscFrac
-    p[6] = 2.2866285  # starsIMFSlope
-    p[7] = 1.2688084  # starsIMFMassMinLog
+    p[0] = 14.825165  # M_halo
+    p[1] = 8.285341  # redshift
+    p[2] = 14.526998  # source Age
+    p[3] = 1.491899   # qsoAlpha
+    p[4] = 0.79072833   # qsoEfficiency
+    p[5] = 0.48244837  # starsEscFrac
+    p[6] = 1.5012491  # starsIMFSlope
+    p[7] = 1.5323509  # starsIMFMassMinLog
 
     p_2D = p.copy()
     p_2D = p_2D[np.newaxis, :]
     
-    output_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D, 'H', measure_time=True)
+    output_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_mlp is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
     
-    output_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D, 'H', measure_time=True)
+    output_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cvae is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
     
-    output_cgan, output_time_cgan = inference_cgan(cgan_run_dir, cgan_model_file_name, p_2D, 'H', measure_time=True)
+    output_cgan, output_time_cgan = inference_cgan(cgan_run_dir, cgan_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cgan is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CGAN', output_time_cgan['avg_time'], output_time_cgan['std_time']))
 
-    profiles = torch.cat((output_mlp['H'], output_cvae['H'], output_cgan['H']), dim=0).cpu().numpy() 
-    plot_inference_profiles(profiles, 'H', p, output_dir='./', labels=['MLP','CVAE', 'CGAN'])
+    output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir, cmlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
+    if output_time_cmlp is not None:
+        print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
+    
+    output_clstm, output_time_clstm = inference_clstm(clstm_run_dir, clstm_model_file_name, p_2D.copy(), 'H', measure_time=True)
+    if output_time_cmlp is not None:
+        print('\tInference time for %s: %e±%e ms\n' % ('CLSTM', output_time_clstm['avg_time'], output_time_clstm['std_time']))
+    
+    profiles = torch.cat((output_mlp['H'], output_cvae['H'], output_cgan['H'],
+                          output_cmlp['H'], output_clstm['H']), dim=0).cpu().numpy() 
+    plot_inference_profiles(profiles, 'H', p, output_dir='./', labels=['MLP','CVAE', 'CGAN', 'CMLP', 'CLSTM'])
 
     
 # -----------------------------------------------------------------
