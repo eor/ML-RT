@@ -184,7 +184,7 @@ def inference_cvae(run_dir, model_file_name, parameters, profile_type, measure_t
     batch_size = np.shape(parameters)[0]
     
     latent_vector = np.zeros((batch_size, config.latent_dim))
-    # TODO enable other modes of filling the latent vector(s), e.g. random numbers, different distributions
+    # all zeros for now ... closest to unit Gaussian
 
     # set up parameters
     if config.n_parameters == 5:
@@ -213,7 +213,9 @@ def inference_cvae(run_dir, model_file_name, parameters, profile_type, measure_t
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
     
-    # move model and input to the available device    
+    # move model and input to the available device
+    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
+    model.load_state_dict(torch.load(model_path))
     model.to(device)
     cond_z.to(device)
     model.eval()
