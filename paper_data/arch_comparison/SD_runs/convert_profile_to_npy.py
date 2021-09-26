@@ -70,14 +70,14 @@ if __name__ == '__main__':
 
 
     # run 4
-    p4_1 ='run_4/run_4_profile_M10.000_z7.000_t4.000.dat'
-    p4_2 ='run_4/run_4_profile_M10.000_z7.000_t8.000.dat'
-    p4_3 ='run_4/run_4_profile_M10.000_z7.000_t12.000.dat'
-    p4_4 ='run_4/run_4_profile_M10.000_z7.000_t16.000.dat'
-    p4_5 ='run_4/run_4_profile_M10.000_z7.000_t19.990.dat'
+    #p4_1 ='run_4/run_4_profile_M10.000_z7.000_t4.000.dat'
+    #p4_2 ='run_4/run_4_profile_M10.000_z7.000_t8.000.dat'
+    #p4_3 ='run_4/run_4_profile_M10.000_z7.000_t12.000.dat'
+    #p4_4 ='run_4/run_4_profile_M10.000_z7.000_t16.000.dat'
+    #p4_5 ='run_4/run_4_profile_M10.000_z7.000_t19.990.dat'
     
-    convert_profile_to_npy(profile_path=p4_1, prefix="run_4_t4")
-    convert_profile_to_npy(profile_path=p4_2, prefix="run_4_t8")
-    convert_profile_to_npy(profile_path=p4_3, prefix="run_4_t12")
-    convert_profile_to_npy(profile_path=p4_4, prefix="run_4_t16")
-    convert_profile_to_npy(profile_path=p4_5, prefix="run_4_t20")
+    #convert_profile_to_npy(profile_path=p4_1, prefix="run_4_t4")
+    #convert_profile_to_npy(profile_path=p4_2, prefix="run_4_t8")
+    #convert_profile_to_npy(profile_path=p4_3, prefix="run_4_t12")
+    #convert_profile_to_npy(profile_path=p4_4, prefix="run_4_t16")
+    #convert_profile_to_npy(profile_path=p4_5, prefix="run_4_t20")
