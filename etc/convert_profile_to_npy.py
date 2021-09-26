@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 column_HII = 3      # 4. column in the profile file is the hydrogen II ionization fraction
 column_HeII = 5     # 6. column n the profile file is the helium II ionization fraction
@@ -46,7 +47,7 @@ def convert_profile_to_npy(profile_path, prefix='', n_grid=1500):
 
     if prefix != '':
         prefix = prefix+'_'
-        
+
     np.save('%sprofile_HII.npy'%prefix, tmp_profile_HII)
     np.save('%sprofile_HeII.npy'%prefix, tmp_profile_HeII)
     np.save('%sprofile_HeIII.npy'%prefix, tmp_profile_HeIII)
@@ -57,14 +58,14 @@ if __name__ == '__main__':
 
 
 
-    #p1 =  './run_1/run_1_profile_M10.000_z9.000_t10.000.dat'    
+    #p1 =  './run_1/run_1_profile_M10.000_z9.000_t10.000.dat
     #convert_profile_to_npy(profile_path=p1, prefix="run_1")
-    
-    
-    #p2 =  './run_2/run_2_profile_M13.000_z6.000_t10.000.dat'    
-    #convert_profile_to_npy(profile_path=p2, prefix="run_2")   
-   
-    
+
+
+    #p2 =  './run_2/run_2_profile_M13.000_z6.000_t10.000.dat'
+    #convert_profile_to_npy(profile_path=p2, prefix="run_2")
+
+
     #p3 =  './run_3/run_3_profile_M8.000_z12.500_t10.000.dat'
     #convert_profile_to_npy(profile_path=p3, prefix="run_3")
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     #p4_3 ='run_4/run_4_profile_M10.000_z7.000_t12.000.dat'
     #p4_4 ='run_4/run_4_profile_M10.000_z7.000_t16.000.dat'
     #p4_5 ='run_4/run_4_profile_M10.000_z7.000_t19.990.dat'
-    
+
     #convert_profile_to_npy(profile_path=p4_1, prefix="run_4_t4")
     #convert_profile_to_npy(profile_path=p4_2, prefix="run_4_t8")
     #convert_profile_to_npy(profile_path=p4_3, prefix="run_4_t12")
