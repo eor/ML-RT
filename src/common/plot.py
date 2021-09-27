@@ -213,7 +213,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 # -----------------------------------------------------------------
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
                         labels=['Actual', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
-                        file_type='pdf'):
+                        file_type='pdf', prefix=None):
     
     # default font size for the plot    
     font_size_title = 26
@@ -292,8 +292,11 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
             ax.plot(profiles[i], c=color, label=labels[i])
             
     ax.legend(loc='best', frameon=False, prop={'size': font_size_legends})
-    timestamp = utils_get_current_timestamp()
-    path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
+    if prefix is None:
+        timestamp = utils_get_current_timestamp()
+        path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
+    else:
+        path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, prefix, file_type))
 
     fig.savefig(path)
     print('Saved plot to:\t%s' % path)

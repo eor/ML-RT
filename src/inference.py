@@ -455,11 +455,19 @@ def inference_test_run_mlp():
     # plots should be done elsewhere by hand
 
 
-def inference_model_comparison():
+def inference_model_comparison(profile_type, actual_parameters, actual_profiles=None, plot_output_dir='./', prefix=None):
     """
     Function to generate inference profiles using all architectures,
     plot those and compare the inference time.
+    profile_type: type of profile you want to plot
+    actual_parameters: parameters of shape (batch_size, parameters) 
+                       or (parameters) for which inference is to be run
+    actual_profile: actual profile corresponding to each parameter if known 
+                    of shape (batch_size, profile_len) or (profile_len) for which inference is to be run
     """
+    # flag if actual profile correspoding to parameters is known
+    ACTUAL_PROFILE = actual_profiles is not None
+    print('inference model')
     
     # MLP test
     mlp_run_dir = './test/MLP_H_run/'
@@ -474,39 +482,37 @@ def inference_model_comparison():
     cgan_model_file_name = 'best_model_H_12774_epochs.pth.tar'
 
     # LSTM test
-    lstm_run_dir = './test/paper/run_LSTM1_DTW_30H'
-    lstm_model_file_name = 'best_model_H_338_epochs.pth.tar'
+    lstm_run_dir = './test/production/production_LSTM_MSE_H'
+    lstm_model_file_name = 'best_model_H_264_epochs.pth.tar'
 
     # CMLP test
     cmlp_run_dir = './test/paper/run_CMLP_MSE_47C/'
     cmlp_model_file_name = 'best_model_C_910_epochs.pth.tar'
      
     # CLSTM test
-    clstm_run_dir = './test/paper/run_CLSTM1_MSE_7C/'
-    clstm_model_file_name = 'best_model_C_242_epochs.pth.tar'
+    clstm_run_dir = './test/run_2021_09_20__16_05_41/'
+    clstm_model_file_name = 'best_model_C_258_epochs.pth.tar'
    
-    p = np.zeros((8))  # has to be 2D array because of BatchNorm
+    # convert input to 2D form     
+    p_2D = actual_parameters.copy()
+    if len(np.shape(p_2D)) != 2:
+        p_2D = p_2D[np.newaxis, :]
+    
+    if ACTUAL_PROFILE:
+        actual_profiles_2D = actual_profiles.copy()
+        if len(np.shape(actual_profiles_2D)) != 2:
+            actual_profiles_2D = actual_profiles_2D[np.newaxis, :]
+        actual_profiles_2D = torch.from_numpy(actual_profiles_2D).to(device)
 
-    p[0] = 8.825165  # M_halo
-    p[1] = 8.285341  # redshift
-    p[2] = 14.526998  # source Age
-    p[3] = 1.491899   # qsoAlpha
-    p[4] = 0.79072833   # qsoEfficiency
-    p[5] = 0.48244837  # starsEscFrac
-    p[6] = 1.5012491  # starsIMFSlope
-    p[7] = 1.5323509  # starsIMFMassMinLog
-
-    p_2D = p.copy()
-    p_2D = p_2D[np.newaxis, :]
     
     output_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_mlp is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
-    
+
     output_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cvae is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
-    
+
     output_cgan, output_time_cgan = inference_cgan(cgan_run_dir, cgan_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cgan is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CGAN', output_time_cgan['avg_time'], output_time_cgan['std_time']))
@@ -518,20 +524,83 @@ def inference_model_comparison():
     output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir, cmlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cmlp is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
-    
+
     output_clstm, output_time_clstm = inference_clstm(clstm_run_dir, clstm_model_file_name, p_2D.copy(), 'H', measure_time=False)
     if output_time_clstm is not None:
         print('\tInference time for %s: %e±%e ms\n' % ('CLSTM', output_time_clstm['avg_time'], output_time_clstm['std_time']))
     
-    profiles = torch.cat((output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
-                          output_cmlp['H'], output_clstm['H']), dim=0).cpu().numpy() 
-    plot_inference_profiles(profiles, 'H', p, output_dir='./', labels=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'])
+    if ACTUAL_PROFILE:
+        profiles = torch.stack((actual_profiles_2D, output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
+                          output_cmlp['H'], output_clstm['H']), dim=1).cpu().numpy()
+        labels=['Actual', 'MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
+    else:
+        profiles = torch.stack((actual_profiles_2D, output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
+                          output_cmlp['H'], output_clstm['H']), dim=1).cpu().numpy() 
+        labels=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
+
+    for i in range(np.shape(p_2D)[0]):
+        plot_inference_profiles(profiles[i], 'H', p_2D[i], output_dir=plot_output_dir,
+                                labels=labels, prefix=prefix)
 
     
+def inference_main(arch_comparison_directory):
+    SD_RUNS = 'SD_runs'
+    INFERENCE_DIR = 'Inference_plots'
+    
+    base_path = osp.join(arch_comparison_directory, SD_RUNS)
+    print(base_path)
+    inference_plots_path = osp.join(arch_comparison_directory, INFERENCE_DIR)
+    
+    # Create inference plots path if doesn't exist
+    utils_create_output_dirs([inference_plots_path])
+    print(inference_plots_path)
+    
+    for i in range(1,4):
+        # path of actual profiles
+        parameter_file_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_parameters.npy'%(i))
+        H_profile_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_profile_HII.npy'%(i))
+        T_profile_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_profile_T.npy'%(i))
+        He_II_profile_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_profile_HeII.npy'%(i))
+        He_III_profile_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_profile_HeIII.npy'%(i))
+        
+        # load the actual profiles
+        parameters = np.load(parameter_file_path)
+        H_II_profiles = np.load(H_profile_path)
+        T_profiles = np.load(T_profile_path)
+        He_II_profiles = np.load(He_II_profile_path)
+        He_III_profiles = np.load(He_III_profile_path)
+        
+        if USE_LOG_PROFILES:
+            # add a small number to avoid trouble
+            H_II_profiles = np.log10(H_II_profiles + 1.0e-6)
+            He_II_profiles = np.log10(He_II_profiles + 1.0e-6)
+            He_III_profiles = np.log10(He_III_profiles + 1.0e-6)
+            T_profiles = np.log10(T_profiles)
+
+        inference_model_comparison('H', parameters, actual_profiles=H_II_profiles,
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i))
+#         inference_model_comparison('T', parameters, actual_profiles=T_profiles)
+
+
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
     # inference_test_run_mlp()
-    inference_model_comparison()
+    #inference_model_comparison()
+    arch_comparison_directory = '../paper_data/arch_comparison/'
+    print(arch_comparison_directory)
+    inference_main(arch_comparison_directory)
+    
+#     # To have a custom run without knowing actual profile    
+#     p = np.zeros((8))  # has to be 2D array because of BatchNorm
+#     p[0] = 8.825165  # M_halo
+#     p[1] = 8.285341  # redshift
+#     p[2] = 14.526998  # source Age
+#     p[3] = 1.491899   # qsoAlpha
+#     p[4] = 0.79072833   # qsoEfficiency
+#     p[5] = 0.48244837  # starsEscFrac
+#     p[6] = 1.5012491  # starsIMFSlope
+#     p[7] = 1.5323509  # starsIMFMassMinLog
+#     inference_model_comparison('H', p)
