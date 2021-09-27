@@ -130,9 +130,7 @@
         \node [style={hidden_layer_unit}]       (h42)   at (8.5, -1.25) {};
         \node [style={empty_slot}, scale=0.5]   (h43)   at (8.5, -1.75) {};
         \node [style={empty_slot}, scale=0.5]   (h44)   at (8.5, -2.25) {};  
-        \node [style={hidden_layer_unit}]       (h45)   at (8.5, -2.75) {};            
-        
-        
+        \node [style={hidden_layer_unit}]       (h45)   at (8.5, -2.75) {};         
         
         % output layer (4x1500 units)
         %1
@@ -158,8 +156,7 @@
         \node [style={output_4}]                (o42)   at (10.5, -2.0) {};
         \node [style={empty_slot}, scale=0.5]   (o43)   at (10.5, -2.5) {};
         \node [style={empty_slot}, scale=0.5]   (o44)   at (10.5, -3.0) {};  
-        \node [style={output_4}]                (o45)   at (10.5, -3.5) {};             
-        
+        \node [style={output_4}]                (o45)   at (10.5, -3.5) {};                    
         
         
         % description at the bottom 
@@ -171,7 +168,7 @@
         \node [style=myText] (58) at (2, -5.5) {\large (64)};
         \node [style=myText] (59) at (4, -5.5) {\large (128)};
         
-                % ellipsis    
+        % ellipsis    
         \node [style=ellipsis, scale=0.3] (59a) at (5.0, -5.5) {};
         \node [style=ellipsis, scale=0.3] (59b) at (5.25, -5.5) {};
         \node [style=ellipsis, scale=0.3] (59c) at (5.5, -5.5) {};
@@ -181,9 +178,10 @@
         \node [style=myText] (62) at (10.45, -5.5) {\large (4$\times$1500)};
         \node [style=myText] (63) at (10.45, -4.5) {\large Profiles};
         
-        \node [style=myText] (55) at (4, 7.5) {\large Full connectivity};
         
-        % epmty nodes for docking line at the bottom 
+        % text at the top
+        \node [style=myText] (55) at (4.25, 8.0) {\large Full connectivity};
+        % epmty nodes for docking line at the top 
         \node [style=none] (100) at (0.0,  7.5) {};
         \node [style=none] (101) at (8.5,  7.5) {};
         
@@ -277,8 +275,7 @@
         \draw [style={main_connector}] (h45) to (o42);
         \draw [style={main_connector}] (h41) to (o45);
         \draw [style={main_connector}] (h42) to (o45);
-        \draw [style={main_connector}] (h45) to (o45);    
-        
+        \draw [style={main_connector}] (h45) to (o45);            
         
         
         % draw 4 boxes around the final hidden layers
@@ -293,12 +290,7 @@
         \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o31.north west)+(-0.1,0.1)$) rectangle ($(o35.south east)+(0.1,-0.1)$);
         \draw[draw={rgb,255: red,184; green,184; blue,184}, line width=0.1mm] ($(o41.north west)+(-0.1,0.1)$) rectangle ($(o45.south east)+(0.1,-0.1)$);
         
-        
-        
-        
     \end{pgfonlayer}
 \end{tikzpicture}
-
-
 
 \end{document}
