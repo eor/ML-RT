@@ -9,6 +9,9 @@ GLOBAL_PARAMETER_FILE = 'data_parameters.npy'
 
 DATA_PRODUCTS_DIR = 'data_products'
 PLOT_DIR = 'plots'
+SD_RUNS = 'SD_runs'
+INFERENCE_DIR = 'Inference_plots'
+PRETRAINED_MODELS_DIR = 'Pretrained_models'
 
 # -----------------------------------------------------------------
 # settings for the data set

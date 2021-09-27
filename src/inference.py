@@ -42,7 +42,8 @@ FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 # -----------------------------------------------------------------
 #  LSTM
 # -----------------------------------------------------------------
-def inference_lstm(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_lstm(parameters, profile_type, pretrained_models_dir, model_file_name = None, 
+                   config_file_name=None, measure_time=False):
     """
     Function to use user specified parameters with the LSTM in inference mode.
 
@@ -51,7 +52,13 @@ def inference_lstm(run_dir, model_file_name, parameters, profile_type, measure_t
 
     print('Running inference for the LSTM')
 
-    config = utils_load_config(run_dir)
+    if model_file_name is None:
+        model_file_name = 'best_model_%s_LSTM.pth.tar'%(profile_type)
+    if config_file_name is None:
+        config_file_name = 'config_%s_LSTM.dict'%(profile_type)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -76,7 +83,6 @@ def inference_lstm(run_dir, model_file_name, parameters, profile_type, measure_t
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -106,7 +112,8 @@ def inference_lstm(run_dir, model_file_name, parameters, profile_type, measure_t
 # -----------------------------------------------------------------
 #  CGAN
 # -----------------------------------------------------------------
-def inference_cgan(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_name = None, 
+                   config_file_name=None, measure_time=False):
     """
     Function to use user specified parameters with the CGAN
     trained generator in inference mode.
@@ -116,7 +123,14 @@ def inference_cgan(run_dir, model_file_name, parameters, profile_type, measure_t
 
     print('Running inference for the CGAN generator')
 
-    config = utils_load_config(run_dir)
+    if model_file_name is None:
+        model_file_name = 'best_model_%s_CGAN.pth.tar'%(profile_type)
+    if config_file_name is None:
+        config_file_name = 'config_%s_CGAN.dict'%(profile_type)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+    
     batch_size = np.shape(parameters)[0]
     
     # set up parameters
@@ -142,7 +156,6 @@ def inference_cgan(run_dir, model_file_name, parameters, profile_type, measure_t
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     generator.load_state_dict(torch.load(model_path))
     generator.to(device)
     generator.eval()
@@ -171,15 +184,22 @@ def inference_cgan(run_dir, model_file_name, parameters, profile_type, measure_t
 # -----------------------------------------------------------------
 #  CVAE
 # -----------------------------------------------------------------
-def inference_cvae(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_name=None, 
+                   config_file_name=None, measure_time=False):
     """
     Function to use user specified parameters with the CVAE in inference mode.
 
     Returns an array of one or more generated profiles
     """
     print('Running inference for the CVAE (decoder)')
-
-    config = utils_load_config(run_dir)
+    
+    if model_file_name is None:
+        model_file_name = 'best_model_%s_CVAE.pth.tar'%(profile_type)
+    if config_file_name is None:
+        config_file_name = 'config_%s_CVAE.dict'%(profile_type)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
 
     batch_size = np.shape(parameters)[0]
     
@@ -214,7 +234,6 @@ def inference_cvae(run_dir, model_file_name, parameters, profile_type, measure_t
         exit(1)
     
     # move model and input to the available device
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     cond_z.to(device)
@@ -244,7 +263,8 @@ def inference_cvae(run_dir, model_file_name, parameters, profile_type, measure_t
 # -----------------------------------------------------------------
 #  MLP
 # -----------------------------------------------------------------
-def inference_mlp(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_name=None, 
+                   config_file_name=None, measure_time=False):
     """
     Function to use user specified parameters with the MLP in inference mode.
 
@@ -253,7 +273,13 @@ def inference_mlp(run_dir, model_file_name, parameters, profile_type, measure_ti
 
     print('Running inference for the MLP')
 
-    config = utils_load_config(run_dir)
+    if model_file_name is None:
+        model_file_name = 'best_model_%s_MLP.pth.tar'%(profile_type)
+    if config_file_name is None:
+        config_file_name = 'config_%s_MLP.dict'%(profile_type)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -278,7 +304,6 @@ def inference_mlp(run_dir, model_file_name, parameters, profile_type, measure_ti
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -307,7 +332,8 @@ def inference_mlp(run_dir, model_file_name, parameters, profile_type, measure_ti
 # -----------------------------------------------------------------
 #  CMLP
 # -----------------------------------------------------------------
-def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CMLP.pth.tar', 
+                   config_file_name='config_C_CMLP.dict', measure_time=False):
     """
     Function to use user specified parameters with the CMLP in inference mode.
 
@@ -315,8 +341,9 @@ def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_t
     """
 
     print('Running inference for the CMLP')
-
-    config = utils_load_config(run_dir)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -334,7 +361,6 @@ def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_t
 
     model = CMLP(config, device)
     
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -367,7 +393,8 @@ def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_t
 # -----------------------------------------------------------------
 #  CLSTM
 # -----------------------------------------------------------------
-def inference_clstm(run_dir, model_file_name, parameters, profile_type, measure_time=False):
+def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CLSTM.pth.tar', 
+                   config_file_name='config_C_CLSTM.dict', measure_time=False):
     """
     Function to use user specified parameters with the CLSTM in inference mode.
 
@@ -375,8 +402,9 @@ def inference_clstm(run_dir, model_file_name, parameters, profile_type, measure_
     """
 
     print('Running inference for the CLSTM')
-
-    config = utils_load_config(run_dir)
+    
+    model_path = osp.join(pretrained_models_dir, model_file_name)    
+    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -394,7 +422,6 @@ def inference_clstm(run_dir, model_file_name, parameters, profile_type, measure_
 
     model = CLSTM(config, device)
     
-    model_path = osp.join(run_dir, DATA_PRODUCTS_DIR, model_file_name)
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -455,106 +482,106 @@ def inference_test_run_mlp():
     # plots should be done elsewhere by hand
 
 
-def inference_model_comparison(profile_type, actual_parameters, actual_profiles=None, plot_output_dir='./', prefix=None):
+def inference_model_comparison(pretrained_models_dir, profile_type, actual_parameters, actual_profiles=None,
+                               models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                               measure_time=False, plot_output_dir='./', prefix=None):
     """
     Function to generate inference profiles using all architectures,
-    plot those and compare the inference time.
+    plot them and compare the inference time.
+    
     profile_type: type of profile you want to plot
     actual_parameters: parameters of shape (batch_size, parameters) 
                        or (parameters) for which inference is to be run
     actual_profile: actual profile corresponding to each parameter if known 
                     of shape (batch_size, profile_len) or (profile_len) for which inference is to be run
+    models_to_use: list of pretrained models to be used for inference
+                    (default: ['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'])
+    measure_time: whether to measure inference time for each model while running inference or not
+    plot_output_dir: directory where inference plots will be placed (default: current_directory)
+    prefix: prefix to be used in the name of the plots 
     """
-    # flag if actual profile correspoding to parameters is known
-    ACTUAL_PROFILE = actual_profiles is not None
-    print('inference model')
-    
-    # MLP test
-    mlp_run_dir = './test/MLP_H_run/'
-    mlp_model_file_name = 'best_model_H_1105_epochs.pth.tar'
-    
-    # CVAE test
-    cvae_run_dir = './test/paper/run_CVAE1_DTW_31H'
-    cvae_model_file_name = 'best_model_H_3558_epochs.pth.tar'
+    # model to corresponding function mapping     
+    model_to_func_dict = {
+        'MLP':inference_mlp,
+        'CVAE':inference_cvae,
+        'CGAN':inference_cgan,
+        'LSTM':inference_lstm,
+        'CMLP':inference_cmlp,
+        'CLSTM':inference_clstm
+    }    
 
-    # CGAN test
-    cgan_run_dir = './test/paper/run_CGAN_MSE_48H'
-    cgan_model_file_name = 'best_model_H_12774_epochs.pth.tar'
-
-    # LSTM test
-    lstm_run_dir = './test/production/production_LSTM_MSE_H'
-    lstm_model_file_name = 'best_model_H_264_epochs.pth.tar'
-
-    # CMLP test
-    cmlp_run_dir = './test/paper/run_CMLP_MSE_47C/'
-    cmlp_model_file_name = 'best_model_C_910_epochs.pth.tar'
-     
-    # CLSTM test
-    clstm_run_dir = './test/run_2021_09_20__16_05_41/'
-    clstm_model_file_name = 'best_model_C_258_epochs.pth.tar'
-   
     # convert input to 2D form     
     p_2D = actual_parameters.copy()
     if len(np.shape(p_2D)) != 2:
         p_2D = p_2D[np.newaxis, :]
     
+    # flag if actual profile correspoding to parameters is known
+    ACTUAL_PROFILE = actual_profiles is not None
+    
+     
+    # number of parameters to run inference for    
+    batch_size = np.shape(p_2D)[0]
+
+    # array of labels for profiles to be plotted finally    
+    labels = []
+    # array of profiles to be plotted finally    
+    profiles = torch.zeros([batch_size, 0, 1500], device=device)
+    
+    # if actual profiles are known
     if ACTUAL_PROFILE:
         actual_profiles_2D = actual_profiles.copy()
+        
+        # convert them to 2D array
         if len(np.shape(actual_profiles_2D)) != 2:
             actual_profiles_2D = actual_profiles_2D[np.newaxis, :]
+        
+        # and concat them to profiles to plot
         actual_profiles_2D = torch.from_numpy(actual_profiles_2D).to(device)
+        profiles = torch.cat((profiles, torch.unsqueeze(actual_profiles_2D, 1)), dim=1)
+        labels.append('Actual')
 
+    # compute profiles for the parameters using the specified pre_trained models
+    # and concat the output profiles with profiles to plot 
+    for model in models_to_use:
+        output_profile, output_time = model_to_func_dict[model](p_2D.copy(), profile_type,
+                                                                pretrained_models_dir, measure_time=measure_time)
+        if output_time is not None:
+            print('\tInference time for %s: %e±%e ms\n' % (model, output_time['avg_time'], output_time['std_time']))
+        
+        profiles = torch.cat((profiles, torch.unsqueeze(output_profile[profile_type], 1)), 1)
+        labels.append(model)
+        
+    # move the profiles to cpu and convert to numpy array     
+    profiles = profiles.cpu().numpy()
     
-    output_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
-    if output_time_mlp is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
-
-    output_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D.copy(), 'H', measure_time=True)
-    if output_time_cvae is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
-
-    output_cgan, output_time_cgan = inference_cgan(cgan_run_dir, cgan_model_file_name, p_2D.copy(), 'H', measure_time=True)
-    if output_time_cgan is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CGAN', output_time_cgan['avg_time'], output_time_cgan['std_time']))
-
-    output_lstm, output_time_lstm = inference_lstm(lstm_run_dir, lstm_model_file_name, p_2D.copy(), 'H', measure_time=False)
-    if output_time_lstm is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('LSTM', output_time_lstm['avg_time'], output_time_lstm['std_time']))
-
-    output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir, cmlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
-    if output_time_cmlp is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
-
-    output_clstm, output_time_clstm = inference_clstm(clstm_run_dir, clstm_model_file_name, p_2D.copy(), 'H', measure_time=False)
-    if output_time_clstm is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CLSTM', output_time_clstm['avg_time'], output_time_clstm['std_time']))
-    
-    if ACTUAL_PROFILE:
-        profiles = torch.stack((actual_profiles_2D, output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
-                          output_cmlp['H'], output_clstm['H']), dim=1).cpu().numpy()
-        labels=['Actual', 'MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-    else:
-        profiles = torch.stack((actual_profiles_2D, output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
-                          output_cmlp['H'], output_clstm['H']), dim=1).cpu().numpy() 
-        labels=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-
-    for i in range(np.shape(p_2D)[0]):
-        plot_inference_profiles(profiles[i], 'H', p_2D[i], output_dir=plot_output_dir,
+    for i in range(batch_size):
+        # if prefix is specified, make it unique for each profile in the batch 
+        # else if prefix is None, timestamp will be used as prefix        
+        if prefix is not None:
+            prefix = prefix+str(i+1)
+        
+        # plot the profiles    
+        plot_inference_profiles(profiles[i], profile_type, p_2D[i], output_dir=plot_output_dir,
                                 labels=labels, prefix=prefix)
-
+        
     
-def inference_main(arch_comparison_directory):
-    SD_RUNS = 'SD_runs'
-    INFERENCE_DIR = 'Inference_plots'
+def inference_main(arch_comparison_directory,
+                   pretrained_models_dir=None,
+                   models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']):
+    """ 
+    Function to load the sde data and run it through the 
+    inference_model_comparison function for H and T profiles.
+    """
     
     base_path = osp.join(arch_comparison_directory, SD_RUNS)
-    print(base_path)
-    inference_plots_path = osp.join(arch_comparison_directory, INFERENCE_DIR)
     
-    # Create inference plots path if doesn't exist
+    inference_plots_path = osp.join(arch_comparison_directory, INFERENCE_DIR)    
+    # Create inference plots dir if doesn't exist
     utils_create_output_dirs([inference_plots_path])
-    print(inference_plots_path)
     
+    if pretrained_models_dir is None:
+        pretrained_models_dir = osp.join(arch_comparison_directory, PRETRAINED_MODELS_DIR)
+
     for i in range(1,4):
         # path of actual profiles
         parameter_file_path = osp.join(base_path, 'run_%d'%(i), 'run_%d_parameters.npy'%(i))
@@ -577,30 +604,43 @@ def inference_main(arch_comparison_directory):
             He_III_profiles = np.log10(He_III_profiles + 1.0e-6)
             T_profiles = np.log10(T_profiles)
 
-        inference_model_comparison('H', parameters, actual_profiles=H_II_profiles,
+        inference_model_comparison(pretrained_models_dir, 'H', parameters, actual_profiles=H_II_profiles,
+                                   models_to_use=models_to_use,
                                    plot_output_dir=inference_plots_path, prefix='run_%d'%(i))
-#         inference_model_comparison('T', parameters, actual_profiles=T_profiles)
-
+        inference_model_comparison(pretrained_models_dir, 'T', parameters, actual_profiles=T_profiles,
+                                   models_to_use=models_to_use,
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i))
+        
 
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-    # inference_test_run_mlp()
-    #inference_model_comparison()
     arch_comparison_directory = '../paper_data/arch_comparison/'
-    print(arch_comparison_directory)
-    inference_main(arch_comparison_directory)
+    models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
+    pretrained_models_dir = './test/production/Pretrained_models'
+#     inference_main(arch_comparison_directory,
+#                    pretrained_models_dir=pretrained_models_dir,
+#                    models_to_use=models_to_use)
     
-#     # To have a custom run without knowing actual profile    
-#     p = np.zeros((8))  # has to be 2D array because of BatchNorm
-#     p[0] = 8.825165  # M_halo
-#     p[1] = 8.285341  # redshift
-#     p[2] = 14.526998  # source Age
-#     p[3] = 1.491899   # qsoAlpha
-#     p[4] = 0.79072833   # qsoEfficiency
-#     p[5] = 0.48244837  # starsEscFrac
-#     p[6] = 1.5012491  # starsIMFSlope
-#     p[7] = 1.5323509  # starsIMFMassMinLog
-#     inference_model_comparison('H', p)
+    # To have a custom run without knowing actual profile    
+    p = np.zeros((8))  # has to be 2D array because of BatchNorm
+    p[0] = 8.825165  # M_halo
+    p[1] = 8.285341  # redshift
+    p[2] = 14.526998  # source Age
+    p[3] = 1.491899   # qsoAlpha
+    p[4] = 0.79072833   # qsoEfficiency
+    p[5] = 0.48244837  # starsEscFrac
+    p[6] = 1.5012491  # starsIMFSlope
+    p[7] = 1.5323509  # starsIMFMassMinLog
+    
+#     inference_model_comparison(
+#                         pretrained_models_dir=pretrained_models_dir,
+#                         profile_type='H',
+#                         actual_parameters=p,
+#                         actual_profiles=None,
+#                         models_to_use=models_to_use,
+#                         measure_time=True,
+#                         plot_output_dir='./',
+#                         prefix=None)
