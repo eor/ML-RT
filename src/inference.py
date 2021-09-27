@@ -363,6 +363,7 @@ def inference_cmlp(run_dir, model_file_name, parameters, profile_type, measure_t
 
     return output, output_time
 
+
 # -----------------------------------------------------------------
 #  CLSTM
 # -----------------------------------------------------------------
@@ -453,6 +454,7 @@ def inference_test_run_mlp():
     # TODO: utils_save_single_profile(profile, path, file_name)
     # plots should be done elsewhere by hand
 
+
 def inference_model_comparison():
     """
     Function to generate inference profiles using all architectures,
@@ -531,5 +533,5 @@ def inference_model_comparison():
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-#     inference_test_run_mlp()
+    # inference_test_run_mlp()
     inference_model_comparison()
