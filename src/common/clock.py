@@ -1,12 +1,15 @@
 import torch
 import numpy as np
 
-""" 
-Class to measure inference time of a model on GPU
-(Note: Ensure that all models and input parameters are already on
-GPU, before passing to this class.)
-"""
+
 class Clock:
+
+    """
+    Class to measure inference time of a model running on a GPU
+    (Note: Ensure that all models and input parameters are already on
+    GPU, before passing to this class.)
+    """
+
     def __init__(self, itr_warmup=20, itr_average_time=100):
         self.itr_warmup = itr_warmup
         self.itr_average_time = itr_average_time
@@ -16,7 +19,7 @@ class Clock:
 
     def get_time(self, function, positional_arguements):
         
-        print('\n \tMeasuring Inference time. Please wait. \n')
+        print('\n \tMeasuring inference time. Please wait. \n')
         
         time_keeping_array = np.zeros((self.itr_average_time, 1))
 
