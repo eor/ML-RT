@@ -452,7 +452,7 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
 
 
 # -----------------------------------------------------------------
-#  functions for test runs
+#  functions for test runs - MLP
 # -----------------------------------------------------------------
 def inference_test_run_mlp():
     """
@@ -474,14 +474,51 @@ def inference_test_run_mlp():
 
     profile_MLP, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
     if output_time is not None:
-        print('Inference time for %s: %e±%e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
+        print('Inference time for %s: %e ± %e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
 
     # save, plot etc
-
     # TODO: utils_save_single_profile(profile, path, file_name)
-    # plots should be done elsewhere by hand
 
 
+# -----------------------------------------------------------------
+#  functions for test runs - CMLP
+# -----------------------------------------------------------------
+def inference_test_run_cmlp():
+    """
+    Example function to demonstrate how to use the fully trained CMLP with custom parameters.
+
+    Returns nothing so far
+    """
+
+    # CMLP test
+    cmlp_run_dir = './production_CMLP_MSE/run_2021_09_29__00_37_07/'
+    cmlp_model_file_name = 'best_model_C_1378_epochs.pth.tar'
+
+    p = np.zeros((8))  # has to be 2D array because of BatchNorm
+
+    p[0] = 8.825165  # M_halo
+    p[1] = 8.285341  # redshift
+    p[2] = 14.526998  # source Age
+    p[3] = 1.491899   # qsoAlpha
+    p[4] = 0.79072833   # qsoEfficiency
+    p[5] = 0.48244837  # starsEscFrac
+    p[6] = 1.5012491  # starsIMFSlope
+    p[7] = 1.5323509  # starsIMFMassMinLog
+
+    p_2D = p.copy()
+    p_2D = p_2D[np.newaxis, :]
+
+    output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir,
+                                                   cmlp_model_file_name,
+                                                   p_2D.copy(), 'H', measure_time=True)
+
+    if output_time_cmlp is not None:
+        print('\tInference time for %s: %e ± %e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
+
+
+# -----------------------------------------------------------------
+#  functions for test runs - overall model comparison
+# -----------------------------------------------------------------
 def inference_model_comparison(pretrained_models_dir, profile_type, actual_parameters, actual_profiles=None,
                                models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                                measure_time=False, plot_output_dir='./', prefix=None):
@@ -508,7 +545,7 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
         'LSTM':inference_lstm,
         'CMLP':inference_cmlp,
         'CLSTM':inference_clstm
-    }    
+    }
 
     # convert input to 2D form     
     p_2D = actual_parameters.copy()
@@ -613,7 +650,7 @@ def inference_main(paper_data_directory,
                                    plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
         
 
-    # -----------------------------------------------------------------
+# -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
@@ -646,3 +683,5 @@ if __name__ == "__main__":
 #                         measure_time=True,
 #                         plot_output_dir='./',
 #                         prefix=None)
+    
+    # inference_test_run_cmlp()
