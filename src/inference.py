@@ -453,12 +453,10 @@ def inference_test_run_mlp():
     # TODO: utils_save_single_profile(profile, path, file_name)
 
 
-
 # -----------------------------------------------------------------
 #  functions for test runs - CMLP
 # -----------------------------------------------------------------
-
- def inference_test_run_cmlp():
+def inference_test_run_cmlp():
     """
     Example function to demonstrate how to use the fully trained CMLP with custom parameters.
 
