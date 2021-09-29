@@ -220,7 +220,7 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 30
-    colors = {'Actual':'#CC79A7',
+    colors = {'Actual':'#000000',
               'MLP':'#D81B60',
               'CVAE':'#0072B2',
               'CGAN':'#F0E442',

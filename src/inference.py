@@ -565,22 +565,23 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
                                 labels=labels, prefix=prefix)
         
     
-def inference_main(arch_comparison_directory,
+def inference_main(paper_data_directory,
                    pretrained_models_dir=None,
-                   models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']):
+                   models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                   measure_time=False):
     """ 
     Function to load the sde data and run it through the 
     inference_model_comparison function for H and T profiles.
     """
     
-    base_path = osp.join(arch_comparison_directory, SD_RUNS)
+    base_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, SD_RUNS_DIR)
     
-    inference_plots_path = osp.join(arch_comparison_directory, INFERENCE_DIR)    
+    inference_plots_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)    
     # Create inference plots dir if doesn't exist
     utils_create_output_dirs([inference_plots_path])
     
     if pretrained_models_dir is None:
-        pretrained_models_dir = osp.join(arch_comparison_directory, PRETRAINED_MODELS_DIR)
+        pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
 
     for i in range(1,4):
         # path of actual profiles
@@ -606,23 +607,24 @@ def inference_main(arch_comparison_directory,
 
         inference_model_comparison(pretrained_models_dir, 'H', parameters, actual_profiles=H_II_profiles,
                                    models_to_use=models_to_use,
-                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i))
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
         inference_model_comparison(pretrained_models_dir, 'T', parameters, actual_profiles=T_profiles,
                                    models_to_use=models_to_use,
-                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i))
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
         
 
-# -----------------------------------------------------------------
+    # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-    arch_comparison_directory = '../paper_data/arch_comparison/'
+    paper_data_directory = '../paper_data/'
     models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-    pretrained_models_dir = './test/production/Pretrained_models'
-#     inference_main(arch_comparison_directory,
+    pretrained_models_dir = './test/production/pretrained_models'
+#     inference_main(paper_data_directory,
 #                    pretrained_models_dir=pretrained_models_dir,
-#                    models_to_use=models_to_use)
+#                    models_to_use=models_to_use,
+#                    measure_time=False)
     
     # To have a custom run without knowing actual profile    
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
