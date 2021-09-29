@@ -521,13 +521,14 @@ def plot_error_density_mse(profiles_true, profiles_gen,
             profile_prefix = config.profile_type
 
         if add_title:
-            title_string = "%s -- %s -- %s" % (config.model, config.loss_type, profile_prefix.replace('_','\_'))       
+            title_string = "%s -- %s -- %s" % ('CGAN', 'MSE', profile_prefix.replace('_','\_'))       
             f.suptitle(title_string, fontsize=25, y=0.95)
 
         path = os.path.join(output_dir, '%s_frequency_density_mse_%d_epochs.%s' % (profile_prefix, n_epoch, file_type))
 
         f.savefig(path)
         print('Saved plot to:\t%s' % path)
+    plt.close('all')
 
 
 # -----------------------------------------------------------------
