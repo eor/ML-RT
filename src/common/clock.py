@@ -10,7 +10,7 @@ class Clock:
     GPU, before passing to this class.)
     """
 
-    def __init__(self, itr_warmup=20, itr_average_time=100):
+    def __init__(self, itr_warmup=20, itr_average_time=1000):
         self.itr_warmup = itr_warmup
         self.itr_average_time = itr_average_time
         self.starter = torch.cuda.Event(enable_timing=True)

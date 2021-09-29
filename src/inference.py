@@ -447,7 +447,7 @@ def inference_test_run_mlp():
 
     profile_MLP, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
     if output_time is not None:
-        print('Inference time for %s: %e±%e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
+        print('Inference time for %s: %e ± %e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
 
     # save, plot etc
     # TODO: utils_save_single_profile(profile, path, file_name)
@@ -486,7 +486,7 @@ def inference_test_run_cmlp():
                                                    p_2D.copy(), 'H', measure_time=True)
 
     if output_time_cmlp is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
 
 
 # -----------------------------------------------------------------
@@ -538,27 +538,27 @@ def inference_model_comparison():
     
     output_mlp, output_time_mlp = inference_mlp(mlp_run_dir, mlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_mlp is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('MLP', output_time_mlp['avg_time'], output_time_mlp['std_time']))
     
     output_cvae, output_time_cvae = inference_cvae(cvae_run_dir, cvae_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cvae is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('CVAE', output_time_cvae['avg_time'], output_time_cvae['std_time']))
     
     output_cgan, output_time_cgan = inference_cgan(cgan_run_dir, cgan_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cgan is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CGAN', output_time_cgan['avg_time'], output_time_cgan['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('CGAN', output_time_cgan['avg_time'], output_time_cgan['std_time']))
 
     output_lstm, output_time_lstm = inference_lstm(lstm_run_dir, lstm_model_file_name, p_2D.copy(), 'H', measure_time=False)
     if output_time_lstm is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('LSTM', output_time_lstm['avg_time'], output_time_lstm['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('LSTM', output_time_lstm['avg_time'], output_time_lstm['std_time']))
 
     output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir, cmlp_model_file_name, p_2D.copy(), 'H', measure_time=True)
     if output_time_cmlp is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
     
     output_clstm, output_time_clstm = inference_clstm(clstm_run_dir, clstm_model_file_name, p_2D.copy(), 'H', measure_time=False)
     if output_time_clstm is not None:
-        print('\tInference time for %s: %e±%e ms\n' % ('CLSTM', output_time_clstm['avg_time'], output_time_clstm['std_time']))
+        print('\tInference time for %s: %e ± %e ms\n' % ('CLSTM', output_time_clstm['avg_time'], output_time_clstm['std_time']))
     
     profiles = torch.cat((output_mlp['H'], output_cvae['H'], output_cgan['H'], output_lstm['H'],
                           output_cmlp['H'], output_clstm['H']), dim=0).cpu().numpy() 
