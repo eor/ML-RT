@@ -425,7 +425,7 @@ def inference_clstm(run_dir, model_file_name, parameters, profile_type, measure_
 
 
 # -----------------------------------------------------------------
-#  functions for test runs
+#  functions for test runs - MLP
 # -----------------------------------------------------------------
 def inference_test_run_mlp():
     """
@@ -450,11 +450,50 @@ def inference_test_run_mlp():
         print('Inference time for %s: %e±%e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
 
     # save, plot etc
-
     # TODO: utils_save_single_profile(profile, path, file_name)
-    # plots should be done elsewhere by hand
 
 
+
+# -----------------------------------------------------------------
+#  functions for test runs - CMLP
+# -----------------------------------------------------------------
+
+ def inference_test_run_cmlp():
+    """
+    Example function to demonstrate how to use the fully trained CMLP with custom parameters.
+
+    Returns nothing so far
+    """
+
+    # CMLP test
+    cmlp_run_dir = './production_CMLP_MSE/run_2021_09_29__00_37_07/'
+    cmlp_model_file_name = 'best_model_C_1378_epochs.pth.tar'
+
+    p = np.zeros((8))  # has to be 2D array because of BatchNorm
+
+    p[0] = 8.825165  # M_halo
+    p[1] = 8.285341  # redshift
+    p[2] = 14.526998  # source Age
+    p[3] = 1.491899   # qsoAlpha
+    p[4] = 0.79072833   # qsoEfficiency
+    p[5] = 0.48244837  # starsEscFrac
+    p[6] = 1.5012491  # starsIMFSlope
+    p[7] = 1.5323509  # starsIMFMassMinLog
+
+    p_2D = p.copy()
+    p_2D = p_2D[np.newaxis, :]
+
+    output_cmlp, output_time_cmlp = inference_cmlp(cmlp_run_dir,
+                                                   cmlp_model_file_name,
+                                                   p_2D.copy(), 'H', measure_time=True)
+
+    if output_time_cmlp is not None:
+        print('\tInference time for %s: %e±%e ms\n' % ('CMLP', output_time_cmlp['avg_time'], output_time_cmlp['std_time']))
+
+
+# -----------------------------------------------------------------
+#  functions for test runs - overall model comparison
+# -----------------------------------------------------------------
 def inference_model_comparison():
     """
     Function to generate inference profiles using all architectures,
@@ -534,4 +573,5 @@ def inference_model_comparison():
 if __name__ == "__main__":
 
     # inference_test_run_mlp()
-    inference_model_comparison()
+    inference_test_run_cmlp()
+    #inference_model_comparison()
