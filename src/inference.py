@@ -538,7 +538,7 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
         # and concat them to profiles to plot
         actual_profiles_2D = torch.from_numpy(actual_profiles_2D).to(device)
         profiles = torch.cat((profiles, torch.unsqueeze(actual_profiles_2D, 1)), dim=1)
-        labels.append('Actual')
+        labels.append('Simulation')
 
     # compute profiles for the parameters using the specified pre_trained models
     # and concat the output profiles with profiles to plot 

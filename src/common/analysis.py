@@ -224,20 +224,15 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
-    if add_title:
-        title_string = "%s -- %s -- %s" % (config.model, config.loss_type, config.profile_type)
-    else:
-        title_string = None
-
     plot_error_density_mse(
         profiles_true=profiles_true,
         profiles_gen=profiles_gen,
-        profile_type=config.profile_type,
         n_epoch=epoch,
+        config=config,
         output_dir=plot_dir_path,
         prefix=prefix,
+        add_title=add_title,
         file_type='pdf',
-        title=title_string
     )
 
 
@@ -251,24 +246,35 @@ if __name__ == '__main__':
 
     print('Hello there! Let\'s analyse some results\n')
     
-    # May be add your own array here.     
+    # May be add your own array here.    
+    production_runs_path = '../test/production/production_runs/'
     best_runs = [
-        '../test/paper/run_CGAN_MSE_48H',
-#         '../test/paper/run_LSTM1_MSE_29H',
-#         '../test/paper/run_LSTM1_DTW_40H',
-        '../test/paper/run_CGAN_MSE_46T',
-#         '../test/paper/run_LSTM1_DTW_3T',
-#         '../test/paper/run_LSTM1_MSE_4T',
-        '../test/paper/run_CMLP_MSE_47C',
-        '../test/paper/run_CMLP_DTW_49C',
-#         '../test/paper/run_CLSTM1_MSE_13C',
-#         '../test/paper/run_CLSTM1_DTW_45C'        
+#         'production_CGAN_MSE_H',
+#         'production_CGAN_MSE_T',
+#         'production_MLP_MSE_H',
+#         'production_MLP_MSE_T',
+#         'production_MLP_DTW_H',
+#         'production_MLP_DTW_T',
+#         'production_LSTM_MSE_H',
+#         'production_LSTM_MSE_T',
+        'production_LSTM_DTW_H',
+#         'production_LSTM_DTW_T',
+#         'production_CVAE_MSE_H',
+#         'production_CVAE_MSE_T',
+#         'production_CVAE_DTW_H',
+#         'production_CVAE_DTW_T',
+#         'production_CMLP_MSE_C',
+#         'production_CMLP_DTW_C',
+#         'production_CLSTM_MSE_C',
+        'production_CLSTM_DTW_C'
     ]
     
-    for path in best_runs:
+    for run in best_runs:
+        path = osp.join(production_runs_path, run)
         config = utils_load_config(path)
 #       analysis_loss_plot(config, gan=False)
-        analysis_auto_plot_profiles(config, k=30, base_path=path, prefix='best')
+#         analysis_auto_plot_profiles(config, k=30, base_path=path, prefix='best')
+        analysis_error_density_plot(config, base_path=path, prefix='best')
 #       analysis_auto_plot_profiles(config, k=10, base_path=path, prefix='test', epoch=283)
 #       analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
 #     analysis_auto_plot_profiles(config, k=15, base_path=base, prefix='best')

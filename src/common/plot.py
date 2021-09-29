@@ -212,7 +212,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
-                        labels=['Actual', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                        labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                         file_type='pdf', prefix=None):
     
     # default font size for the plot    
@@ -220,7 +220,7 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 30
-    colors = {'Actual':'#000000',
+    colors = {'Simulation':'#000000',
               'MLP':'#D81B60',
               'CVAE':'#0072B2',
               'CGAN':'#F0E442',
@@ -458,64 +458,76 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 # -----------------------------------------------------------------
 #  visualise error distribution: histogram and density plot
 # -----------------------------------------------------------------
-def plot_error_density_mse(profiles_true, profiles_gen, profile_type,
-                           n_epoch, output_dir='./', prefix='test', file_type='pdf', title=None):
+def plot_error_density_mse(profiles_true, profiles_gen,
+                           n_epoch, config,output_dir='./', profile_order=['H','T','He_II','He_III'], 
+                           prefix='test', file_type='pdf', add_title=True):
 
-    print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, profile_type, n_epoch))
+    print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, config.profile_type, n_epoch))
 
+    profile_type_to_color = {
+        'H': 'steelblue',
+        'T': 'darkorange',
+        'He_II': 'darkgreen',
+        'He_III': 'darkgreen'
+    }
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
-    if profile_type == 'C':
-        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=(2, 1))
-    else:
-        mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=1)
-
+    if len(np.shape(profiles_true)) == 2:
+        profiles_true = profiles_true[:, np.newaxis, :]
+        profiles_gen = profiles_gen[:, np.newaxis, :]
+    
+    mse_array = (np.square((profiles_true) - (profiles_gen))).mean(axis=2)
     mse_array = np.log10(mse_array + 1e-11)
 
-    # -----------------------------------------------------------------
-    #  set up figure
-    # -----------------------------------------------------------------
-    f, ax = plt.subplots(figsize=(6, 6))
-    rc('font', **{'family': 'serif'})
-    rc('text', usetex=True)
+    for i in range(np.shape(profiles_true)[1]):
 
-    # select colour based on profile_type
-    if profile_type == 'H':
-        hist_color = 'steelblue'
-    elif profile_type == 'T':
-        hist_color = 'darkorange'
-    else:
-        hist_color = 'darkgreen'
+        # -----------------------------------------------------------------
+        #  set up figure
+        # -----------------------------------------------------------------
+        f, ax = plt.subplots(figsize=(6, 6))
+        rc('font', **{'family': 'serif'})
+        rc('text', usetex=True)
+        
+        # select colour based on profile_type
+        if config.profile_type == 'C':
+            hist_color = profile_type_to_color[profile_order[i]]
+        else:
+            hist_color = profile_type_to_color[config.profile_type]
 
-    sns.histplot(mse_array, kde=True, bins=50, color=hist_color, alpha=0.25, ax=ax, stat='density',
+        sns.histplot(mse_array[:, i], kde=True, bins=50, color=hist_color, alpha=0.25, ax=ax, stat='density',
                  edgecolor=None, legend=False)
 
-    ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
-    ax.set_ylabel(r'$\textrm{Frequency density}$', fontsize=25, labelpad=10)
+        ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
+        ax.set_ylabel(r'$\textrm{Frequency density}$', fontsize=25, labelpad=10)
 
-    ax.tick_params(axis='y', which='major', labelsize=15)
-    ax.tick_params(axis='x', which='major', labelsize=15)
+        ax.tick_params(axis='y', which='major', labelsize=15)
+        ax.tick_params(axis='x', which='major', labelsize=15)
 
-    ax.minorticks_on()
-    ax.yaxis.set_ticks_position('both')
-    ax.xaxis.set_ticks_position('both')
+        ax.minorticks_on()
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
 
-    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.25)
+        ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.25)
 
-    f.subplots_adjust(bottom=0.2, left=0.15)
+        f.subplots_adjust(bottom=0.2, left=0.15)
 
-    # ax.legend(loc='best', frameon=False)
+        # ax.legend(loc='best', frameon=False)
+        
+        
+        if config.profile_type == 'C':
+            profile_prefix = profile_order[i]
+        else:
+            profile_prefix = config.profile_type
 
-    if title is not None:
-        f.suptitle(title, fontsize=25, y=0.95)
+        if add_title:
+            title_string = "%s -- %s -- %s" % (config.model, config.loss_type, profile_prefix.replace('_','\_'))       
+            f.suptitle(title_string, fontsize=25, y=0.95)
 
-    path = os.path.join(output_dir, '%s_frequency_density_mse_%d_epochs.%s' % (profile_type, n_epoch, file_type))
+        path = os.path.join(output_dir, '%s_frequency_density_mse_%d_epochs.%s' % (profile_prefix, n_epoch, file_type))
 
-    f.savefig(path)
-    print('Saved plot to:\t%s' % path)
-
-    # TODO implement solution for coupled networks
+        f.savefig(path)
+        print('Saved plot to:\t%s' % path)
 
 
 # -----------------------------------------------------------------
