@@ -657,7 +657,7 @@ if __name__ == "__main__":
 
     paper_data_directory = '../paper_data/'
     models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-    pretrained_models_dir = './test/production/pretrained_models'
+    pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
 #     inference_main(paper_data_directory,
 #                    pretrained_models_dir=pretrained_models_dir,
 #                    models_to_use=models_to_use,
