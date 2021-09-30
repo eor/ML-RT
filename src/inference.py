@@ -637,12 +637,12 @@ if __name__ == "__main__":
     p[6] = 1.5012491  # starsIMFSlope
     p[7] = 1.5323509  # starsIMFMassMinLog
     
-#     inference_model_comparison(
-#                         pretrained_models_dir=pretrained_models_dir,
-#                         profile_type='H',
-#                         actual_parameters=p,
-#                         actual_profiles=None,
-#                         models_to_use=models_to_use,
-#                         measure_time=True,
-#                         plot_output_dir='./',
-#                         prefix=None)
+    inference_model_comparison(
+                        pretrained_models_dir=pretrained_models_dir,
+                        profile_type='H',
+                        actual_parameters=p,
+                        actual_profiles=None,
+                        models_to_use=models_to_use,
+                        measure_time=False,
+                        plot_output_dir='./',
+                        prefix=None)

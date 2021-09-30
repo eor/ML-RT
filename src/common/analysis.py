@@ -249,32 +249,32 @@ if __name__ == '__main__':
     # May be add your own array here.    
     production_runs_path = '../test/production/production_runs/'
     best_runs = [
-        'production_CGAN_MSE_H',
-        'production_CGAN_MSE_T',
-        'production_MLP_MSE_H',
-        'production_MLP_MSE_T',
-        'production_MLP_DTW_H',
-        'production_MLP_DTW_T',
-        'production_LSTM_MSE_H',
-        'production_LSTM_MSE_T',
-        'production_LSTM_DTW_H',
-        'production_LSTM_DTW_T',
-        'production_CVAE_MSE_H',
-        'production_CVAE_MSE_T',
-        'production_CVAE_DTW_H',
-        'production_CVAE_DTW_T',
-        'production_CMLP_MSE_C',
+#         'production_CGAN_MSE_H',
+#         'production_CGAN_MSE_T',
+#         'production_MLP_MSE_H',
+#         'production_MLP_MSE_T',
+#         'production_MLP_DTW_H',
+#         'production_MLP_DTW_T',
+#         'production_LSTM_MSE_H',
+#         'production_LSTM_MSE_T',
+#         'production_LSTM_DTW_H',
+#         'production_LSTM_DTW_T',
+#         'production_CVAE_MSE_H',
+#         'production_CVAE_MSE_T',
+#         'production_CVAE_DTW_H',
+#         'production_CVAE_DTW_T',
+#         'production_CMLP_MSE_C',
         'production_CMLP_DTW_C',
-        'production_CLSTM_MSE_C',
-        'production_CLSTM_DTW_C'
+#         'production_CLSTM_MSE_C',
+#         'production_CLSTM_DTW_C'
     ]
     
     for run in best_runs:
         path = osp.join(production_runs_path, run)
         config = utils_load_config(path)
 #       analysis_loss_plot(config, gan=False)
-        analysis_auto_plot_profiles(config, k=30, base_path=path, prefix='best')
-#         analysis_error_density_plot(config, base_path=path, prefix='best')
+#         analysis_auto_plot_profiles(config, k=30, base_path=path, prefix='best')
+        analysis_error_density_plot(config, base_path=path, prefix='best')
 #       analysis_auto_plot_profiles(config, k=10, base_path=path, prefix='test', epoch=283)
 #       analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
 #     analysis_auto_plot_profiles(config, k=15, base_path=base, prefix='best')
