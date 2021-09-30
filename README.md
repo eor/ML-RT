@@ -20,6 +20,7 @@ Furthermore, the following Python packages are needed:
 * numpy (1.20.0 or newer)
 * matplotlib
 * numba (used in the Soft DTW implementation)
+* seaborn
 
 They can be installed with pip like so:
 ```bash
