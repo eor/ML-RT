@@ -13,7 +13,6 @@ We assume your system is equipped with the following dependencies:
 * Python 3.7 or newer
 * bash
 * wget
-* gdown
 * unzip
 * md5sum (optional)
 
@@ -26,9 +25,10 @@ Furthermore, the following Python packages are needed:
 
 * pytorch
 * numpy (1.20.0 or newer)
-* matplotlib
 * numba (used in the Soft DTW implementation)
+* matplotlib
 * seaborn
+* gdown (to download pre-trained models)
 
 They can be installed with pip like so:
 ```bash
