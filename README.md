@@ -1,5 +1,5 @@
 # ML-RT
-ML-RT stand for Machine Learning and Radiative Transfer. It is a project aimed at examining the possibility to use 
+ML-RT stands for Machine Learning and Radiative Transfer. It is a project aimed at examining the possibility of using 
 machine learning techniques to emulate radiative transfer simulation results.
 
 
