@@ -178,25 +178,25 @@ def main():
     src_folder_names = args.source
     parent_folder_name = args.destination
 
-    # you can also hard code folders here for ease ;p
-    # must be commented to use command line for specifying paths
-    src_folder_names = [
-    # '../test/paper/run_MLP1_DTW_17H',
-    # '../test/paper/run_MLP1_MSE_12H',
-    # '../test/paper/run_CVAE1_DTW_32H',
-    # '../test/paper/run_CVAE1_MSE_42H',
-    # '../test/paper/run_LSTM1_MSE_29H',
-    # '../test/paper/run_LSTM1_DTW_40H',
-    # '../test/paper/run_MLP2_DTW_23T',
-    # '../test/paper/run_MLP2_MSE_25T',
-    # '../test/paper/run_CVAE1_MSE_36T',
-    # '../test/paper/run_CVAE1_DTW_39T',
-    # '../test/paper/run_LSTM1_DTW_3T',
-    # '../test/paper/run_LSTM1_MSE_4T',
-    # '../test/paper/run_CLSTM1_MSE_13C',
-    # '../test/paper/run_CLSTM1_DTW_45C'
-    ]
-    parent_folder_name = 'ML_RT_results'
+#     # you can also hard code folders here for ease ;p
+#     # must be commented to use command line for specifying paths
+#     src_folder_names = [
+#     # '../test/paper/run_MLP1_DTW_17H',
+#     # '../test/paper/run_MLP1_MSE_12H',
+#     # '../test/paper/run_CVAE1_DTW_32H',
+#     # '../test/paper/run_CVAE1_MSE_42H',
+#     # '../test/paper/run_LSTM1_MSE_29H',
+#     # '../test/paper/run_LSTM1_DTW_40H',
+#     # '../test/paper/run_MLP2_DTW_23T',
+#     # '../test/paper/run_MLP2_MSE_25T',
+#     # '../test/paper/run_CVAE1_MSE_36T',
+#     # '../test/paper/run_CVAE1_DTW_39T',
+#     # '../test/paper/run_LSTM1_DTW_3T',
+#     # '../test/paper/run_LSTM1_MSE_4T',
+#     # '../test/paper/run_CLSTM1_MSE_13C',
+#     # '../test/paper/run_CLSTM1_DTW_45C'
+#     ]
+#     parent_folder_name = 'ML_RT_results'
 
     if len(src_folder_names) <= 0:
         print('\nNo files to upload.\n')

@@ -5,3 +5,6 @@ test/
 *log*
 *.npy
 tensorboard/*
+*.zip
+*.pdf
+*/client_secrets.json
