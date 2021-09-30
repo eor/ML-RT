@@ -214,26 +214,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
                         labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                         file_type='pdf', prefix=None):
-    
-    # default font size for the plot    
-    font_size_title = 26
-    font_size_ticks = 26
-    font_size_legends = 22
-    font_size_x_y = 30
-    colors = {'Simulation':'#000000',
-              'MLP':'#D81B60',
-              'CVAE':'#0072B2',
-              'CGAN':'#F0E442',
-              'LSTM':'#19D4A1',
-              'CMLP':'#E69F00',
-              'CLSTM':'#64D500'}
-
-
-    fig, ax = plt.subplots(figsize=(11, 10))
-    plt.subplots_adjust(top=0.82)
-    if np.max(profiles) < 1 and np.abs(np.min(profiles)) < 1:
-        ax.set_ylim(-5, 5)
-
     def get_label_Y(profile_type):
         if profile_type == 'H':
             return r'$\log_{10}(x_{H_{II}}) $'
@@ -246,11 +226,47 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
         else:
             return r'Physical Unit'
 
+    # default font size for the plot    
+    font_size_title = 26
+    font_size_ticks = 26
+    font_size_legends = 22
+    font_size_x_y = 32
+    colors = {'Simulation':'#D10000',
+              'MLP':'#D81B60',
+              'CVAE':'#0072B2',
+              'CGAN':'#F0E442',
+              'LSTM':'#19D4A1',
+              'CMLP':'#E69F00',
+              'CLSTM':'#64D500'}
+    
+    isSimulationKnown = 'Simulation' in labels
+    if isSimulationKnown:
+        start = 1
+        num_plots = len(labels) - 1
+    else:
+        start = 0
+        num_plots = len(labels)
+    
+    # compute size of grid ie. rows and columns to fit all the plots
+    columns = 2
+    rows = int(np.ceil(num_plots / columns))
+            
+    # -----------------------------------------------------------------
+    # figure setup
+    # -----------------------------------------------------------------
+    fig, ax = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True, figsize=(11, 12))
+    plt.subplots_adjust(top=0.86)
+    plt.subplots_adjust(wspace=0, hspace=0)
+    
+    print('Producing Inference profile plot:')
+
+    if np.max(profiles) < 1 and np.abs(np.min(profiles)) < 1:
+        ax.set_ylim(-5, 5)
+
     # convert inputs to usable forms
     if len(profiles.shape) != 2:
         profiles = profiles[np.newaxis, :]
 
-    print('Producing Inference profile plot:')
     
     if len(parameters) == 5:
         param_names = p5_names_latex
@@ -271,27 +287,34 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
-    
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
+    
+    for r, row in enumerate(ax):
+        for c, ax0 in enumerate(row):
+        
+            if labels[start] in colors.keys():
+                ax0.plot(profiles[start], c=colors[labels[start]], label=labels[start])
+            else:
+                color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                ax0.plot(profiles[start], c=colors[labels[start]], label=labels[start])
 
-    ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y, labelpad=10)
-    ax.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y, labelpad=10)
-
-    ax.minorticks_on()
-    ax.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
-
-    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-    for i in range(len(labels)):
-        if labels[i] in colors.keys():
-            ax.plot(profiles[i], c=colors[labels[i]], label=labels[i])
-        else:
-            color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
-            ax.plot(profiles[i], c=color, label=labels[i])
+            if isSimulationKnown:
+                ax0.plot(profiles[0], c=colors[labels[0]], label=labels[0])
             
-    ax.legend(loc='best', frameon=False, prop={'size': font_size_legends})
+            start += 1
+            ax0.minorticks_on()
+            ax0.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
+            ax0.legend(loc='best', frameon=False, prop={'size': font_size_legends})
+            ax0.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+
+    fig.text(0.5, 0.04, r'Radius $\mathrm{[kpc]}$', ha='center', fontsize=font_size_x_y)
+    fig.text(0.02, 0.5, get_label_Y(profile_type), va='center', rotation='vertical', fontsize=font_size_x_y)
+#     ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y, labelpad=10)
+#     ax.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y, labelpad=10)
+            
     if prefix is None:
         timestamp = utils_get_current_timestamp()
         path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
