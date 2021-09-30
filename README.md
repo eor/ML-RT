@@ -16,12 +16,13 @@ We assume your system is equipped with the following dependencies:
 * unzip
 * md5sum (optional)
 
-#### apt based Linux systems
+#### System packages
 On Debian or Debian-derivatives, e.g. Ubuntu, the required packages should be part of the base installation 
 but can be installed using the default package manager if necessary with the following command:
 ```bash
 sudo apt install wget unzip md5sum
 ```
+#### Python modules
 Furthermore, the following Python packages are needed:
 
 * pytorch
