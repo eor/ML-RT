@@ -324,7 +324,7 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 32
-    colors = {'Simulation':'#000000',
+    colors = {'Simulation':'#00000080',
               'MLP':'#D81B60',
               'CVAE':'#0072B2',
               'CGAN':'#F0E442',
@@ -351,29 +351,29 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
     plt.subplots_adjust(top=0.86)
     plt.subplots_adjust(wspace=0, hspace=0)
     
-    print('Producing Inference profile plot:')
+    print('Producing Inference time evolution plot:')
 
     if np.max(profiles) < 1 and np.abs(np.min(profiles)) < 1:
         ax.set_ylim(-5, 5)
-
-    # convert inputs to usable forms
-    if len(profiles.shape) != 2:
-        profiles = profiles[np.newaxis, :]
-
     
-    if len(parameters) == 5:
+    if np.shape(parameters)[2] == 5:
         param_names = p5_names_latex
     else:
         param_names = p8_names_latex
 
-    if parameters is not None and len(parameters) > 0:
+    # only time differs in different parameters. append all other parameters 
+    # that are constant across all profiles to the title     
+    parameter = parameters[0][0]
+    if parameter is not None:
         a = ''
         for j in range(len(param_names)):
+            if param_names[j] == 't_{\mathrm{source}}':
+                continue
             # add line break after every 3 parameters are added
             if j != 0 and j % 3 == 0:
                 a += '\n'
             # append the parameter with its name and value to title string
-            value = parameters[j]
+            value = parameter[j]
             name = '$' + param_names[j]
             a = a + name + ' = ' + str(value) + '$'
             if j == 2:
@@ -384,18 +384,21 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
     rc('text', usetex=True)
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
-    
     for r, row in enumerate(ax):
         for c, ax0 in enumerate(row):
-        
-            if labels[start] in colors.keys():
-                ax0.plot(profiles[start], c=colors[labels[start]], label=labels[start])
-            else:
-                color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
-                ax0.plot(profiles[start], c=colors[labels[start]], label=labels[start])
+            ax0.plot([], c=colors[labels[start]], label=labels[start])
+            ax0.plot([], c=colors[labels[0]], label=labels[0])
 
-            if isSimulationKnown:
-                ax0.plot(profiles[0], c=colors[labels[0]], label=labels[0])
+            for i in range(np.shape(profiles)[0]):
+                
+                if labels[start] in colors.keys():
+                    ax0.plot(profiles[i][start], c=colors[labels[start]])
+                else:
+                    color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                    ax0.plot(profiles[i][start], c=colors[labels[start]])
+
+                if isSimulationKnown:
+                    ax0.plot(profiles[i][0], c=colors[labels[0]])
             
             start += 1
             ax0.minorticks_on()
@@ -405,8 +408,6 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
 
     fig.text(0.5, 0.04, r'Radius $\mathrm{[kpc]}$', ha='center', fontsize=font_size_x_y)
     fig.text(0.02, 0.5, get_label_Y(profile_type), va='center', rotation='vertical', fontsize=font_size_x_y)
-#     ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y, labelpad=10)
-#     ax.set_ylabel(get_label_Y(profile_type), fontsize=font_size_x_y, labelpad=10)
             
     if prefix is None:
         timestamp = utils_get_current_timestamp()

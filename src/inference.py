@@ -13,7 +13,7 @@ from models.clstm import *
 from common.utils import *
 from common.settings import *
 from common.clock import Clock
-from common.plot import plot_inference_profiles
+from common.plot import plot_inference_profiles, plot_inference_time_evolution
 import common.settings_parameters as sp
 
 from torch.autograd import Variable
@@ -521,6 +521,7 @@ def inference_test_run_cmlp():
 # -----------------------------------------------------------------
 def inference_model_comparison(pretrained_models_dir, profile_type, actual_parameters, actual_profiles=None,
                                models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                               plot=True,
                                measure_time=False, plot_output_dir='./', prefix=None):
     """
     Function to generate inference profiles using all architectures,
@@ -590,17 +591,17 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
         
     # move the profiles to cpu and convert to numpy array     
     profiles = profiles.cpu().numpy()
-    
-    for i in range(batch_size):
-        # if prefix is specified, make it unique for each profile in the batch 
-        # else if prefix is None, timestamp will be used as prefix        
-        if prefix is not None:
-            prefix = prefix+str(i+1)
-        
-        # plot the profiles    
-        plot_inference_profiles(profiles[i], profile_type, p_2D[i], output_dir=plot_output_dir,
-                                labels=labels, prefix=prefix)
-        
+    if plot:
+        for i in range(batch_size):
+            # if prefix is specified, make it unique for each profile in the batch 
+            # else if prefix is None, timestamp will be used as prefix        
+            if prefix is not None:
+                prefix = prefix+str(i+1)
+
+            # plot the profiles    
+            plot_inference_profiles(profiles[i], profile_type, p_2D[i], output_dir=plot_output_dir,
+                                    labels=labels, prefix=prefix)
+    return profiles    
     
 def inference_main(paper_data_directory,
                    pretrained_models_dir=None,
@@ -650,11 +651,85 @@ def inference_main(paper_data_directory,
                                    plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
         
 
+def inference_time_evolution(paper_data_directory,
+                   pretrained_models_dir=None,
+                   models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                   measure_time=False):
+    """ 
+    Function to load the sde data and run it through the 
+    inference_model_comparison function for H and T profiles.
+    """
+    
+    base_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, SD_RUNS_DIR)
+    
+    inference_plots_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)  
+    print(inference_plots_path)
+    
+    # Create inference plots dir if doesn't exist
+    utils_create_output_dirs([inference_plots_path])
+    
+    if pretrained_models_dir is None:
+        pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
+        
+    # +1 because we will also be plotting simulation along with generated profiles    
+    concat_profiles_gen_H = np.empty([0, len(models_to_use) + 1, 1500])
+    concat_profiles_gen_T = np.empty([0, len(models_to_use) + 1, 1500])
+    concat_parameters = np.empty([0, 1, 8])
+
+    for i in range(4,24,4):
+        # path of actual profiles
+        parameter_file_path = osp.join(base_path, 'run_4', 'run_4_t%d_parameters.npy'%(i))
+        H_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HII.npy'%(i))
+        T_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_T.npy'%(i))
+        He_II_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HeII.npy'%(i))
+        He_III_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HeIII.npy'%(i))
+        
+        # load the actual profiles
+        print('loading profiles for time t=%d\n'%(i))
+        parameters = np.load(parameter_file_path)
+        H_II_profiles = np.load(H_profile_path)
+        T_profiles = np.load(T_profile_path)
+        He_II_profiles = np.load(He_II_profile_path)
+        He_III_profiles = np.load(He_III_profile_path)
+        print('loaded profiles for time t=%d\n'%(i))
+
+        if USE_LOG_PROFILES:
+            # add a small number to avoid trouble
+            H_II_profiles = np.log10(H_II_profiles + 1.0e-6)
+            He_II_profiles = np.log10(He_II_profiles + 1.0e-6)
+            He_III_profiles = np.log10(He_III_profiles + 1.0e-6)
+            T_profiles = np.log10(T_profiles)
+
+        # return profiles of (batch_size, profile_length). Because batch_size is 1 for us, we will be using 
+        # this dimension to stack profiles at different time_step         
+        profiles_gen_H = inference_model_comparison(pretrained_models_dir, 'H', parameters, actual_profiles=H_II_profiles,
+                                   models_to_use=models_to_use,
+                                   plot=False,
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
+        profiles_gen_T = inference_model_comparison(pretrained_models_dir, 'T', parameters, actual_profiles=T_profiles,
+                                   models_to_use=models_to_use,
+                                   plot=False,
+                                   plot_output_dir=inference_plots_path, prefix='run_%d'%(i), measure_time=measure_time)
+
+        concat_profiles_gen_H = np.concatenate((concat_profiles_gen_H, profiles_gen_H), axis=0)
+        concat_profiles_gen_T = np.concatenate((concat_profiles_gen_T, profiles_gen_T), axis=0)
+        concat_parameters = np.concatenate((concat_parameters, parameters[np.newaxis, np.newaxis, :]), axis=0)
+    
+    plot_inference_time_evolution(concat_profiles_gen_H, 'H', concat_parameters, output_dir='./',
+                        labels=['Simulation']+ models_to_use,
+                        file_type='pdf', prefix='run_4')
+
+    plot_inference_time_evolution(concat_profiles_gen_T, 'T', concat_parameters, output_dir='./',
+                        labels=['Simulation']+ models_to_use,
+                        file_type='pdf', prefix='run_4')
+
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
-
+    
+    print('Let\'s run inference!')
+    
     paper_data_directory = '../paper_data/'
     models_to_use=['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
     pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
@@ -663,7 +738,11 @@ if __name__ == "__main__":
 #                    models_to_use=models_to_use,
 #                    measure_time=False)
 #     inference_test_run_cmlp()
-    
+#     inference_time_evolution(paper_data_directory,
+#                    pretrained_models_dir=pretrained_models_dir,
+#                    models_to_use=models_to_use,
+#                    measure_time=False)
+
     # To have a custom run without knowing actual profile    
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
     p[0] = 8.825165  # M_halo
