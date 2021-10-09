@@ -1,5 +1,8 @@
 import numpy as np
-from common.utils import utils_get_user_param_limits
+try:
+    from common.utils import utils_get_user_param_limits
+except ImportError:
+    from utils import utils_get_user_param_limits
 
 
 # -----------------------------------------------------------------

@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import numpy as np
 
+
 class RTdata(Dataset):
 
     def __init__(self, profile_data, parameter_data, derivative_data=None, split='train', split_frac=(0.8, 0.1, 0.1)):
@@ -13,8 +14,8 @@ class RTdata(Dataset):
         #               (num_samples, profile_len) containing data for all the profiles
         # parameter_data: numpy array of shape (num_samples, profile_len) containing parameters
         #                 corresponding to all the profiles
-        # split: whether to return data correspoding to 'train', 'test' or 'val' dataset
-        # split_fraction: ratio's in which data needs to be splitted (must add upto 1)
+        # split: whether to return data corresponding to 'train', 'test' or 'val' dataset
+        # split_fraction: ratio's in which data needs to be split (must add upto 1)
         # --------------------------------------------------------------------------------------------------
         if len(profile_data.shape) != 3:
             profile_data = profile_data[:, np.newaxis, :]

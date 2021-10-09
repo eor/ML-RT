@@ -20,7 +20,7 @@ try:
 except ImportError:
     from common.utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
 
-from scipy.ndimage import gaussian_filter
+# from scipy.ndimage import gaussian_filter
 
 
 matplotlib.use('Agg')
@@ -126,7 +126,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     for i in range(num_plots):
 
-        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.1, hspace=0.0, height_ratios=[3, 1])
+        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.1, hspace=0.0,
+                                                 height_ratios=[3, 1])
 
         ax0 = fig.add_subplot(inner[0])
         ax1 = fig.add_subplot(inner[1], sharex=ax0)
@@ -192,7 +193,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
 
-    #         plt.figtext(0.5, 0.01, 'Errors: MSE: %e DTW: %e' % (mse, dtw), fontsize=font_size_title, ha='center', bbox={"alpha": 0, "pad": 10})
+    # plt.figtext(0.5, 0.01, 'Errors: MSE: %e DTW: %e' % (mse, dtw),
+    #             fontsize=font_size_title, ha='center', bbox={"alpha": 0, "pad": 10})
 
     mse = utils_compute_mse(profile_true, profile_inferred)
 
@@ -212,22 +214,21 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
-                        labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
-                        file_type='pdf', prefix=None):
+                            labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                            file_type='pdf', prefix=None):
     
     # default font size for the plot    
     font_size_title = 26
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 30
-    colors = {'Simulation':'#000000',
-              'MLP':'#D81B60',
-              'CVAE':'#0072B2',
-              'CGAN':'#F0E442',
-              'LSTM':'#19D4A1',
-              'CMLP':'#E69F00',
-              'CLSTM':'#64D500'}
-
+    colors = {'Simulation': '#000000',
+              'MLP': '#D81B60',
+              'CVAE': '#0072B2',
+              'CGAN': '#F0E442',
+              'LSTM': '#19D4A1',
+              'CMLP': '#E69F00',
+              'CLSTM': '#64D500'}
 
     fig, ax = plt.subplots(figsize=(11, 10))
     plt.subplots_adjust(top=0.82)
@@ -271,7 +272,6 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
-    
     rc('font', **{'family': 'serif'})
     rc('text', usetex=True)
 
@@ -459,7 +459,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 #  visualise error distribution: histogram and density plot
 # -----------------------------------------------------------------
 def plot_error_density_mse(profiles_true, profiles_gen,
-                           n_epoch, config,output_dir='./', profile_order=['H','T','He_II','He_III'], 
+                           n_epoch, config,output_dir='./', profile_order=['H', 'T', 'He_II', 'He_III'],
                            prefix='test', file_type='pdf', add_title=True):
 
     print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, config.profile_type, n_epoch))
@@ -496,7 +496,7 @@ def plot_error_density_mse(profiles_true, profiles_gen,
             hist_color = profile_type_to_color[config.profile_type]
 
         sns.histplot(mse_array[:, i], kde=True, bins=50, color=hist_color, alpha=0.25, ax=ax, stat='density',
-                 edgecolor=None, legend=False)
+                     edgecolor=None, legend=False)
 
         ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
         ax.set_ylabel(r'$\textrm{Frequency density}$', fontsize=25, labelpad=10)
@@ -514,14 +514,13 @@ def plot_error_density_mse(profiles_true, profiles_gen,
 
         # ax.legend(loc='best', frameon=False)
         
-        
         if config.profile_type == 'C':
             profile_prefix = profile_order[i]
         else:
             profile_prefix = config.profile_type
 
         if add_title:
-            title_string = "%s -- %s -- %s" % (config.model, config.loss_type, profile_prefix.replace('_','\_'))       
+            title_string = "%s -- %s -- %s" % (config.model, config.loss_type, profile_prefix.replace('_', '\_'))
             f.suptitle(title_string, fontsize=25, y=0.95)
 
         path = os.path.join(output_dir, '%s_frequency_density_mse_%d_epochs.%s' % (profile_prefix, n_epoch, file_type))

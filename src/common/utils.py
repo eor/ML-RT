@@ -11,6 +11,7 @@ try:
 except ImportError:
     from soft_dtw import SoftDTW as SoftDTW_CPU
 
+
 # -----------------------------------------------------------------
 # functions to scale and re-scale parameters
 # -----------------------------------------------------------------
