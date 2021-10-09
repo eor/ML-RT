@@ -676,7 +676,7 @@ def inference_time_evolution(paper_data_directory,
     concat_profiles_gen_T = np.empty([0, len(models_to_use) + 1, 1500])
     concat_parameters = np.empty([0, 1, 8])
 
-    for i in range(4,24,4):
+    for i in range(8,24,4):
         # path of actual profiles
         parameter_file_path = osp.join(base_path, 'run_4', 'run_4_t%d_parameters.npy'%(i))
         H_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HII.npy'%(i))
@@ -738,10 +738,10 @@ if __name__ == "__main__":
 #                    models_to_use=models_to_use,
 #                    measure_time=False)
 #     inference_test_run_cmlp()
-#     inference_time_evolution(paper_data_directory,
-#                    pretrained_models_dir=pretrained_models_dir,
-#                    models_to_use=models_to_use,
-#                    measure_time=False)
+    inference_time_evolution(paper_data_directory,
+                   pretrained_models_dir=pretrained_models_dir,
+                   models_to_use=models_to_use,
+                   measure_time=False)
 
     # To have a custom run without knowing actual profile    
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
@@ -754,12 +754,12 @@ if __name__ == "__main__":
     p[6] = 1.5012491  # starsIMFSlope
     p[7] = 1.5323509  # starsIMFMassMinLog
     
-    inference_model_comparison(
-                        pretrained_models_dir=pretrained_models_dir,
-                        profile_type='H',
-                        actual_parameters=p,
-                        actual_profiles=None,
-                        models_to_use=models_to_use,
-                        measure_time=False,
-                        plot_output_dir='./',
-                        prefix=None)
+#     inference_model_comparison(
+#                         pretrained_models_dir=pretrained_models_dir,
+#                         profile_type='H',
+#                         actual_parameters=p,
+#                         actual_profiles=None,
+#                         models_to_use=models_to_use,
+#                         measure_time=False,
+#                         plot_output_dir='./',
+#                         prefix=None)

@@ -347,7 +347,7 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
     # -----------------------------------------------------------------
     # figure setup
     # -----------------------------------------------------------------
-    fig, ax = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True, figsize=(11, 12))
+    fig, ax = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True, figsize=(11, 13))
     plt.subplots_adjust(top=0.86)
     plt.subplots_adjust(wspace=0, hspace=0)
     
