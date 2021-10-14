@@ -525,6 +525,7 @@ def inference_test_run_cmlp():
 def inference_model_comparison(pretrained_models_dir, profile_type, actual_parameters, actual_profiles=None,
                                models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                                measure_time=False, plot_output_dir='./', prefix=None):
+
     """
     Function to generate inference profiles using all architectures,
     plot them and compare the inference time.
@@ -540,6 +541,7 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
     plot_output_dir: directory where inference plots will be placed (default: current_directory)
     prefix: prefix to be used in the name of the plots 
     """
+
     # model to corresponding function mapping     
     model_to_func_dict = {
         'MLP': inference_mlp,
@@ -608,6 +610,7 @@ def inference_main(paper_data_directory,
                    pretrained_models_dir=None,
                    models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                    measure_time=False):
+
     """ 
     Function to load the sde data and run it through the 
     inference_model_comparison function for H and T profiles.
@@ -615,8 +618,9 @@ def inference_main(paper_data_directory,
     
     base_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, SD_RUNS_DIR)
     
-    inference_plots_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)    
-    # Create inference plots dir if doesn't exist
+    inference_plots_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)
+
+    # Create inference plots directory if doesn't exist
     utils_create_output_dirs([inference_plots_path])
     
     if pretrained_models_dir is None:
@@ -624,11 +628,11 @@ def inference_main(paper_data_directory,
 
     for i in range(1, 4):
         # path of actual profiles
-        parameter_file_path = osp.join(base_path, 'run_%d' % (i), 'run_%d_parameters.npy' % (i))
-        H_profile_path = osp.join(base_path, 'run_%d' % (i), 'run_%d_profile_HII.npy' % (i))
-        T_profile_path = osp.join(base_path, 'run_%d' % (i), 'run_%d_profile_T.npy' % (i))
-        He_II_profile_path = osp.join(base_path, 'run_%d' % (i), 'run_%d_profile_HeII.npy' % (i))
-        He_III_profile_path = osp.join(base_path, 'run_%d' % (i), 'run_%d_profile_HeIII.npy' % (i))
+        parameter_file_path = osp.join(base_path, 'run_%d' % i, 'run_%d_parameters.npy' % i)
+        H_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HII.npy' % i)
+        T_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_T.npy' % i)
+        He_II_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HeII.npy' % i)
+        He_III_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HeIII.npy' % i)
         
         # load the actual profiles
         parameters = np.load(parameter_file_path)
