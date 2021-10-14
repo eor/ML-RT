@@ -209,7 +209,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     plt.savefig(os.path.join(output_dir, file_name))
     plt.close('all')
 
-
+    
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
@@ -292,6 +292,123 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
             ax.plot(profiles[i], c=color, label=labels[i])
             
     ax.legend(loc='best', frameon=False, prop={'size': font_size_legends})
+    if prefix is None:
+        timestamp = utils_get_current_timestamp()
+        path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
+    else:
+        path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, prefix, file_type))
+
+    fig.savefig(path)
+    print('Saved plot to:\t%s' % path)
+
+# -----------------------------------------------------------------
+#  Plot Inference profiles generated using inference.py
+# -----------------------------------------------------------------
+def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
+                        labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                        file_type='pdf', prefix=None):
+    def get_label_Y(profile_type):
+        if profile_type == 'H':
+            return r'$\log_{10}(x_{H_{II}}) $'
+        elif profile_type == 'T':
+            return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K}) $'
+        elif profile_type == 'He_II':
+            return r'$\log_{10}(x_{He_{II}}) $'
+        elif profile_type == 'He_III':
+            return r'$\log_{10}(x_{He_{III}}) $'
+        else:
+            return r'Physical Unit'
+
+    # default font size for the plot    
+    font_size_title = 26
+    font_size_ticks = 26
+    font_size_legends = 22
+    font_size_x_y = 32
+    colors = {'Simulation':'#00000080',
+              'MLP':'#D81B60',
+              'CVAE':'#0072B2',
+              'CGAN':'#F0E442',
+              'LSTM':'#19D4A1',
+              'CMLP':'#E69F00',
+              'CLSTM':'#64D500'}
+    
+    isSimulationKnown = 'Simulation' in labels
+    if isSimulationKnown:
+        start = 1
+        num_plots = len(labels) - 1
+    else:
+        start = 0
+        num_plots = len(labels)
+    
+    # compute size of grid ie. rows and columns to fit all the plots
+    columns = 2
+    rows = int(np.ceil(num_plots / columns))
+            
+    # -----------------------------------------------------------------
+    # figure setup
+    # -----------------------------------------------------------------
+    fig, ax = plt.subplots(nrows=rows, ncols=columns, sharex=True, sharey=True, figsize=(11, 13))
+    plt.subplots_adjust(top=0.86)
+    plt.subplots_adjust(wspace=0, hspace=0)
+    
+    print('Producing Inference time evolution plot:')
+
+    if np.max(profiles) < 1 and np.abs(np.min(profiles)) < 1:
+        ax.set_ylim(-5, 5)
+    
+    if np.shape(parameters)[2] == 5:
+        param_names = p5_names_latex
+    else:
+        param_names = p8_names_latex
+
+    # only time differs in different parameters. append all other parameters 
+    # that are constant across all profiles to the title     
+    parameter = parameters[0][0]
+    if parameter is not None:
+        a = ''
+        for j in range(len(param_names)):
+            if param_names[j] == 't_{\mathrm{source}}':
+                continue
+            # add line break after every 3 parameters are added
+            if j != 0 and j % 3 == 0:
+                a += '\n'
+            # append the parameter with its name and value to title string
+            value = parameter[j]
+            name = '$' + param_names[j]
+            a = a + name + ' = ' + str(value) + '$'
+            if j == 2:
+                a += '$\mathrm{Myr}$'
+            a += '\, \, \, '
+
+    rc('font', **{'family': 'serif'})
+    rc('text', usetex=True)
+
+    fig.suptitle(a, fontsize=font_size_title, y=0.98)
+    for r, row in enumerate(ax):
+        for c, ax0 in enumerate(row):
+            ax0.plot([], c=colors[labels[start]], label=labels[start])
+            ax0.plot([], c=colors[labels[0]], label=labels[0])
+
+            for i in range(np.shape(profiles)[0]):
+                
+                if labels[start] in colors.keys():
+                    ax0.plot(profiles[i][start], c=colors[labels[start]])
+                else:
+                    color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                    ax0.plot(profiles[i][start], c=colors[labels[start]])
+
+                if isSimulationKnown:
+                    ax0.plot(profiles[i][0], c=colors[labels[0]])
+            
+            start += 1
+            ax0.minorticks_on()
+            ax0.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
+            ax0.legend(loc='best', frameon=False, prop={'size': font_size_legends})
+            ax0.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+
+    fig.text(0.5, 0.04, r'Radius $\mathrm{[kpc]}$', ha='center', fontsize=font_size_x_y)
+    fig.text(0.02, 0.5, get_label_Y(profile_type), va='center', rotation='vertical', fontsize=font_size_x_y)
+            
     if prefix is None:
         timestamp = utils_get_current_timestamp()
         path = os.path.join(output_dir, '%s_inference_profile_%s.%s' % (profile_type, timestamp, file_type))
