@@ -13,7 +13,7 @@ from models.clstm import *
 from common.utils import *
 from common.settings import *
 from common.clock import Clock
-from common.plot import plot_inference_profiles
+from common.plot import plot_inference_profiles, plot_inference_time_evolution
 import common.settings_parameters as sp
 
 from torch.autograd import Variable
@@ -56,9 +56,10 @@ def inference_lstm(parameters, profile_type, pretrained_models_dir, model_file_n
         model_file_name = 'best_model_%s_LSTM.pth.tar' % (profile_type)
     if config_file_name is None:
         config_file_name = 'config_%s_LSTM.dict' % (profile_type)
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -68,7 +69,8 @@ def inference_lstm(parameters, profile_type, pretrained_models_dir, model_file_n
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
@@ -127,12 +129,13 @@ def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_n
         model_file_name = 'best_model_%s_CGAN.pth.tar' % (profile_type)
     if config_file_name is None:
         config_file_name = 'config_%s_CGAN.dict' % (profile_type)
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
-    
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
+
     batch_size = np.shape(parameters)[0]
-    
+
     # set up parameters
     if config.n_parameters == 5:
         parameter_limits = sp.p5_limits
@@ -141,12 +144,14 @@ def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_n
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
-    
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
+
     # configure generator input
     parameters = torch.from_numpy(parameters).to(device)
     parameters = Variable(parameters.type(FloatTensor))
-    latent_vector = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, config.latent_dim)))).to(device)
+    latent_vector = Variable(FloatTensor(np.random.normal(
+        0, 1, (batch_size, config.latent_dim)))).to(device)
 
     if config.gen_model == 'GEN2':
         generator = Generator2(config)
@@ -159,20 +164,21 @@ def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_n
     generator.load_state_dict(torch.load(model_path))
     generator.to(device)
     generator.eval()
-    
+
     output = {}
     output_time = None
-    
+
     # run inference
     with torch.no_grad():
         gen_profile = generator(latent_vector, parameters)
         output[profile_type] = gen_profile
-    
+
     if measure_time:
         if cuda:
             output_time = {}
             clock = Clock()
-            avg_time, std_time = clock.get_time(generator, [latent_vector, parameters])
+            avg_time, std_time = clock.get_time(
+                generator, [latent_vector, parameters])
             output_time['avg_time'] = avg_time
             output_time['std_time'] = std_time
         else:
@@ -184,7 +190,7 @@ def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_n
 # -----------------------------------------------------------------
 #  CVAE
 # -----------------------------------------------------------------
-def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_name=None, 
+def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_name=None,
                    config_file_name=None, measure_time=False):
     """
     Function to use user specified parameters with the CVAE in inference mode.
@@ -192,17 +198,18 @@ def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_n
     Returns an array of one or more generated profiles
     """
     print('Running inference for the CVAE (decoder)')
-    
+
     if model_file_name is None:
         model_file_name = 'best_model_%s_CVAE.pth.tar' % (profile_type)
     if config_file_name is None:
         config_file_name = 'config_%s_CVAE.dict' % (profile_type)
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
 
     batch_size = np.shape(parameters)[0]
-    
+
     latent_vector = np.zeros((batch_size, config.latent_dim))
     # all zeros for now ... closest to unit Gaussian
 
@@ -214,7 +221,8 @@ def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_n
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters)
@@ -225,14 +233,14 @@ def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_n
 
     # concatenate both vector, i.e. condition the latent vector with the parameters
     cond_z = torch.cat((latent_vector, parameters), 1)
-     
+
     # prepare the model
     if config.model == 'CVAE1':
         model = CVAE1(config)
     else:
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
-    
+
     # move model and input to the available device
     model.load_state_dict(torch.load(model_path))
     model.to(device)
@@ -241,12 +249,12 @@ def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_n
 
     output = {}
     output_time = None
-   
+
     # run inference
     with torch.no_grad():
         profile_gen = model.decode(cond_z)
         output[profile_type] = profile_gen
-        
+
     if measure_time:
         if cuda:
             output_time = {}
@@ -277,9 +285,10 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         model_file_name = 'best_model_%s_MLP.pth.tar' % profile_type
     if config_file_name is None:
         config_file_name = 'config_%s_MLP.dict' % profile_type
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -289,7 +298,8 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
@@ -333,7 +343,7 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
 # -----------------------------------------------------------------
 #  CMLP
 # -----------------------------------------------------------------
-def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CMLP.pth.tar', 
+def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CMLP.pth.tar',
                    config_file_name='config_C_CMLP.dict', measure_time=False):
     """
     Function to use user specified parameters with the CMLP in inference mode.
@@ -342,9 +352,10 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
     """
 
     print('Running inference for the CMLP')
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -354,14 +365,15 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
     parameters = Variable(parameters.type(FloatTensor))
 
     model = CMLP(config, device)
-    
+
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -371,7 +383,8 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
 
     # run inference
     with torch.no_grad():
-        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(parameters)
+        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(
+            parameters)
         output['H'] = gen_profile_H
         output['T'] = gen_profile_T
         output['He_II'] = gen_profile_He_II
@@ -394,7 +407,7 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
 # -----------------------------------------------------------------
 #  CLSTM
 # -----------------------------------------------------------------
-def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CLSTM.pth.tar', 
+def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CLSTM.pth.tar',
                     config_file_name='config_C_CLSTM.dict', measure_time=False):
     """
     Function to use user specified parameters with the CLSTM in inference mode.
@@ -403,9 +416,10 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
     """
 
     print('Running inference for the CLSTM')
-    
-    model_path = osp.join(pretrained_models_dir, model_file_name)    
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+
+    model_path = osp.join(pretrained_models_dir, model_file_name)
+    config = utils_load_config(
+        pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -415,14 +429,15 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(
+            limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
     parameters = Variable(parameters.type(FloatTensor))
 
     model = CLSTM(config, device)
-    
+
     model.load_state_dict(torch.load(model_path))
     model.to(device)
     model.eval()
@@ -432,7 +447,8 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
 
     # run inference
     with torch.no_grad():
-        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(parameters)
+        gen_profile_H, gen_profile_T, gen_profile_He_II, gen_profile_He_III = model(
+            parameters)
         output['H'] = gen_profile_H
         output['T'] = gen_profile_T
         output['He_II'] = gen_profile_He_II
@@ -473,9 +489,11 @@ def inference_test_run_mlp():
     p[0][3] = 1.0  # qsoAlpha
     p[0][4] = 0.2  # starsEscFrac
 
-    profile_MLP, output_time = inference_mlp(run_dir, model_file_name, p, measure_time=True)
+    profile_MLP, output_time = inference_mlp(
+        run_dir, model_file_name, p, measure_time=True)
     if output_time is not None:
-        print('Inference time for %s: %e ± %e ms' % ('MLP', output_time['avg_time'], output_time['std_time']))
+        print('Inference time for %s: %e ± %e ms' %
+              ('MLP', output_time['avg_time'], output_time['std_time']))
 
     # save, plot etc
     # TODO: utils_save_single_profile(profile, path, file_name)
@@ -523,13 +541,14 @@ def inference_test_run_cmlp():
 #  functions for test runs - overall model comparison
 # -----------------------------------------------------------------
 def inference_model_comparison(pretrained_models_dir, profile_type, actual_parameters, actual_profiles=None,
-                               models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                               models_to_use=['MLP', 'CVAE',
+                                              'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                               plot=True,
                                measure_time=False, plot_output_dir='./', prefix=None):
-
     """
     Function to generate inference profiles using all architectures,
     plot them and compare the inference time.
-    
+
     profile_type: type of profile you want to plot
     actual_parameters: parameters of shape (batch_size, parameters) 
                        or (parameters) for which inference is to be run
@@ -541,8 +560,7 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
     plot_output_dir: directory where inference plots will be placed (default: current_directory)
     prefix: prefix to be used in the name of the plots 
     """
-
-    # model to corresponding function mapping     
+    # model to corresponding function mapping
     model_to_func_dict = {
         'MLP': inference_mlp,
         'CVAE': inference_cvae,
@@ -552,95 +570,106 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
         'CLSTM': inference_clstm
     }
 
-    # convert input to 2D form     
+    # convert input to 2D form
     p_2D = actual_parameters.copy()
     if len(np.shape(p_2D)) != 2:
         p_2D = p_2D[np.newaxis, :]
-    
+
     # flag if actual profile corresponding to parameters is known
     ACTUAL_PROFILE = actual_profiles is not None
-     
-    # number of parameters to run inference for    
+
+    # number of parameters to run inference for
     batch_size = np.shape(p_2D)[0]
 
-    # array of labels for profiles to be plotted finally    
+    # array of labels for profiles to be plotted finally
     labels = []
-    # array of profiles to be plotted finally    
+    # array of profiles to be plotted finally
     profiles = torch.zeros([batch_size, 0, 1500], device=device)
-    
+
     # if actual profiles are known
     if ACTUAL_PROFILE:
         actual_profiles_2D = actual_profiles.copy()
-        
+
         # convert them to 2D array
         if len(np.shape(actual_profiles_2D)) != 2:
             actual_profiles_2D = actual_profiles_2D[np.newaxis, :]
-        
+
         # and concat them to profiles to plot
         actual_profiles_2D = torch.from_numpy(actual_profiles_2D).to(device)
-        profiles = torch.cat((profiles, torch.unsqueeze(actual_profiles_2D, 1)), dim=1)
+        profiles = torch.cat(
+            (profiles, torch.unsqueeze(actual_profiles_2D, 1)), dim=1)
         labels.append('Simulation')
 
     # compute profiles for the parameters using the specified pre_trained models
-    # and concat the output profiles with profiles to plot 
+    # and concat the output profiles with profiles to plot
     for model in models_to_use:
         output_profile, output_time = model_to_func_dict[model](p_2D.copy(), profile_type,
                                                                 pretrained_models_dir, measure_time=measure_time)
         if output_time is not None:
-            print('\tInference time for %s: %e±%e ms\n' % (model, output_time['avg_time'], output_time['std_time']))
-        
-        profiles = torch.cat((profiles, torch.unsqueeze(output_profile[profile_type], 1)), 1)
+            print('\tInference time for %s: %e±%e ms\n' %
+                  (model, output_time['avg_time'], output_time['std_time']))
+
+        profiles = torch.cat(
+            (profiles, torch.unsqueeze(output_profile[profile_type], 1)), 1)
         labels.append(model)
-        
-    # move the profiles to cpu and convert to numpy array     
+
+    # move the profiles to cpu and convert to numpy array
     profiles = profiles.cpu().numpy()
-    
-    for i in range(batch_size):
-        # if prefix is specified, make it unique for each profile in the batch 
-        # else if prefix is None, timestamp will be used as prefix        
-        if prefix is not None:
-            prefix = prefix+str(i+1)
-        
-        # plot the profiles    
-        plot_inference_profiles(profiles[i], profile_type, p_2D[i], output_dir=plot_output_dir,
-                                labels=labels, prefix=prefix)
-        
-    
+    if plot:
+        for i in range(batch_size):
+            # if prefix is specified, make it unique for each profile in the batch
+            # else if prefix is None, timestamp will be used as prefix
+            if prefix is not None:
+                prefix = prefix + str(i + 1)
+
+            # plot the profiles
+            plot_inference_profiles(profiles[i], profile_type, p_2D[i], output_dir=plot_output_dir,
+                                    labels=labels, prefix=prefix)
+    return profiles
+
+
 def inference_main(paper_data_directory,
                    pretrained_models_dir=None,
-                   models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                   models_to_use=['MLP', 'CVAE',
+                                  'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                    measure_time=False):
-
     """ 
     Function to load the sde data and run it through the 
     inference_model_comparison function for H and T profiles.
     """
-    
-    base_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, SD_RUNS_DIR)
-    
-    inference_plots_path = osp.join(paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)
 
-    # Create inference plots directory if doesn't exist
+    base_path = osp.join(paper_data_directory,
+                         ARCH_COMPARISON_DIR, SD_RUNS_DIR)
+
+    inference_plots_path = osp.join(
+        paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)
+    # Create inference plots dir if doesn't exist
     utils_create_output_dirs([inference_plots_path])
-    
+
     if pretrained_models_dir is None:
-        pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
+        pretrained_models_dir = osp.join(
+            paper_data_directory, PRETRAINED_MODELS_DIR)
 
     for i in range(1, 4):
         # path of actual profiles
-        parameter_file_path = osp.join(base_path, 'run_%d' % i, 'run_%d_parameters.npy' % i)
-        H_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HII.npy' % i)
-        T_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_T.npy' % i)
-        He_II_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HeII.npy' % i)
-        He_III_profile_path = osp.join(base_path, 'run_%d' % i, 'run_%d_profile_HeIII.npy' % i)
-        
+        parameter_file_path = osp.join(
+            base_path, 'run_%d' % (i), 'run_%d_parameters.npy' % (i))
+        H_profile_path = osp.join(base_path, 'run_%d' %
+                                  (i), 'run_%d_profile_HII.npy' % (i))
+        T_profile_path = osp.join(base_path, 'run_%d' %
+                                  (i), 'run_%d_profile_T.npy' % (i))
+        He_II_profile_path = osp.join(
+            base_path, 'run_%d' % (i), 'run_%d_profile_HeII.npy' % (i))
+        He_III_profile_path = osp.join(
+            base_path, 'run_%d' % (i), 'run_%d_profile_HeIII.npy' % (i))
+
         # load the actual profiles
         parameters = np.load(parameter_file_path)
         H_II_profiles = np.load(H_profile_path)
         T_profiles = np.load(T_profile_path)
         He_II_profiles = np.load(He_II_profile_path)
         He_III_profiles = np.load(He_III_profile_path)
-        
+
         if USE_LOG_PROFILES:
             # add a small number to avoid trouble
             H_II_profiles = np.log10(H_II_profiles + 1.0e-6)
@@ -659,23 +688,115 @@ def inference_main(paper_data_directory,
                                    plot_output_dir=inference_plots_path,
                                    prefix='run_%d' % (i),
                                    measure_time=measure_time)
-        
+
+
+def inference_time_evolution(paper_data_directory,
+                             pretrained_models_dir=None,
+                             models_to_use=['MLP', 'CVAE',
+                                            'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                             measure_time=False):
+    """ 
+    Function to load the sde data and run it through the 
+    inference_model_comparison function for H and T profiles.
+    """
+
+    base_path = osp.join(paper_data_directory,
+                         ARCH_COMPARISON_DIR, SD_RUNS_DIR)
+
+    inference_plots_path = osp.join(
+        paper_data_directory, ARCH_COMPARISON_DIR, INFERENCE_DIR)
+    print(inference_plots_path)
+
+    # Create inference plots dir if doesn't exist
+    utils_create_output_dirs([inference_plots_path])
+
+    if pretrained_models_dir is None:
+        pretrained_models_dir = osp.join(
+            paper_data_directory, PRETRAINED_MODELS_DIR)
+
+    # +1 because we will also be plotting simulation along with generated profiles
+    concat_profiles_gen_H = np.empty([0, len(models_to_use) + 1, 1500])
+    concat_profiles_gen_T = np.empty([0, len(models_to_use) + 1, 1500])
+    concat_parameters = np.empty([0, 1, 8])
+
+    for i in range(8, 24, 4):
+        # path of actual profiles
+        parameter_file_path = osp.join(
+            base_path, 'run_4', 'run_4_t%d_parameters.npy' % (i))
+        H_profile_path = osp.join(
+            base_path, 'run_4', 'run_4_t%d_profile_HII.npy' % (i))
+        T_profile_path = osp.join(
+            base_path, 'run_4', 'run_4_t%d_profile_T.npy' % (i))
+        He_II_profile_path = osp.join(
+            base_path, 'run_4', 'run_4_t%d_profile_HeII.npy' % (i))
+        He_III_profile_path = osp.join(
+            base_path, 'run_4', 'run_4_t%d_profile_HeIII.npy' % (i))
+
+        # load the actual profiles
+        print('loading profiles for time t=%d\n' % (i))
+        parameters = np.load(parameter_file_path)
+        H_II_profiles = np.load(H_profile_path)
+        T_profiles = np.load(T_profile_path)
+        He_II_profiles = np.load(He_II_profile_path)
+        He_III_profiles = np.load(He_III_profile_path)
+        print('loaded profiles for time t=%d\n' % (i))
+
+        if USE_LOG_PROFILES:
+            # add a small number to avoid trouble
+            H_II_profiles = np.log10(H_II_profiles + 1.0e-6)
+            He_II_profiles = np.log10(He_II_profiles + 1.0e-6)
+            He_III_profiles = np.log10(He_III_profiles + 1.0e-6)
+            T_profiles = np.log10(T_profiles)
+
+        # return profiles of (batch_size, profile_length). Because batch_size is 1 for us, we will be using
+        # this dimension to stack profiles at different time_step
+        profiles_gen_H = inference_model_comparison(pretrained_models_dir, 'H', parameters, actual_profiles=H_II_profiles,
+                                                    models_to_use=models_to_use,
+                                                    plot=False,
+                                                    plot_output_dir=inference_plots_path, prefix='run_%d' % (i), measure_time=measure_time)
+        profiles_gen_T = inference_model_comparison(pretrained_models_dir, 'T', parameters, actual_profiles=T_profiles,
+                                                    models_to_use=models_to_use,
+                                                    plot=False,
+                                                    plot_output_dir=inference_plots_path, prefix='run_%d' % (i), measure_time=measure_time)
+
+        concat_profiles_gen_H = np.concatenate(
+            (concat_profiles_gen_H, profiles_gen_H), axis=0)
+        concat_profiles_gen_T = np.concatenate(
+            (concat_profiles_gen_T, profiles_gen_T), axis=0)
+        concat_parameters = np.concatenate(
+            (concat_parameters, parameters[np.newaxis, np.newaxis, :]), axis=0)
+
+    plot_inference_time_evolution(concat_profiles_gen_H, 'H', concat_parameters, output_dir='./',
+                                  labels=['Simulation'] + models_to_use,
+                                  file_type='pdf', prefix='run_4')
+
+    plot_inference_time_evolution(concat_profiles_gen_T, 'T', concat_parameters, output_dir='./',
+                                  labels=['Simulation'] + models_to_use,
+                                  file_type='pdf', prefix='run_4')
+
 
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
+    print('Let\'s run inference!')
+
     paper_data_directory = '../paper_data/'
     models_to_use = ['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-    pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
+    pretrained_models_dir = osp.join(
+        paper_data_directory, PRETRAINED_MODELS_DIR)
 #     inference_main(paper_data_directory,
 #                    pretrained_models_dir=pretrained_models_dir,
 #                    models_to_use=models_to_use,
 #                    measure_time=False)
 #     inference_test_run_cmlp()
-    
-    # To have a custom run without knowing actual profile    
+    inference_time_evolution(paper_data_directory,
+                             pretrained_models_dir=pretrained_models_dir,
+                             models_to_use=models_to_use,
+                             measure_time=False)
+
+    # To have a custom run without knowing actual profile
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
     p[0] = 8.825165  # M_halo
     p[1] = 8.285341  # redshift
@@ -685,13 +806,13 @@ if __name__ == "__main__":
     p[5] = 0.48244837  # starsEscFrac
     p[6] = 1.5012491  # starsIMFSlope
     p[7] = 1.5323509  # starsIMFMassMinLog
-    
-    inference_model_comparison(
-                        pretrained_models_dir=pretrained_models_dir,
-                        profile_type='H',
-                        actual_parameters=p,
-                        actual_profiles=None,
-                        models_to_use=models_to_use,
-                        measure_time=False,
-                        plot_output_dir='./',
-                        prefix=None)
+
+#     inference_model_comparison(
+#                         pretrained_models_dir=pretrained_models_dir,
+#                         profile_type='H',
+#                         actual_parameters=p,
+#                         actual_profiles=None,
+#                         models_to_use=models_to_use,
+#                         measure_time=False,
+#                         plot_output_dir='./',
+#                         prefix=None)
