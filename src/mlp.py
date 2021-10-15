@@ -336,16 +336,15 @@ def main(config):
         train_loss = epoch_loss / len(train_loader)    # divide by number of batches (!= batch size)
         train_loss_array = np.append(train_loss_array, train_loss)
 
-        val_loss_mse, val_loss_dtw = mlp_run_evaluation(
-            current_epoch=epoch,
-            data_loader=val_loader,
-            model=model,
-            path=data_products_path,
-            config=config,
-            print_results=False,
-            save_results=False,
-            best_model=False
-        )
+        val_loss_mse, val_loss_dtw = mlp_run_evaluation(current_epoch=epoch,
+                                                        data_loader=val_loader,
+                                                        model=model,
+                                                        path=data_products_path,
+                                                        config=config,
+                                                        print_results=False,
+                                                        save_results=False,
+                                                        best_model=False
+                                                        )
 
         val_loss_mse_array = np.append(val_loss_mse_array, val_loss_mse)
         val_loss_dtw_array = np.append(val_loss_dtw_array, val_loss_dtw)
@@ -372,8 +371,15 @@ def main(config):
         # check for testing criterion
         if epoch % config.testing_interval == 0 or epoch == config.n_epochs:
 
-            best_test_mse, best_test_dtw = mlp_run_evaluation(best_epoch_mse, test_loader, best_model, data_products_path, config,
-                                                              print_results=True, save_results=True, best_model=False)
+            best_test_mse, best_test_dtw = mlp_run_evaluation(current_epoch=best_epoch_mse,
+                                                              data_loader=test_loader,
+                                                              model=best_model,
+                                                              path=data_products_path,
+                                                              confg=config,
+                                                              print_results=True,
+                                                              save_results=True,
+                                                              best_model=False
+                                                              )
 
         # early stopping check
         if FORCE_STOP or (EARLY_STOPPING and n_epoch_without_improvement >= EARLY_STOPPING_THRESHOLD_MLP):
