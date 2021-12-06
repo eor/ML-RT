@@ -301,12 +301,14 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
     fig.savefig(path)
     print('Saved plot to:\t%s' % path)
 
+
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
-                        labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
-                        file_type='pdf', prefix=None):
+                                    labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                                    file_type='pdf', prefix=None):
+
     def get_label_Y(profile_type):
         if profile_type == 'H':
             return r'$\log_{10}(x_{H_{II}}) $'
@@ -332,8 +334,8 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
               'CMLP':'#E69F00',
               'CLSTM':'#64D500'}
     
-    isSimulationKnown = 'Simulation' in labels
-    if isSimulationKnown:
+    is_simulation_known = 'Simulation' in labels
+    if is_simulation_known:
         start = 1
         num_plots = len(labels) - 1
     else:
@@ -397,7 +399,7 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
                     color = "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
                     ax0.plot(profiles[i][start], c=colors[labels[start]])
 
-                if isSimulationKnown:
+                if is_simulation_known:
                     ax0.plot(profiles[i][0], c=colors[labels[0]])
             
             start += 1

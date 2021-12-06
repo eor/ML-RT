@@ -294,7 +294,7 @@ def main(config):
     epochs_trained = -1
 
     # -----------------------------------------------------------------
-    # FORCE STOPPING
+    # FORCED STOPPING
     # -----------------------------------------------------------------
     global FORCE_STOP
     FORCE_STOP = False
