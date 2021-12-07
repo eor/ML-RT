@@ -306,8 +306,8 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
-                                    labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
-                                    file_type='pdf', prefix=None):
+                                  labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                                  file_type='pdf', prefix=None):
 
     def get_label_Y(profile_type):
         if profile_type == 'H':
@@ -326,13 +326,13 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
     font_size_ticks = 26
     font_size_legends = 22
     font_size_x_y = 32
-    colors = {'Simulation':'#00000080',
-              'MLP':'#D81B60',
-              'CVAE':'#0072B2',
-              'CGAN':'#F0E442',
-              'LSTM':'#19D4A1',
-              'CMLP':'#E69F00',
-              'CLSTM':'#64D500'}
+    colors = {'Simulation': '#00000080',
+              'MLP': '#D81B60',
+              'CVAE': '#0072B2',
+              'CGAN': '#F0E442',
+              'LSTM': '#19D4A1',
+              'CMLP': '#E69F00',
+              'CLSTM': '#64D500'}
     
     is_simulation_known = 'Simulation' in labels
     if is_simulation_known:
@@ -578,7 +578,7 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 #  visualise error distribution: histogram and density plot
 # -----------------------------------------------------------------
 def plot_error_density_mse(profiles_true, profiles_gen,
-                           n_epoch, config,output_dir='./', profile_order=['H', 'T', 'He_II', 'He_III'],
+                           n_epoch, config, output_dir='./', profile_order=['H', 'T', 'He_II', 'He_III'],
                            prefix='test', file_type='pdf', add_title=True):
 
     print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, config.profile_type, n_epoch))
