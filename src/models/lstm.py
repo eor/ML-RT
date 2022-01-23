@@ -7,7 +7,6 @@ class LSTM1(nn.Module):
         super(LSTM1, self).__init__()
 
         self.conf = conf
-
         self.device = device
         self.num_layers = 1
 
