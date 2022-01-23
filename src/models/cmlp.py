@@ -1,13 +1,18 @@
 from torch import nn
 import torch
 
+
 class CMLP(nn.Module):
     def __init__(self, conf, device):
         super(CMLP, self).__init__()
         self.conf = conf
+
         def block(features_in, features_out):
+
+            # No dropout or batch norm needed here
             layers = [nn.Linear(features_in, features_out)]
             layers.append(nn.LeakyReLU(0.2, inplace=True))
+
             return layers
 
         self.model = nn.Sequential(
@@ -25,6 +30,7 @@ class CMLP(nn.Module):
         self.out_layer_He_III = nn.Linear(int(conf.profile_len), int(conf.profile_len))
 
     def forward(self, parameters):
+
         x = self.model(parameters)
 
         x_H_II = x[:, 0: int(self.conf.profile_len)]

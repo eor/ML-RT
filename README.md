@@ -10,7 +10,7 @@ machine learning techniques to emulate radiative transfer simulation results.
 
 We assume your system is equipped with the following dependencies:
 
-* Python 3.7 or newer
+* Python 3.8 or newer
 * bash
 * wget
 * unzip
