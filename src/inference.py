@@ -778,7 +778,7 @@ def inference_estimate_number_density_ranges(pretrained_models_dir,
                                              measure_time=False):
 
     constant_n_H_0 = 1.9e-7  # cm-3
-    constant_n_He_0 = 1.5e-8 # cm-3x_He_III
+    constant_n_He_0 = 1.5e-8 # cm-3
 
     if pretrained_models_dir is None:
         pretrained_models_dir = osp.join(
