@@ -85,7 +85,7 @@ def inference_lstm(parameters, profile_type, pretrained_models_dir, model_file_n
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
 
@@ -161,7 +161,7 @@ def inference_cgan(parameters, profile_type, pretrained_models_dir, model_file_n
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    generator.load_state_dict(torch.load(model_path))
+    generator.load_state_dict(torch.load(model_path, map_location=device))
     generator.to(device)
     generator.eval()
 
@@ -242,7 +242,7 @@ def inference_cvae(parameters, profile_type, pretrained_models_dir, model_file_n
         exit(1)
 
     # move model and input to the available device
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     cond_z.to(device)
     model.eval()
@@ -314,7 +314,7 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         print('Error. Check if you are using the right model. Exiting.')
         exit(1)
 
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
 
@@ -374,7 +374,7 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
 
     model = CMLP(config, device)
 
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
 
@@ -438,7 +438,7 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
 
     model = CLSTM(config, device)
 
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
 
@@ -550,15 +550,15 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
     plot them and compare the inference time.
 
     profile_type: type of profile you want to plot
-    actual_parameters: parameters of shape (batch_size, parameters) 
+    actual_parameters: parameters of shape (batch_size, parameters)
                        or (parameters) for which inference is to be run
-    actual_profile: actual profile corresponding to each parameter if known 
+    actual_profile: actual profile corresponding to each parameter if known
                     of shape (batch_size, profile_len) or (profile_len) for which inference is to be run
     models_to_use: list of pretrained models to be used for inference
                     (default: ['MLP','CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'])
     measure_time: whether to measure inference time for each model while running inference or not
     plot_output_dir: directory where inference plots will be placed (default: current_directory)
-    prefix: prefix to be used in the name of the plots 
+    prefix: prefix to be used in the name of the plots
     """
 
     # model to corresponding function mapping
@@ -635,8 +635,8 @@ def inference_main(paper_data_directory,
                    pretrained_models_dir=None,
                    models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                    measure_time=False):
-    """ 
-    Function to load the sde data and run it through the 
+    """
+    Function to load the sde data and run it through the
     inference_model_comparison function for H and T profiles.
     """
 
@@ -692,8 +692,8 @@ def inference_time_evolution(paper_data_directory,
                              models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                              measure_time=False):
 
-    """ 
-    Function to load the sde data and run it through the 
+    """
+    Function to load the sde data and run it through the
     inference_model_comparison function for H and T profiles.
     """
 
@@ -771,6 +771,65 @@ def inference_time_evolution(paper_data_directory,
                                   file_type='pdf', prefix='run_4')
 
 
+
+def inference_estimate_number_density_ranges(pretrained_models_dir,
+                                             actual_parameters,
+                                             radius = [0, 250, 750, 1250, 1500],
+                                             measure_time=False):
+
+    constant_n_H_0 = 1.9e-7  # cm-3
+    constant_n_He_0 = 1.5e-8 # cm-3
+
+    if pretrained_models_dir is None:
+        pretrained_models_dir = osp.join(
+            paper_data_directory, PRETRAINED_MODELS_DIR)
+
+    # convert input to 2D form
+    p_2D = actual_parameters.copy()
+    if len(np.shape(p_2D)) != 2:
+        p_2D = p_2D[np.newaxis, :]
+
+    # run inference on the parameters
+    output_profiles, output_time = inference_cmlp(p_2D.copy(), 'C',
+                                                    pretrained_models_dir,
+                                                    measure_time=measure_time)
+
+    # obtain inference profiles for all our parameters
+    # and convert them to numpy arrays.
+    x_H_II = output_profiles['H'].numpy()
+    x_T = output_profiles['T'].numpy()
+    x_He_II = output_profiles['He_II'].numpy()
+    x_He_III = output_profiles['He_III'].numpy()
+
+    # convert log profiles to normal scale
+    x_H_II = np.power(10, x_H_II)
+    x_T = np.power(10, x_T)
+    x_He_II = np.power(10, x_He_II)
+    x_He_III = np.power(10, x_He_III)
+
+    # obtain x_H_I and x_He_I (neutral hydrogen and helium)
+    # from ionisation fractions
+    x_H_I = 1 - x_H_II
+    x_He_I = 1 - x_He_II - x_He_III
+
+    # select redshift from input parameters and recompute the shape.
+    redshift = p_2D[:, 1].reshape((p_2D.shape[0], -1))
+    # compute n_H and n_He for the redhshifts
+    n_H = np.power((1 + redshift), 3) * constant_n_H_0
+    n_He = np.power((1 + redshift), 3) * constant_n_He_0
+
+    # compute neutral hydrogen and helium number densities
+    # from ionisation fractions for all radius r.
+    n_H_I = n_H * x_H_I
+    n_He_I = n_He * x_He_I
+    for r in radius:
+        print('\nFor radius (r) = %d'%(r))
+        print ("| {:<8} | {:<15} | {:<15} |".format('redshift','avg. n_H_I','avg. n_He_I'))
+        for i in range(len(p_2D)):
+            avg_number_density_hydrogen = np.average(n_H_I[i, :r])
+            avg_number_density_helium = np.average(n_He_I[i, :r])
+            print ("| {:<8} | {:<15e} | {:<15e} |".format(redshift[i, 0], avg_number_density_hydrogen, avg_number_density_helium))
+
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
@@ -787,10 +846,10 @@ if __name__ == "__main__":
 #                    models_to_use=models_to_use,
 #                    measure_time=False)
 #     inference_test_run_cmlp()
-    inference_time_evolution(paper_data_directory,
-                             pretrained_models_dir=pretrained_models_dir,
-                             models_to_use=models_to_use,
-                             measure_time=False)
+    # inference_time_evolution(paper_data_directory,
+    #                          pretrained_models_dir=pretrained_models_dir,
+    #                          models_to_use=models_to_use,
+    #                          measure_time=False)
 
     # To have a custom run without knowing actual profile
     p = np.zeros((8))  # has to be 2D array because of BatchNorm
@@ -812,3 +871,13 @@ if __name__ == "__main__":
 #                         measure_time=False,
 #                         plot_output_dir='./',
 #                         prefix=None)
+
+    p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
+    p[0] = [8.825165, 6.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    p[1] = [8.825165, 8.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    p[2] = [8.825165, 9.5, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    p[3] = [8.825165, 11.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    p[4] = [8.825165, 13.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    inference_estimate_number_density_ranges(pretrained_models_dir=pretrained_models_dir,
+                                             radius = [1, 250, 750, 1250, 1500],
+                                             actual_parameters=p)
