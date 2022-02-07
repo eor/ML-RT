@@ -18,12 +18,6 @@ from common.settings import *
 from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
-# -----------------------------------------------------------------
-#  global  variables :-|
-# -----------------------------------------------------------------
-parameter_limits = list()
-parameter_names_latex = list()
-
 
 # -----------------------------------------------------------------
 #  CUDA available?
@@ -31,25 +25,21 @@ parameter_names_latex = list()
 if torch.cuda.is_available():
     cuda = True
     device = torch.device("cuda")
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+    FloatTensor = torch.cuda.FloatTensor
+
 else:
     cuda = False
     device = torch.device("cpu")
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
+    FloatTensor = torch.FloatTensor
 
-# -----------------------------------------------------------------
-#  global FloatTensor instance
-# -----------------------------------------------------------------
-FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 # -----------------------------------------------------------------
 #  loss function
 # -----------------------------------------------------------------
-if cuda:
-    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
-else:
-    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
+def cmlp_loss_function(func, gen_x, real_x):
 
-
-def cmlp_loss_function(func, gen_x, real_x, config):
     if func == 'DTW':
         # profile tensors are of shape [batch size, profile length]
         # soft dtw wants input of shape [batch size, 1, profile length]
@@ -62,6 +52,10 @@ def cmlp_loss_function(func, gen_x, real_x, config):
         loss = F.mse_loss(input=gen_x, target=real_x, reduction='mean')
     return loss
 
+
+# -----------------------------------------------------------------
+#  signal handling # TODO put it elsewhere
+# -----------------------------------------------------------------
 
 def force_stop_signal_handler(sig, frame):
     global FORCE_STOP
@@ -98,9 +92,6 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         profiles_true_all = torch.tensor([], device=device)
         parameters_true_all = torch.tensor([], device=device)
 
-    # Note: ground truth data could be obtained elsewhere but by getting it from the data loader here
-    # we don't have to worry about randomisation of the samples.
-
     model.eval()
 
     loss_dtw, loss_mse = 0.0, 0.0
@@ -121,10 +112,10 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss via soft dtw
-            dtw_loss_H_II = cmlp_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles, config)
-            dtw_loss_T = cmlp_loss_function('DTW', gen_T_profiles, real_T_profiles, config)
-            dtw_loss_He_II = cmlp_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles, config)
-            dtw_loss_He_III = cmlp_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles, config)
+            dtw_loss_H_II = cmlp_loss_function('DTW', gen_H_II_profiles, real_H_II_profiles)
+            dtw_loss_T = cmlp_loss_function('DTW', gen_T_profiles, real_T_profiles)
+            dtw_loss_He_II = cmlp_loss_function('DTW', gen_He_II_profiles, real_He_II_profiles)
+            dtw_loss_He_III = cmlp_loss_function('DTW', gen_He_III_profiles, real_He_III_profiles)
 
             dtw = dtw_loss_H_II + dtw_loss_T + dtw_loss_He_II + dtw_loss_He_III
             loss_dtw += dtw.item()
@@ -134,10 +125,10 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_r
             loss_dtw_He_III += dtw_loss_He_III.item()
 
             # compute loss via MSE:
-            mse_loss_H_II = cmlp_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles, config)
-            mse_loss_T = cmlp_loss_function('MSE', gen_T_profiles, real_T_profiles, config)
-            mse_loss_He_II = cmlp_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles, config)
-            mse_loss_He_III = cmlp_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles, config)
+            mse_loss_H_II = cmlp_loss_function('MSE', gen_H_II_profiles, real_H_II_profiles)
+            mse_loss_T = cmlp_loss_function('MSE', gen_T_profiles, real_T_profiles)
+            mse_loss_He_II = cmlp_loss_function('MSE', gen_He_II_profiles, real_He_II_profiles)
+            mse_loss_He_III = cmlp_loss_function('MSE', gen_He_III_profiles, real_He_III_profiles)
 
             mse = mse_loss_H_II + mse_loss_T + mse_loss_He_II + mse_loss_He_III
             loss_mse += mse.item()
@@ -184,25 +175,26 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_r
         profiles_true_all = profiles_true_all.cpu().numpy()
         parameters_true_all = parameters_true_all.cpu().numpy()
 
-        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
+        parameters_true_all = utils_rescale_parameters(limits=config.parameter_limits,
+                                                       parameters=parameters_true_all)
 
         if best_model:
             prefix = 'best'
         else:
             prefix = 'test'
 
-        # use profile type 'C' to save the combined profiles
-        utils_save_test_data(
-            parameters=parameters_true_all,
-            profiles_true=profiles_true_all,
-            profiles_gen=profiles_gen_all,
-            path=path,
-            profile_choice='C',
-            epoch=current_epoch,
-            prefix=prefix
-        )
+        # use profile type
+        utils_save_test_data(parameters=parameters_true_all,
+                             profiles_true=profiles_true_all,
+                             profiles_gen=profiles_gen_all,
+                             path=path,
+                             profile_choice='C',         # 'C' for combined profiles
+                             epoch=current_epoch,
+                             prefix=prefix
+                             )
 
     return loss_mse, loss_dtw, stacked_mse_loss, stacked_dtw_loss
+
 
 # -----------------------------------------------------------------
 #  Main
@@ -242,12 +234,28 @@ def main(config):
     # OPTIONAL: Filter (blow-out) profiles
     # -----------------------------------------------------------------
     if config.filter_blowouts:
-        H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, global_parameters = filter_blowout_profiles(
-            H_II_profiles, T_profiles, global_parameters, He_II_profiles=He_II_profiles, He_III_profiles=He_III_profiles)
+        (H_II_profiles,
+         T_profiles,
+         He_II_profiles,
+         He_III_profiles,
+         global_parameters) = filter_blowout_profiles(H_II_profiles=H_II_profiles,
+                                                      T_profiles=T_profiles,
+                                                      global_parameters=global_parameters,
+                                                      He_II_profiles=He_II_profiles,
+                                                      He_III_profiles=He_III_profiles
+                                                      )
 
     if config.filter_parameters:
-        global_parameters, [H_II_profiles, T_profiles, He_II_profiles, He_III_profiles] = filter_cut_parameter_space(
-            global_parameters, [H_II_profiles, T_profiles, He_II_profiles, He_III_profiles])
+        (global_parameters,
+         [H_II_profiles,
+          T_profiles,
+          He_II_profiles,
+          He_III_profiles]) = filter_cut_parameter_space(global_parameters=global_parameters,
+                                                         profiles=[H_II_profiles,
+                                                                   T_profiles,
+                                                                   He_II_profiles,
+                                                                   He_III_profiles]
+                                                         )
 
     # -----------------------------------------------------------------
     # log space?
@@ -263,32 +271,30 @@ def main(config):
     # shuffle / rescale parameters
     # -----------------------------------------------------------------
     if SCALE_PARAMETERS:
-        global_parameters = utils_scale_parameters(
-            limits=parameter_limits, parameters=global_parameters)
+        global_parameters = utils_scale_parameters(limits=config.parameter_limits, parameters=global_parameters)
 
     if SHUFFLE:
         np.random.seed(SHUFFLE_SEED)
         n_samples = H_II_profiles.shape[0]
         indices = np.arange(n_samples, dtype=np.int32)
         indices = np.random.permutation(indices)
+
         H_II_profiles = H_II_profiles[indices]
         T_profiles = T_profiles[indices]
         He_II_profiles = He_II_profiles[indices]
         He_III_profiles = He_III_profiles[indices]
         global_parameters = global_parameters[indices]
 
-    # order must stay same as the profiles are returned and used in the same order through out this script
     profiles = np.stack((H_II_profiles, T_profiles, He_II_profiles, He_III_profiles), axis=1)
 
     # -----------------------------------------------------------------
     # data loaders
     # -----------------------------------------------------------------
-    training_data = RTdata(profiles, global_parameters,
-                           split='train', split_frac=SPLIT_FRACTION)
-    validation_data = RTdata(profiles, global_parameters,
-                             split='val', split_frac=SPLIT_FRACTION)
-    testing_data = RTdata(profiles, global_parameters,
-                          split='test', split_frac=SPLIT_FRACTION)
+    training_data = RTdata(profiles, global_parameters, split='train', split_frac=SPLIT_FRACTION)
+
+    validation_data = RTdata(profiles, global_parameters, split='val', split_frac=SPLIT_FRACTION)
+
+    testing_data = RTdata(profiles, global_parameters,  split='test', split_frac=SPLIT_FRACTION)
 
     train_loader = DataLoader(training_data, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(validation_data, batch_size=config.batch_size)
@@ -306,11 +312,7 @@ def main(config):
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=config.lr,
-        betas=(config.b1, config.b2)
-    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, betas=(config.b1, config.b2))
 
     # -----------------------------------------------------------------
     # book keeping arrays
@@ -378,10 +380,10 @@ def main(config):
             gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
 
             # compute loss
-            loss_H_II = cmlp_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles, config)
-            loss_T = cmlp_loss_function(config.loss_type, gen_T_profiles, real_T_profiles, config)
-            loss_He_II = cmlp_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles, config)
-            loss_He_III = cmlp_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles, config)
+            loss_H_II = cmlp_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles)
+            loss_T = cmlp_loss_function(config.loss_type, gen_T_profiles, real_T_profiles)
+            loss_He_II = cmlp_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles)
+            loss_He_III = cmlp_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles)
 
             loss = loss_H_II + loss_T + loss_He_II + loss_He_III
             loss.backward()
@@ -405,23 +407,27 @@ def main(config):
         stacked_train_loss = np.stack((epoch_loss_H_II, epoch_loss_T, epoch_loss_He_II, epoch_loss_He_III))
         combined_train_loss_array = np.concatenate((combined_train_loss_array, stacked_train_loss.reshape(1, -1)), axis=0)
 
-        # validation & save the best performing model
-        val_loss_mse, val_loss_dtw, stacked_loss_mse, stacked_loss_dtw = cmlp_run_evaluation(
-            current_epoch=epoch,
-            data_loader=val_loader,
-            model=model,
-            path=data_products_path,
-            config=config,
-            print_results=False,
-            save_results=False,
-            best_model=False
-        )
+        # validation
+        (val_loss_mse,
+         val_loss_dtw,
+         stacked_loss_mse,
+         stacked_loss_dtw) = cmlp_run_evaluation(current_epoch=epoch,
+                                                 data_loader=val_loader,
+                                                 model=model,
+                                                 path=data_products_path,
+                                                 config=config,
+                                                 print_results=False,
+                                                 save_results=False,
+                                                 best_model=False
+                                                 )
 
         avg_val_loss_mse_array = np.append(avg_val_loss_mse_array, val_loss_mse)
         avg_val_loss_dtw_array = np.append(avg_val_loss_dtw_array, val_loss_dtw)
+
         combined_val_loss_mse_array = np.concatenate((combined_val_loss_mse_array, stacked_loss_mse.reshape(1, -1)), axis=0)
         combined_val_loss_dtw_array = np.concatenate((combined_val_loss_dtw_array, stacked_loss_dtw.reshape(1, -1)), axis=0)
 
+        # save the best performing model
         if val_loss_mse < best_loss_mse:
             best_loss_mse = val_loss_mse
             best_model = copy.deepcopy(model)
@@ -453,27 +459,14 @@ def main(config):
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
     # -----------------------------------------------------------------
-    # Save best model and loss functions
-    # -----------------------------------------------------------------
-    # TODO: save checkpoint for further training?
-    # checkpoint = {
-    #     'epoch': config.n_epochs,
-    #     'state_dict': best_model.state_dict(),
-    #     'bestLoss': best_loss,
-    #     'optimizer': optimizer.state_dict(),
-    #     }
-
-    # save train and validation losses
-    utils_save_loss(combined_train_loss_array, data_products_path,
-                    config.profile_type, config.n_epochs, prefix='train')
-    utils_save_loss(avg_train_loss_array, data_products_path,
-                    config.profile_type, config.n_epochs, prefix='train_avg')
+    # save loss
+    # ----------------------------------------------------------------
+    utils_save_loss(combined_train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train')
+    utils_save_loss(avg_train_loss_array, data_products_path, config.profile_type, config.n_epochs, prefix='train_avg')
 
     if config.loss_type == 'MSE':
-        utils_save_loss(combined_val_loss_mse_array, data_products_path,
-                        config.profile_type, config.n_epochs, prefix='val')
-        utils_save_loss(avg_val_loss_mse_array, data_products_path,
-                        config.profile_type, config.n_epochs, prefix='val_avg')
+        utils_save_loss(combined_val_loss_mse_array, data_products_path, config.profile_type, config.n_epochs, prefix='val')
+        utils_save_loss(avg_val_loss_mse_array, data_products_path, config.profile_type, config.n_epochs, prefix='val_avg')
     else:
         utils_save_loss(combined_val_loss_dtw_array, data_products_path,
                         config.profile_type, config.n_epochs, prefix='val')
@@ -483,16 +476,18 @@ def main(config):
     # -----------------------------------------------------------------
     # Evaluate the best model by using the test set
     # -----------------------------------------------------------------
-    best_test_mse, best_test_dtw, stacked_test_loss_mse, stacked_test_loss_dtw = cmlp_run_evaluation(
-        best_epoch_mse,
-        test_loader,
-        best_model,
-        data_products_path,
-        config,
-        print_results=True,
-        save_results=True,
-        best_model=True
-    )
+    (best_test_mse,
+     best_test_dtw,
+     stacked_test_loss_mse,
+     stacked_test_loss_dtw) = cmlp_run_evaluation(best_epoch_mse,
+                                                  test_loader,
+                                                  best_model,
+                                                  data_products_path,
+                                                  config,
+                                                  print_results=True,
+                                                  save_results=True,
+                                                  best_model=True
+                                                  )
 
     # -----------------------------------------------------------------
     # Save the best model and the final model
@@ -502,48 +497,64 @@ def main(config):
     # -----------------------------------------------------------------
     # Save some results to config object for later use
     # -----------------------------------------------------------------
-    setattr(config, 'best_epoch', best_epoch_mse)
-    setattr(config, 'best_epoch_mse', best_epoch_mse)
-    setattr(config, 'best_epoch_dtw', best_epoch_dtw)
+    config.best_epoch = best_epoch_mse
+    config.best_epoch_mse = best_epoch_mse
+    config.best_epoch_dtw = best_epoch_dtw
 
-    setattr(config, 'best_val_mse', best_loss_mse)
-    setattr(config, 'best_val_dtw', best_loss_dtw)
+    config.best_val_mse = best_loss_mse
+    config.best_val_dtw = best_loss_dtw
 
-    setattr(config, 'best_test_mse', best_test_mse)
-    setattr(config, 'best_test_mse_H_II', stacked_test_loss_mse[0])
-    setattr(config, 'best_test_mse_T', stacked_test_loss_mse[1])
-    setattr(config, 'best_test_mse_He_II', stacked_test_loss_mse[2])
-    setattr(config, 'best_test_mse_He_III', stacked_test_loss_mse[3])
+    config.best_test_mse = best_test_mse
+    config.best_test_mse_H_II = stacked_test_loss_mse[0]
+    config.best_test_mse_T = stacked_test_loss_mse[1]
+    config.best_test_mse_He_II = stacked_test_loss_mse[2]
+    config.best_test_mse_He_III = stacked_test_loss_mse[3]
 
-    setattr(config, 'best_test_dtw', best_test_dtw)
-    setattr(config, 'best_test_dtw_H_II', stacked_test_loss_dtw[0])
-    setattr(config, 'best_test_dtw_T', stacked_test_loss_dtw[1])
-    setattr(config, 'best_test_dtw_He_II', stacked_test_loss_dtw[2])
-    setattr(config, 'best_test_dtw_He_III', stacked_test_loss_dtw[3])
+    config.best_test_dtw = best_test_dtw
+    config.best_test_dtw_H_II = stacked_test_loss_dtw[0]
+    config.best_test_dtw_T = stacked_test_loss_dtw[1]
+    config.best_test_dtw_He_II = stacked_test_loss_dtw[2]
+    config.best_test_dtw_He_III = stacked_test_loss_dtw[3]
 
-    setattr(config, 'stopped_early', stopped_early)
-    setattr(config, 'epochs_trained', epochs_trained)
-    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_CMLP)
+    config.stopped_early = stopped_early
+    config.epochs_trained = epochs_trained
+    config.early_stopping_threshold = EARLY_STOPPING_THRESHOLD_CMLP
 
-    # -----------------------------------------------------------------
-    # Overwrite config object
-    # -----------------------------------------------------------------
-    utils_save_config_to_log(config)
+    utils_save_config_to_log(config)  # Overwrite config object
     utils_save_config_to_file(config)
 
-    # TODO: (!optional) save training time
-
-    # finished
-    print('\nAll done!')
-
-    # -----------------------------------------------------------------
-    # Optional: analysis
-    # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
+
         analysis_loss_plot(config)
         analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
+
+
+def cmlp_input_sanity_checks(config):
+
+    if config.data_dir is None:
+        print('\nError: Parameter data_dir must not be empty. Exiting.\n')
+        argparse.ArgumentParser().print_help()
+        exit(1)
+
+    if config.n_parameters not in [5, 8]:
+        print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
+        argparse.ArgumentParser().print_help()
+        exit(1)
+
+
+def cmlp_set_parameter_limits(config):
+
+    if config.n_parameters == 5:
+        config.parameter_limits = ps.p5_limits
+        config.parameter_names_latex = ps.p5_names_latex
+
+    if config.n_parameters == 8:
+        config.parameter_limits = ps.p8_limits
+        config.parameter_names_latex = ps.p8_names_latex
+
+    return config
 
 
 # -----------------------------------------------------------------
@@ -552,12 +563,10 @@ def main(config):
 if __name__ == "__main__":
 
     # parse arguments
-    parser = argparse.ArgumentParser(
-        description='ML-RT - Cosmological radiative transfer with neural networks (MLP)')
+    parser = argparse.ArgumentParser(description='ML-RT - Cosmological radiative transfer with neural networks (CMLP)')
 
     # arguments for data handling
-    parser.add_argument('--data_dir', type=str,
-                        metavar='(string)', help='Path to data directory')
+    parser.add_argument('--data_dir', type=str, metavar='(string)', help='Path to data directory')
 
     parser.add_argument('--out_dir', type=str, default='output', metavar='(string)',
                         help='Path to output directory, used for all plots and data products, default: ./output/')
@@ -576,13 +585,10 @@ if __name__ == "__main__":
                         help='Pick a loss function: MSE (default) or DTW')
 
     # network optimisation
-    parser.add_argument("--n_epochs", type=int, default=1500,
-                        help="number of epochs of training")
-    parser.add_argument("--batch_size", type=int, default=32,
-                        help="size of the batches (default=32)")
+    parser.add_argument("--n_epochs", type=int, default=1500, help="number of epochs of training")
+    parser.add_argument("--batch_size", type=int, default=32, help="size of the batches (default=32)")
 
-    parser.add_argument("--lr", type=float, default=0.0002,
-                        help="adam: learning rate, default=0.0001")
+    parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate, default=0.0001")
     parser.add_argument("--b1", type=float, default=0.9,
                         help="adam: beta1 - decay of first order momentum of gradient, default=0.9")
     parser.add_argument("--b2", type=float, default=0.999,
@@ -602,8 +608,6 @@ if __name__ == "__main__":
                         help="do not use user_config to filter data set by parameters (default)")
     parser.set_defaults(filter_parameters=False)
 
-    # momentum?
-
     # analysis
     parser.add_argument("--analysis", dest='analysis', action='store_true',
                         help="automatically generate some plots (default)")
@@ -612,37 +616,16 @@ if __name__ == "__main__":
 
     my_config = parser.parse_args()
 
-    # set profile type in config to combined mode
-    setattr(my_config, 'profile_type', 'C')
-    setattr(my_config, 'model', 'CMLP')
-
-    # sanity checks
-    if my_config.data_dir is None:
-        print('\nError: Parameter data_dir must not be empty. Exiting.\n')
-        argparse.ArgumentParser().print_help()
-        exit(1)
-
-    if my_config.n_parameters not in [5, 8]:
-        print(
-            '\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
-        argparse.ArgumentParser().print_help()
-        exit(1)
-
-    if my_config.n_parameters == 5:
-        parameter_limits = ps.p5_limits
-        parameter_names_latex = ps.p5_names_latex
-
-    if my_config.n_parameters == 8:
-        parameter_limits = ps.p8_limits
-        parameter_names_latex = ps.p8_names_latex
-
-    # print summary
-    print("\nUsed parameters:\n")
-    for arg in vars(my_config):
-        print("\t", arg, getattr(my_config, arg))
-
+    # additional settings
+    my_config.profile_type = 'C'
+    my_config.model = 'CMLP'
     my_config.out_dir = os.path.abspath(my_config.out_dir)
     my_config.data_dir = os.path.abspath(my_config.data_dir)
 
-    # run main program
+    cmlp_input_sanity_checks(my_config)
+
+    cmlp_set_parameter_limits(my_config)
+
+    utils_print_config_object(my_config)
+
     main(my_config)

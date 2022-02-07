@@ -3,11 +3,11 @@ import numpy as np
 
 
 class Clock:
-
     """
-    Class to measure inference time of a model running on a GPU
-    (Note: Ensure that all models and input parameters are already on
-    GPU, before passing to this class.)
+    A class to measure inference time of a model running on a GPU.
+
+    Note: Ensure that all models and input parameters are already on
+    GPU, before passing to this class.
     """
 
     def __init__(self, itr_warmup=20, itr_average_time=1000):
@@ -17,7 +17,7 @@ class Clock:
         self.ender = torch.cuda.Event(enable_timing=True)
         self.device = 'cuda'
 
-    def get_time(self, function, positional_arguements):
+    def get_time(self, function, positional_arguments):
         
         print('\n \tMeasuring inference time. Please wait. \n')
         
@@ -25,13 +25,13 @@ class Clock:
 
         # GPU WARM_UP
         for _ in range(self.itr_warmup):
-            _ = function(*positional_arguements)
+            _ = function(*positional_arguments)
 
         # MEASURE PERFORMANCE
         with torch.no_grad():
             for i in range(self.itr_average_time):
                 self.starter.record()
-                _ = function(*positional_arguements)
+                _ = function(*positional_arguments)
                 self.ender.record()
                 
                 # WAIT FOR GPU SYNCHRONIZATION

@@ -54,7 +54,8 @@ def filter_cut_parameter_space(global_parameters, profiles, user_config_path='')
 # -----------------------------------------------------------------
 # Blow out filter
 # -----------------------------------------------------------------
-def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters, He_II_profiles=None, He_III_profiles=None, threshold=0.9):
+def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters,
+                            He_II_profiles=None, He_III_profiles=None, threshold=0.9):
     """
     This function filters out all blow-out profiles, i.e. removes all hydrogen ionisation profiles
     whose ionisation front is beyond the edge of the computing grid. The same action is
@@ -74,15 +75,6 @@ def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters, He_II_
     # 1) find all profiles for which the min > threshold
     deletion_indices = np.where(profile_minima > threshold)[0]
 
-    for i in range(0, len(deletion_indices)):
-        index = deletion_indices[i]
-
-        # print("Deletions for index %d [%d]:"%(i, index))
-        # print("Parameters:", global_parameters[index,:])
-        # print("Hprofile:", H_profiles[index,:])
-        # print("--------------------------------------------------------------------------------------")
-
-    # [TODO]: verfiy the logic
     H_II_profiles = np.delete(H_II_profiles, deletion_indices, axis=0)
     T_profiles = np.delete(T_profiles, deletion_indices, axis=0)
     if He_II_profiles is not None:

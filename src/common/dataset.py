@@ -6,6 +6,7 @@ import numpy as np
 class RTdata(Dataset):
 
     def __init__(self, profile_data, parameter_data, derivative_data=None, split='train', split_frac=(0.8, 0.1, 0.1)):
+
         # -------------------------------------------------------------------------------------------------
         # Splits the given data into Train, Test and Validation set
         # -------------------------------------------------------------------------------------------------

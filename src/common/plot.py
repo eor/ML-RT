@@ -10,19 +10,14 @@ import matplotlib as mpl
 from matplotlib import rc
 import seaborn as sns
 
-try:
-    from settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
-except ImportError:
-    from common.settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
-
-try:
-    from utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
-except ImportError:
-    from common.utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
-
-# from scipy.ndimage import gaussian_filter
+import sys; sys.path.append('..')
+from common.settings_parameters import p5_names_latex, p8_names_latex, p5_limits, p8_limits
+from common.utils import utils_compute_mse, utils_compute_dtw, utils_get_current_timestamp
 
 
+# -----------------------------------------------------------------
+#  Static matplotlib settings
+# -----------------------------------------------------------------
 matplotlib.use('Agg')
 mpl.rc('text', usetex=True)
 
@@ -35,7 +30,7 @@ def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='
     print('Producing loss function plot:')
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    rc('font', **{'family': 'serif'})
+    rc('font', family='serif')
     rc('text', usetex=True)
 
     if gan:
@@ -56,9 +51,7 @@ def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='
     ax.set_yscale('log')
 
     ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
-    # ax.grid(which='minor', color='#cccccc', linestyle='-', linewidth='0.4', alpha=0.4)
 
-    # ax.legend(loc='upper right', frameon=False)
     ax.legend(loc='best', frameon=False)
 
     path = os.path.join(output_dir, '%s_loss_functions_%d_epochs_lr_%5f.%s' % (profile_type, epoch, lr, file_type))
@@ -71,7 +64,7 @@ def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='
 # Plot a single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
-                        profile_type, prefix, profile_order=['H', 'T', 'He_II', 'He_III'],
+                        profile_type, prefix, profile_order=('H', 'T', 'He_II', 'He_III'),
                         file_type='pdf', parameters=None, add_errors=True):
 
     def get_label_Y(profile_type):
@@ -110,7 +103,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     # -----------------------------------------------------------------
     # font settings
     # -----------------------------------------------------------------
-    rc('font', **{'family': 'serif'})
+    rc('font', family='serif')
     rc('text', usetex=True)
 
     if profile_type == 'C':
@@ -193,9 +186,6 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
 
-    # plt.figtext(0.5, 0.01, 'Errors: MSE: %e DTW: %e' % (mse, dtw),
-    #             fontsize=font_size_title, ha='center', bbox={"alpha": 0, "pad": 10})
-
     mse = utils_compute_mse(profile_true, profile_inferred)
 
     # -----------------------------------------------------------------
@@ -214,7 +204,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
-                            labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                            labels=('Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'),
                             file_type='pdf', prefix=None):
     
     # default font size for the plot    
@@ -272,7 +262,7 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
-    rc('font', **{'family': 'serif'})
+    rc('font', family='serif')
     rc('text', usetex=True)
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
@@ -306,7 +296,7 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
 def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
-                                  labels=['Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
+                                  labels=('Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'),
                                   file_type='pdf', prefix=None):
 
     def get_label_Y(profile_type):
@@ -382,7 +372,7 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
                 a += '$\mathrm{Myr}$'
             a += '\, \, \, '
 
-    rc('font', **{'family': 'serif'})
+    rc('font', family='serif')
     rc('text', usetex=True)
 
     fig.suptitle(a, fontsize=font_size_title, y=0.98)
@@ -448,17 +438,8 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     # add padding to limits
     # -----------------------------------------------------------------
     # parameter intervals (with some padding)
-    # limits = [(8.0, 15.0), (6.0, 13.0), (0.1, 20.0), (1.0, 2.0), (0.0, 1.0)]
-    padding_5 = [(7.5, 15.5), (5.5, 13.5), (0.5, 21.2), (0.94, 2.07), (-0.075, 1.075)]
 
-    # padding_8 = [(8.0, 15.0),
-    #              (6.0, 13.0),
-    #              (0.1, 20.0),
-    #              (0.0, 2.0),
-    #              (0.0, 1.0),
-    #              (0.0, 1.0),
-    #              (0.0, 2.5),
-    #              (0.6989700043360189, 2.6989700043360187)]
+    padding_5 = [(7.5, 15.5), (5.5, 13.5), (0.5, 21.2), (0.94, 2.07), (-0.075, 1.075)]
 
     padding_8 = [(8.0 - 0.2, 15.0 + 0.2),
                  (6.0 - 0.39, 13.0 + 0.2),
@@ -474,7 +455,6 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
     else:
         padding = padding_8
 
-    # TODO: ability to fix color range (to make different plots comparable)
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
@@ -578,17 +558,17 @@ def plot_parameter_space_mse(parameters, profiles_true, profiles_gen, profile_ty
 #  visualise error distribution: histogram and density plot
 # -----------------------------------------------------------------
 def plot_error_density_mse(profiles_true, profiles_gen,
-                           n_epoch, config, output_dir='./', profile_order=['H', 'T', 'He_II', 'He_III'],
+                           n_epoch, config, output_dir='./', profile_order=('H', 'T', 'He_II', 'He_III'),
                            prefix='test', file_type='pdf', add_title=True):
 
     print('Making frequency density plot: {} set, {} profiles, {} epochs'.format(prefix, config.profile_type, n_epoch))
 
-    profile_type_to_color = {
-        'H': 'steelblue',
-        'T': 'darkorange',
-        'He_II': 'darkgreen',
-        'He_III': 'darkgreen'
-    }
+    profile_type_to_color = {'H': 'steelblue',
+                             'T': 'darkorange',
+                             'He_II': 'darkgreen',
+                             'He_III': 'darkgreen'
+                            }
+
     # -----------------------------------------------------------------
     #  compute MSE for each sample
     # -----------------------------------------------------------------
@@ -605,17 +585,17 @@ def plot_error_density_mse(profiles_true, profiles_gen,
         #  set up figure
         # -----------------------------------------------------------------
         f, ax = plt.subplots(figsize=(6, 6))
-        rc('font', **{'family': 'serif'})
+        rc('font', family='serif')
         rc('text', usetex=True)
         
-        # select colour based on profile_type
         if config.profile_type == 'C':
             hist_color = profile_type_to_color[profile_order[i]]
         else:
             hist_color = profile_type_to_color[config.profile_type]
 
         sns.histplot(mse_array[:, i], kde=True, bins=50, color=hist_color, alpha=0.25, ax=ax, stat='density',
-                     edgecolor=None, legend=False)
+                     edgecolor=None, legend=False
+                     )
 
         ax.set_xlabel(r'$\textrm{log}_{10} (\textrm{MSE of true and inferred profiles})$', fontsize=25, labelpad=10)
         ax.set_ylabel(r'$\textrm{Frequency density}$', fontsize=25, labelpad=10)
@@ -649,9 +629,3 @@ def plot_error_density_mse(profiles_true, profiles_gen,
     plt.close('all')
 
 
-# -----------------------------------------------------------------
-#  run the following if this file is called directly
-# -----------------------------------------------------------------
-if __name__ == '__main__':
-
-    print('Hello there!')

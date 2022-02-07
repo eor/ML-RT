@@ -1,16 +1,11 @@
 import numpy as np
 import os.path as osp
 import heapq
-try:
-    from common.utils import utils_load_config
-except ImportError:
-    from utils import utils_load_config
+import sys; sys.path.append('..')
 
-try:
-    from plot import *
-except ImportError:
-    from common.plot import *
-
+from common.utils import utils_load_config
+from common.plot import *
+from common.settings import DATA_PRODUCTS_DIR, PLOT_DIR, PLOT_FILE_TYPE
 
 # -----------------------------------------------------------------
 # Purpose of the functions below is to automatically run the data
@@ -19,17 +14,7 @@ except ImportError:
 # directories.
 # -----------------------------------------------------------------
 
-# -----------------------------------------------------------------
-# hard-coded parameters (for now)
-# -----------------------------------------------------------------
-DATA_PRODUCTS_DIR = 'data_products'
-PLOT_DIR = 'plots'
-PLOT_FILE_TYPE = 'pdf'  # or 'png'
 
-
-# -----------------------------------------------------------------
-#  setup for the loss function plots
-# -----------------------------------------------------------------
 def analysis_loss_plot(config, gan=False):
     """
     function to load and plot the training and validation loss data
@@ -64,17 +49,16 @@ def analysis_loss_plot(config, gan=False):
         loss_2 = np.load(osp.join(data_dir_path, dis_loss_real_file))
         loss_3 = np.load(osp.join(data_dir_path, dis_loss_fake_file))
 
-    plot_loss_function(
-        lf1=loss_1,
-        lf2=loss_2,
-        lf3=loss_3,
-        epoch=config.n_epochs,
-        lr=config.lr,
-        output_dir=plot_dir_path,
-        profile_type=config.profile_type,
-        file_type=PLOT_FILE_TYPE,
-        gan=gan
-    )
+    plot_loss_function(lf1=loss_1,
+                       lf2=loss_2,
+                       lf3=loss_3,
+                       epoch=config.n_epochs,
+                       lr=config.lr,
+                       output_dir=plot_dir_path,
+                       profile_type=config.profile_type,
+                       file_type=PLOT_FILE_TYPE,
+                       gan=gan
+                       )
 
 
 # -----------------------------------------------------------------
@@ -124,15 +108,14 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
         tmp_profile_true = profiles_true[index]
         tmp_profile_gen = profiles_gen[index]
 
-        plot_profile_single(
-            profile_true=tmp_profile_true,
-            profile_inferred=tmp_profile_gen,
-            n_epoch=epoch,
-            output_dir=plot_dir_path,
-            profile_type=config.profile_type,
-            prefix=prefix,
-            parameters=tmp_parameters
-        )
+        plot_profile_single(profile_true=tmp_profile_true,
+                            profile_inferred=tmp_profile_gen,
+                            n_epoch=epoch,
+                            output_dir=plot_dir_path,
+                            profile_type=config.profile_type,
+                            prefix=prefix,
+                            parameters=tmp_parameters
+                            )
 
     # 5.  plot profiles for smallest MSE
     print('Producing profile plot(s) for profiles with %d lowest MSE' % k)
@@ -144,15 +127,14 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
         tmp_profile_true = profiles_true[index]
         tmp_profile_gen = profiles_gen[index]
 
-        plot_profile_single(
-            profile_true=tmp_profile_true,
-            profile_inferred=tmp_profile_gen,
-            n_epoch=epoch,
-            output_dir=plot_dir_path,
-            profile_type=config.profile_type,
-            prefix=prefix,
-            parameters=tmp_parameters
-        )
+        plot_profile_single(profile_true=tmp_profile_true,
+                            profile_inferred=tmp_profile_gen,
+                            n_epoch=epoch,
+                            output_dir=plot_dir_path,
+                            profile_type=config.profile_type,
+                            prefix=prefix,
+                            parameters=tmp_parameters
+                            )
 
 
 # -----------------------------------------------------------------
@@ -183,16 +165,15 @@ def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=N
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
-    plot_parameter_space_mse(
-        parameters=parameters,
-        profiles_true=profiles_true,
-        profiles_gen=profiles_gen,
-        profile_type=config.profile_type,
-        n_epoch=epoch,
-        output_dir=plot_dir_path,
-        prefix=prefix,
-        file_type='png'
-    )
+    plot_parameter_space_mse(parameters=parameters,
+                             profiles_true=profiles_true,
+                             profiles_gen=profiles_gen,
+                             profile_type=config.profile_type,
+                             n_epoch=epoch,
+                             output_dir=plot_dir_path,
+                             prefix=prefix,
+                             file_type='png'
+                             )
 
 
 # -----------------------------------------------------------------
@@ -224,16 +205,15 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
     profiles_true = np.load(osp.join(data_dir_path, profiles_true_file))
     profiles_gen = np.load(osp.join(data_dir_path, profiles_gen_file))
 
-    plot_error_density_mse(
-        profiles_true=profiles_true,
-        profiles_gen=profiles_gen,
-        n_epoch=epoch,
-        config=config,
-        output_dir=plot_dir_path,
-        prefix=prefix,
-        add_title=add_title,
-        file_type='pdf',
-    )
+    plot_error_density_mse(profiles_true=profiles_true,
+                           profiles_gen=profiles_gen,
+                           n_epoch=epoch,
+                           config=config,
+                           output_dir=plot_dir_path,
+                           prefix=prefix,
+                           add_title=add_title,
+                           file_type='pdf',
+                           )
 
 
 # -----------------------------------------------------------------
@@ -269,12 +249,7 @@ if __name__ == '__main__':
     for run in best_runs:
         path = osp.join(production_runs_path, run)
         config = utils_load_config(path)
-#         analysis_loss_plot(config, gan=False)
-#         analysis_auto_plot_profiles(config, k=30, base_path=path, prefix='best')
+
         analysis_error_density_plot(config, base_path=path, prefix='best')
-#         analysis_auto_plot_profiles(config, k=10, base_path=path, prefix='test', epoch=283)
-#         analysis_parameter_space_plot(config, base_path=base, prefix='test',epoch=283)
-#         analysis_auto_plot_profiles(config, k=15, base_path=base, prefix='best')
-#         analysis_parameter_space_plot(config, base_path=base, prefix='best')
 
     print('\n Completed! \n')

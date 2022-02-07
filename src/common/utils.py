@@ -6,10 +6,9 @@ import torch.nn.functional as F
 import os.path as osp
 from datetime import datetime
 from configparser import ConfigParser
-try:
-    from common.soft_dtw import SoftDTW as SoftDTW_CPU
-except ImportError:
-    from soft_dtw import SoftDTW as SoftDTW_CPU
+
+import sys; sys.path.append('..')
+from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
 
 # -----------------------------------------------------------------
@@ -125,7 +124,6 @@ def utils_derivative_1(array, norm=None, absolute=False, mode='torch'):
     if absolute:
         derivatives = abs(derivatives)
 
-    # TODO: check if this still works
     if norm == 'max':
         der_max = (derivatives.max(axis=1)).reshape((derivatives.shape[0], 1))
         der_max[der_max == 0] = 1              # we should not divide by zero
@@ -197,7 +195,6 @@ def utils_save_test_data(parameters, profiles_true, profiles_gen, path, profile_
 # -----------------------------------------------------------------
 def utils_get_current_timestamp():
 
-    # return datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
     return datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
 
@@ -217,6 +214,16 @@ def utils_create_run_directories(main_dir, data_products_dir='data_products', pl
     os.makedirs(main_dir, exist_ok=False)
     os.makedirs(d, exist_ok=False)
     os.makedirs(p, exist_ok=False)
+
+
+# -----------------------------------------------------------------
+# Write argparse config to screen
+# -----------------------------------------------------------------
+def utils_print_config_object(config):
+
+    print("\nConfig parameters and values:\n")
+    for arg in vars(config):
+        print("\t", arg, getattr(config, arg))
 
 
 # -----------------------------------------------------------------
