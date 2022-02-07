@@ -10,19 +10,21 @@ from common.settings import DATA_PRODUCTS_DIR, PLOT_DIR, PLOT_FILE_TYPE
 # -----------------------------------------------------------------
 # Purpose of the functions below is to automatically run the data
 # products through the plotting routines (after a training run) and
-# and make sure the plots are placed in the corresponding 'plots'
+# and make sure the plots are placed in the corresponding PLOT_DIR
 # directories.
 # -----------------------------------------------------------------
 
 
 def analysis_loss_plot(config, gan=False):
     """
-    function to load and plot the training and validation loss data
+    Function to load and plot the training and validation loss data and pass it to the plot function.
 
     Args:
+        config:  user config object
+        gan:  bool to indicate if a GAN was used?
 
-        config object that is generated from user arguments when
-        the main script is run
+    Returns:
+        Nothing
     """
 
     data_dir_path = osp.join(config.out_dir, DATA_PRODUCTS_DIR)
@@ -65,6 +67,21 @@ def analysis_loss_plot(config, gan=False):
 # Automatically plot test profiles
 # -----------------------------------------------------------------
 def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoch=None):
+    """
+    Function to load the test set inference results, compute the MSE using the ground truth, and pass a
+    selected number of best and worst profiles to a plotting routing.
+
+    Args:
+        config: User config object
+        k: number of best / worst examples to plot
+        base_path: path to training run (can supersede path in config object  )
+        prefix:  'best or ''test'
+        epoch: epoch of the output file
+
+    Returns:
+        Nothing
+
+    """
 
     if base_path is not None:
         data_dir_path = osp.join(base_path, DATA_PRODUCTS_DIR)
@@ -114,7 +131,8 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
                             output_dir=plot_dir_path,
                             profile_type=config.profile_type,
                             prefix=prefix,
-                            parameters=tmp_parameters
+                            parameters=tmp_parameters,
+                            file_type=PLOT_FILE_TYPE
                             )
 
     # 5.  plot profiles for smallest MSE
@@ -133,7 +151,8 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
                             output_dir=plot_dir_path,
                             profile_type=config.profile_type,
                             prefix=prefix,
-                            parameters=tmp_parameters
+                            parameters=tmp_parameters,
+                            file_type=PLOT_FILE_TYPE
                             )
 
 
@@ -141,6 +160,20 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
 #  generate parameter space plots
 # -----------------------------------------------------------------
 def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=None):
+    """
+     Function to load the test set inference results and pass them on to a plot function that visualises the
+     error - parameter space relationship.
+
+    Args:
+        config: User config object
+        base_path: path to training run (can supersede path in config object  )
+        prefix:  'best or ''test'
+        epoch: epoch of the output file
+
+    Returns:
+        Nothing
+
+    """
 
     print('Producing parameter space - MSE plot')
 
@@ -172,7 +205,7 @@ def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=N
                              n_epoch=epoch,
                              output_dir=plot_dir_path,
                              prefix=prefix,
-                             file_type='png'
+                             file_type='png'   # pdf makes no sense here
                              )
 
 
@@ -180,6 +213,20 @@ def analysis_parameter_space_plot(config, base_path=None, prefix='test', epoch=N
 #  generate error density plots
 # -----------------------------------------------------------------
 def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=None, add_title=True):
+    """
+    Function to load the test set inference results and pass them on to a plot function that
+    visualises the error distribution.
+
+    Args:
+        config: User config object
+        base_path: path to training run (can supersede path in config object  )
+        prefix:  'best or ''test'
+        epoch: epoch of the output file
+        add_title: pass a plot title to the plot function
+
+    Returns:
+        Nothing
+    """
 
     print('Producing error density - MSE plot')
 
@@ -212,7 +259,7 @@ def analysis_error_density_plot(config, base_path=None, prefix='test', epoch=Non
                            output_dir=plot_dir_path,
                            prefix=prefix,
                            add_title=add_title,
-                           file_type='pdf',
+                           file_type=PLOT_FILE_TYPE
                            )
 
 

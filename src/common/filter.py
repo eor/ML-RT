@@ -10,16 +10,18 @@ except ImportError:
 # -----------------------------------------------------------------
 def filter_cut_parameter_space(global_parameters, profiles, user_config_path=''):
     """
-     This function makes cuts to the parameter space according to some user-specified limits.
-     The limits could be provided as an argument (2D numpy array) in the same format as the ones
-     in settings_parameters.py. They could be either come from a user_settings.py or we could use the hard
-     coded parameter section in the script files (e.g. mlp.py). I thing the latter might be a bit cleaner.
-
+    This function makes cuts to the parameter space according to some user-specified limits.
+    The limits could be provided as an argument (2D numpy array) in the same format as the ones in
+    settings_parameters.py. They could be either come from a user_settings.py or we could use the hard
+    coded parameter section in the script files (e.g. mlp.py).
 
      Args:
         global_parameters: numpy objects containing the parameters
         profiles: list of numpy objects containing profiles
-     Returns: modified numpy objects
+        user_config_path:
+
+     Returns:
+         Filtered numpy objects
      """
 
     # choose limits to use based on number of parameters
@@ -45,8 +47,8 @@ def filter_cut_parameter_space(global_parameters, profiles, user_config_path='')
 
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nParameter space filter: Deleting a total of %d samples. %d remaining." %
-          (len(deletion_indices), len(global_parameters)))
+    print("\nParameter space filter: Deleting a total of {} samples. {} remaining.".format(len(deletion_indices),
+                                                                                           len(global_parameters)))
 
     return global_parameters, profiles
 
@@ -56,18 +58,26 @@ def filter_cut_parameter_space(global_parameters, profiles, user_config_path='')
 # -----------------------------------------------------------------
 def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters,
                             He_II_profiles=None, He_III_profiles=None, threshold=0.9):
+
     """
     This function filters out all blow-out profiles, i.e. removes all hydrogen ionisation profiles
     whose ionisation front is beyond the edge of the computing grid. The same action is
-    performed for their corresponding temperature counterparts.
+    performed for their corresponding temperature and helium counterparts.
 
     Args:
-        numpy objects containing the hydrogen, temperature profiles, and parameters
-        threshold : Filter threshold [0,1], should be close to 1.
+        H_II_profiles: numpy objects containing the hydrogen profiles
+        T_profiles:  numpy objects containing the Temperature profiles
+        global_parameters: numpy objects containing the RT parameters
+        He_II_profiles: numpy objects containing the helium II profiles
+        He_III_profiles: numpy objects containing the helium III profiles
+        threshold:  Filter threshold [0,1], should be close to 1.
+
+    Returns:
+        Filtered numpy objects
+
     """
 
-    # identify all blow-outs
-    # blow out is a x_{H_{II}} profile for which all array values are above a certain threshold (e.g. < 0.9)
+    # A blow out is a x_{H_{II}} profile for which all array values are above a certain threshold (e.g. < 0.9)
 
     # 0) for each profile find the min value
     profile_minima = np.min(H_II_profiles, axis=1)
@@ -83,7 +93,8 @@ def filter_blowout_profiles(H_II_profiles, T_profiles, global_parameters,
         He_III_profiles = np.delete(He_III_profiles, deletion_indices, axis=0)
     global_parameters = np.delete(global_parameters, deletion_indices, axis=0)
 
-    print("\nBlow-out filter: Deleting a total of %d samples. %d remaining." % (len(deletion_indices), len(H_II_profiles)))
+    print("\nBlow-out filter: Deleting a total of {} samples. {} remaining.".format(len(deletion_indices),
+                                                                                    len(H_II_profiles)))
 
     if He_II_profiles is None or He_III_profiles is None:
         return H_II_profiles, T_profiles, global_parameters
