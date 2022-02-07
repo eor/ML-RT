@@ -105,7 +105,7 @@ def run_get_data_loaders_one_profile(config):
     # shuffle / rescale parameters
     # -----------------------------------------------------------------
     if SCALE_PARAMETERS:
-        global_parameters = utils_scale_parameters(limits=parameter_limits, parameters=global_parameters)
+        global_parameters = utils_scale_parameters(limits=config.parameter_limits, parameters=global_parameters)
 
     if SHUFFLE:
         np.random.seed(SHUFFLE_SEED)

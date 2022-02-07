@@ -204,7 +204,7 @@ def mlp_train(model, optimizer, train_loader, config):
         optimizer.zero_grad()
 
         # generate a batch of profiles
-        gen_profiles, mu, log_var = model(real_profiles, real_parameters)
+        gen_profiles = model(real_parameters)
 
         # estimate loss
         loss = mlp_loss_function(config.loss_type, gen_profiles, real_profiles, config)
@@ -323,7 +323,7 @@ def main(config):
                                                               data_loader=test_loader,
                                                               model=best_model,
                                                               path=data_products_path,
-                                                              confg=config,
+                                                              config=config,
                                                               print_results=True,
                                                               save_results=True,
                                                               best_model=False
@@ -386,7 +386,7 @@ def main(config):
     print('\nAll done!')
 
     # -----------------------------------------------------------------
-    # Optional: analysis
+    # Analysis
     # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")

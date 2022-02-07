@@ -79,12 +79,13 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config,
         path: path to output directory
         model: current model state
         config: config object with user supplied parameters
+        print_results: boolean
         save_results: whether to save actual and generated profiles locally (default: False)
         best_model: flag for testing on best model
     """
 
     if save_results:
-        print("\033[94m\033[1mTesting the CMLP now at epoch %d \033[0m" % current_epoch)
+        print("\033[94m\033[1mTesting the CMLP now at epoch {} \033[0m" .format(current_epoch))
 
     if cuda:
         model.cuda()
@@ -382,7 +383,7 @@ def main(config):
             best_loss_dtw = val_loss_dtw
             best_epoch_dtw = epoch
 
-        print("[Epoch %d/%d] [Train loss {}}: {}] [Validation loss MSE: {}] [Validation loss DTW: {}] "
+        print("[Epoch {} / {}] [Train loss {}: {}] [Validation loss MSE: {}] [Validation loss DTW: {}] "
               "[Best_epoch (mse): {}] [Best_epoch (dtw): {}]"
               .format(epoch, config.n_epochs, config.loss_type, train_loss, val_loss_mse, val_loss_dtw,
                       best_epoch_mse, best_epoch_dtw)
@@ -472,6 +473,9 @@ def main(config):
     utils_save_config_to_log(config)  # Overwrite config object
     utils_save_config_to_file(config)
 
+    # -----------------------------------------------------------------
+    # Analysis
+    # -----------------------------------------------------------------
     if config.analysis:
         print("\n\033[96m\033[1m\nRunning analysis\033[0m\n")
 
