@@ -201,6 +201,71 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config,
 
 
 # -----------------------------------------------------------------
+#  Training
+# -----------------------------------------------------------------
+def cmlp_train(model, optimizer, train_loader, config):
+    """
+    This function trains the network for one epoch.
+    Returns: averaged training loss. No need to return the model as the optimizer modifies it inplace.
+
+    Args:
+        model: current model state
+        optimizer: optimizer object to perform the back-propagation
+        train_loader: data loader used for the inference, most likely the test set
+        config: config object with user supplied parameters
+
+    Returns:
+          The average loss
+    """
+
+    epoch_loss = epoch_loss_H_II = epoch_loss_T = epoch_loss_He_II = epoch_loss_He_III = 0
+
+    # set model mode
+    model.train()
+
+    for i, (H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, parameters) in enumerate(train_loader):
+        # configure input
+        real_H_II_profiles = Variable(H_II_profiles.type(FloatTensor))
+        real_T_profiles = Variable(T_profiles.type(FloatTensor))
+        real_He_II_profiles = Variable(He_II_profiles.type(FloatTensor))
+        real_He_III_profiles = Variable(He_III_profiles.type(FloatTensor))
+        real_parameters = Variable(parameters.type(FloatTensor))
+
+        # zero the gradients on each iteration
+        optimizer.zero_grad()
+
+        # generate a batch of profiles
+        gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
+
+        # compute loss
+        loss_H_II = cmlp_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles)
+        loss_T = cmlp_loss_function(config.loss_type, gen_T_profiles, real_T_profiles)
+        loss_He_II = cmlp_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles)
+        loss_He_III = cmlp_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles)
+
+        loss = loss_H_II + loss_T + loss_He_II + loss_He_III
+        loss.backward()
+        optimizer.step()
+
+        # sum the loss values
+        epoch_loss += loss.item()
+        epoch_loss_H_II = loss_H_II.item()
+        epoch_loss_T = loss_T.item()
+        epoch_loss_He_II = loss_He_II.item()
+        epoch_loss_He_III = loss_He_III.item()
+
+    # end-of-epoch book keeping
+    train_loss = epoch_loss / (len(train_loader) * 4)
+
+    epoch_loss_H_II /= len(train_loader)
+    epoch_loss_T /= len(train_loader)
+    epoch_loss_He_II /= len(train_loader)
+    epoch_loss_He_III /= len(train_loader)
+
+    return train_loss, epoch_loss_H_II, epoch_loss_T, epoch_loss_He_II, epoch_loss_He_III
+
+
+# -----------------------------------------------------------------
 #  Main
 # -----------------------------------------------------------------
 def main(config):
@@ -267,52 +332,18 @@ def main(config):
     print("\033[96m\033[1m\nTraining starts now\033[0m")
     for epoch in range(1, config.n_epochs + 1):
 
-        epoch_loss = epoch_loss_H_II = epoch_loss_T = epoch_loss_He_II = epoch_loss_He_III = 0
+       # training
+        (train_loss,
+         epoch_loss_H_II,
+         epoch_loss_T,
+         epoch_loss_He_II,
+         epoch_loss_He_III) = cmlp_train(model, optimizer, train_loader, config)
 
-        # set model mode
-        model.train()
-
-        for i, (H_II_profiles, T_profiles, He_II_profiles, He_III_profiles, parameters) in enumerate(train_loader):
-
-            # configure input
-            real_H_II_profiles = Variable(H_II_profiles.type(FloatTensor))
-            real_T_profiles = Variable(T_profiles.type(FloatTensor))
-            real_He_II_profiles = Variable(He_II_profiles.type(FloatTensor))
-            real_He_III_profiles = Variable(He_III_profiles.type(FloatTensor))
-            real_parameters = Variable(parameters.type(FloatTensor))
-
-            # zero the gradients on each iteration
-            optimizer.zero_grad()
-
-            # generate a batch of profiles
-            gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles = model(real_parameters)
-
-            # compute loss
-            loss_H_II = cmlp_loss_function(config.loss_type, gen_H_II_profiles, real_H_II_profiles)
-            loss_T = cmlp_loss_function(config.loss_type, gen_T_profiles, real_T_profiles)
-            loss_He_II = cmlp_loss_function(config.loss_type, gen_He_II_profiles, real_He_II_profiles)
-            loss_He_III = cmlp_loss_function(config.loss_type, gen_He_III_profiles, real_He_III_profiles)
-
-            loss = loss_H_II + loss_T + loss_He_II + loss_He_III
-            loss.backward()
-            optimizer.step()
-
-            # sum the loss values
-            epoch_loss += loss.item()
-            epoch_loss_H_II = loss_H_II.item()
-            epoch_loss_T = loss_T.item()
-            epoch_loss_He_II = loss_He_II.item()
-            epoch_loss_He_III = loss_He_III.item()
-
-        # end-of-epoch book keeping
-        train_loss = epoch_loss / (len(train_loader) * 4)
+        # book keeping
         avg_train_loss_array = np.append(avg_train_loss_array, train_loss)
 
-        epoch_loss_H_II /= len(train_loader)
-        epoch_loss_T /= len(train_loader)
-        epoch_loss_He_II /= len(train_loader)
-        epoch_loss_He_III /= len(train_loader)
         stacked_train_loss = np.stack((epoch_loss_H_II, epoch_loss_T, epoch_loss_He_II, epoch_loss_He_III))
+
         combined_train_loss_array = np.concatenate((combined_train_loss_array,
                                                     stacked_train_loss.reshape(1, -1)), axis=0)
 

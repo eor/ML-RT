@@ -96,6 +96,9 @@ def cvae_train(model, optimizer, train_loader, config):
         optimizer: optimizer object to perform the back-propagation
         train_loader: data loader used for the inference, most likely the test set
         config: config object with user supplied parameters
+
+    Returns:
+          The average loss
     """
 
     if cuda:
