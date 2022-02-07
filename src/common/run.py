@@ -10,6 +10,7 @@ from common.settings import *
 from common.filter import *
 from common.dataset import RTdata
 
+
 def run_setup_run(config):
     """
     Sets up unique run directory and saves config file
@@ -34,7 +35,7 @@ def run_setup_run(config):
     return data_products_path
 
 
-def run_get_data_loaders(config):
+def run_get_data_loaders_four_profiles(config):
     """
     Loads data, filter if necessary, and return data loaders
 
