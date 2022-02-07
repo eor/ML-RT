@@ -13,15 +13,11 @@ from common.utils import *
 from common.analysis import *
 import common.settings_parameters as sp
 from common.settings import *
+from common.run import *
 
 from common.soft_dtw_cuda import SoftDTW as SoftDTW_CUDA
 from common.soft_dtw import SoftDTW as SoftDTW_CPU
 
-# -----------------------------------------------------------------
-#  global variables
-# -----------------------------------------------------------------
-parameter_limits = list()
-parameter_names_latex = list()
 
 # -----------------------------------------------------------------
 #  CUDA available?
@@ -29,26 +25,32 @@ parameter_names_latex = list()
 if torch.cuda.is_available():
     cuda = True
     device = torch.device("cuda")
+    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
+    FloatTensor = torch.cuda.FloatTensor
 else:
     cuda = False
     device = torch.device("cpu")
-
-# -----------------------------------------------------------------
-#  global FloatTensor instance
-# -----------------------------------------------------------------
-FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
+    FloatTensor = torch.FloatTensor
 
 
 # -----------------------------------------------------------------
 #  loss function(s)
 # -----------------------------------------------------------------
-if cuda:
-    soft_dtw_loss = SoftDTW_CUDA(use_cuda=True, gamma=0.1)
-else:
-    soft_dtw_loss = SoftDTW_CPU(use_cuda=False, gamma=0.1)
-
 
 def mlp_loss_function(loss_function, gen_x, real_x, config):
+    """
+     computes the MLP loss function (either DTW or MSE)
+
+    Args:
+        loss_function: 'DTW' or 'MSE'
+        gen_x: inferred profile
+        real_x: simulated profile
+        config: user config object
+
+    Returns:
+        loss
+    """
 
     if loss_function == 'DTW':
         # profile tensors are of shape [batch size, profile length]
@@ -148,7 +150,7 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config,
         profiles_true_all = profiles_true_all.cpu().numpy()
         parameters_true_all = parameters_true_all.cpu().numpy()
 
-        parameters_true_all = utils_rescale_parameters(limits=parameter_limits, parameters=parameters_true_all)
+        parameters_true_all = utils_rescale_parameters(limits=config.parameter_limits, parameters=parameters_true_all)
 
         if best_model:
             prefix = 'best'
@@ -169,84 +171,60 @@ def mlp_run_evaluation(current_epoch, data_loader, model, path, config,
 
 
 # -----------------------------------------------------------------
+#  Training
+# -----------------------------------------------------------------
+def mlp_train(model, optimizer, train_loader, config):
+    """
+    This function trains the network for one epoch.
+    Returns: averaged training loss. No need to return the model as the optimizer modifies it inplace.
+
+    Args:
+        model: current model state
+        optimizer: optimizer object to perform the back-propagation
+        train_loader: data loader used for the inference, most likely the test set
+        config: config object with user supplied parameters
+    """
+
+    if cuda:
+        model.cuda()
+
+    model.train()
+    train_loss = 0
+
+    for batch_idx, (profiles, parameters) in enumerate(train_loader):
+
+        # configure input
+        real_profiles = Variable(profiles.type(FloatTensor))
+        real_parameters = Variable(parameters.type(FloatTensor))
+
+        # zero the gradients on each iteration
+        optimizer.zero_grad()
+
+        # generate a batch of profiles
+        gen_profiles, mu, log_var = model(real_profiles, real_parameters)
+
+        # estimate loss
+        loss = mlp_loss_function(config.loss_type, gen_profiles, real_profiles, config)
+
+        train_loss += loss.item()    # average loss per batch
+
+        # back propagation
+        loss.backward()
+        optimizer.step()
+
+    average_loss = train_loss / len(train_loader)   # divide by number of batches (!= batch size)
+
+    return average_loss  # float
+
+
+# -----------------------------------------------------------------
 #  Main
 # -----------------------------------------------------------------
 def main(config):
 
-    # -----------------------------------------------------------------
-    # create unique output path and run directories, save config
-    # -----------------------------------------------------------------
-    run_id = 'run_' + utils_get_current_timestamp()
-    config.out_dir = os.path.join(config.out_dir, run_id)
+    data_products_path = run_setup_run(config)
 
-    utils_create_run_directories(config.out_dir, DATA_PRODUCTS_DIR, PLOT_DIR)
-    utils_save_config_to_log(config)
-    utils_save_config_to_file(config)
-
-    data_products_path = os.path.join(config.out_dir, DATA_PRODUCTS_DIR)
-    plot_path = os.path.join(config.out_dir, PLOT_DIR)
-
-    # -----------------------------------------------------------------
-    # Check if data files exist / read data and shuffle / rescale parameters
-    # -----------------------------------------------------------------
-    H_profile_file_path = utils_join_path(config.data_dir, H_II_PROFILE_FILE)
-    T_profile_file_path = utils_join_path(config.data_dir, T_PROFILE_FILE)
-    global_parameter_file_path = utils_join_path(config.data_dir, GLOBAL_PARAMETER_FILE)
-
-    H_profiles = np.load(H_profile_file_path)
-    T_profiles = np.load(T_profile_file_path)
-    global_parameters = np.load(global_parameter_file_path)
-
-    # -----------------------------------------------------------------
-    # OPTIONAL: Filter (blow-out) profiles
-    # -----------------------------------------------------------------
-    if config.filter_blowouts:
-        H_profiles, T_profiles, global_parameters = filter_blowout_profiles(H_profiles, T_profiles,
-                                                                            global_parameters)
-
-    if config.filter_parameters:
-        global_parameters, [H_profiles, T_profiles] = filter_cut_parameter_space(global_parameters, [H_profiles, T_profiles])
-
-    # -----------------------------------------------------------------
-    # log space?
-    # -----------------------------------------------------------------
-    if USE_LOG_PROFILES:
-        H_profiles = np.log10(H_profiles + 1.0e-6)  # add a small number to avoid trouble
-        T_profiles = np.log10(T_profiles)
-
-    # -----------------------------------------------------------------
-    # shuffle / rescale parameters
-    # -----------------------------------------------------------------
-    if SCALE_PARAMETERS:
-        global_parameters = utils_scale_parameters(limits=parameter_limits, parameters=global_parameters)
-
-    if SHUFFLE:
-        np.random.seed(SHUFFLE_SEED)
-        n_samples = H_profiles.shape[0]
-        indices = np.arange(n_samples, dtype=np.int32)
-        indices = np.random.permutation(indices)
-        H_profiles = H_profiles[indices]
-        T_profiles = T_profiles[indices]
-        global_parameters = global_parameters[indices]
-
-    # -----------------------------------------------------------------
-    # we are doing one profile at a time
-    # -----------------------------------------------------------------
-    if config.profile_type == 'H':
-        profiles = H_profiles
-    else:
-        profiles = T_profiles
-
-    # -----------------------------------------------------------------
-    # data loaders
-    # -----------------------------------------------------------------
-    training_data = RTdata(profiles, global_parameters, split='train', split_frac=SPLIT_FRACTION)
-    validation_data = RTdata(profiles, global_parameters, split='val', split_frac=SPLIT_FRACTION)
-    testing_data = RTdata(profiles, global_parameters, split='test', split_frac=SPLIT_FRACTION)
-
-    train_loader = DataLoader(training_data, batch_size=config.batch_size, shuffle=True)
-    val_loader = DataLoader(validation_data, batch_size=config.batch_size)
-    test_loader = DataLoader(testing_data, batch_size=config.batch_size)
+    train_loader, val_loader, test_loader = run_get_data_loaders_one_profile(config)
 
     # -----------------------------------------------------------------
     # initialise model + check for CUDA
@@ -264,27 +242,19 @@ def main(config):
     # -----------------------------------------------------------------
     # Optimizers
     # -----------------------------------------------------------------
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=config.lr,
-        betas=(config.b1, config.b2)
-    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, betas=(config.b1, config.b2))
 
     # -----------------------------------------------------------------
     # book keeping arrays
     # -----------------------------------------------------------------
-    train_loss_array = np.empty(0)
-    val_loss_mse_array = np.empty(0)
-    val_loss_dtw_array = np.empty(0)
+    train_loss_array = val_loss_mse_array = val_loss_dtw_array = np.empty(0)
 
     # -----------------------------------------------------------------
     # keep the model with min validation loss
     # -----------------------------------------------------------------
     best_model = copy.deepcopy(model)
-    best_loss_mse = np.inf
-    best_loss_dtw = np.inf
-    best_epoch_mse = 0
-    best_epoch_dtw = 0
+    best_loss_mse = best_loss_dtw = np.inf
+    best_epoch_mse = best_epoch_dtw = 0
 
     # -----------------------------------------------------------------
     # Early Stopping Criteria
@@ -308,32 +278,8 @@ def main(config):
     print("\033[96m\033[1m\nTraining starts now\033[0m")
     for epoch in range(1, config.n_epochs + 1):
 
-        epoch_loss = 0
+        train_loss = mlp_train(model, optimizer, train_loader, config)
 
-        # set model mode
-        model.train()
-
-        for i, (profiles, parameters) in enumerate(train_loader):
-
-            # configure input
-            real_profiles = Variable(profiles.type(FloatTensor))
-            real_parameters = Variable(parameters.type(FloatTensor))
-
-            # zero the gradients on each iteration
-            optimizer.zero_grad()
-
-            # generate a batch of profiles
-            gen_profiles = model(real_parameters)
-
-            loss = mlp_loss_function(config.loss_type, gen_profiles, real_profiles, config)
-
-            loss.backward()
-            optimizer.step()
-
-            epoch_loss += loss.item()
-
-        # end-of-epoch book keeping
-        train_loss = epoch_loss / len(train_loader)    # divide by number of batches (!= batch size)
         train_loss_array = np.append(train_loss_array, train_loss)
 
         val_loss_mse, val_loss_dtw = mlp_run_evaluation(current_epoch=epoch,
@@ -361,11 +307,10 @@ def main(config):
             best_loss_dtw = val_loss_dtw
             best_epoch_dtw = epoch
 
-        print(
-            "[Epoch %d/%d] [Train loss %s: %e] [Validation loss MSE: %e] [Validation loss DTW: %e] "
-            "[Best_epoch (mse): %d] [Best_epoch (dtw): %d]"
-            % (epoch, config.n_epochs, config.loss_type, train_loss, val_loss_mse, val_loss_dtw,
-               best_epoch_mse, best_epoch_dtw)
+        print("[Epoch {}/{}] [Train loss {}: {}] [Validation loss MSE: {}] [Validation loss DTW: {}] "
+              "[Best_epoch (mse): {}] [Best_epoch (dtw): {}]"
+              .format(epoch, config.n_epochs, config.loss_type, train_loss, val_loss_mse, val_loss_dtw,
+                      best_epoch_mse, best_epoch_dtw)
         )
 
         # check for testing criterion
@@ -414,19 +359,19 @@ def main(config):
     # -----------------------------------------------------------------
     # Save some results to config object for later use
     # -----------------------------------------------------------------
-    setattr(config, 'best_epoch', best_epoch_mse)
-    setattr(config, 'best_epoch_mse', best_epoch_mse)
-    setattr(config, 'best_epoch_dtw', best_epoch_dtw)
+    config.best_epoch = best_epoch_mse
+    config.best_epoch_mse = best_epoch_mse
+    config.best_epoch_dtw = best_epoch_dtw
 
-    setattr(config, 'best_val_mse', best_loss_mse)
-    setattr(config, 'best_val_dtw', best_loss_dtw)
+    config.best_val_mse = best_loss_mse
+    config.best_val_dtw = best_loss_dtw
 
-    setattr(config, 'best_test_mse', best_test_mse)
-    setattr(config, 'best_test_dtw', best_test_dtw)
+    config.best_test_mse = best_test_mse
+    config.best_test_dtw = best_test_dtw
 
-    setattr(config, 'stopped_early', stopped_early)
-    setattr(config, 'epochs_trained', epochs_trained)
-    setattr(config, 'early_stopping_threshold', EARLY_STOPPING_THRESHOLD_MLP)
+    config.stopped_early = stopped_early
+    config.epochs_trained = epochs_trained
+    config.early_stopping_threshold = EARLY_STOPPING_THRESHOLD_MLP
 
     # -----------------------------------------------------------------
     # Overwrite config object
@@ -447,6 +392,37 @@ def main(config):
         analysis_auto_plot_profiles(config, k=30, prefix='best')
         analysis_parameter_space_plot(config, prefix='best')
         analysis_error_density_plot(config, prefix='best')
+
+
+def mlp_input_sanity_checks(config):
+    """
+    Perform user input checks. Print help and exit if anything is wrong
+
+    Args:
+        config: user config object
+
+    Returns:
+        config object
+
+    """
+
+    if config.data_dir is None:
+        print('\nError: Parameter data_dir must not be empty. Exiting.\n')
+        argparse.ArgumentParser().print_help()
+        exit(1)
+
+    if config.n_parameters not in [5, 8]:
+        print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
+        argparse.ArgumentParser().print_help()
+        exit(1)
+
+    if my_config.model not in ['MLP1', 'MLP2', 'MLP3']:
+        my_config.model = 'MLP1'
+
+    if my_config.loss_type not in ['MSE', 'DTW']:
+        my_config.model = 'MSE'
+
+    return config
 
 
 # -----------------------------------------------------------------
@@ -527,38 +503,14 @@ if __name__ == "__main__":
 
     my_config = parser.parse_args()
 
-    # sanity checks
-    if my_config.data_dir is None:
-        print('\nError: Parameter data_dir must not be empty. Exiting.\n')
-        argparse.ArgumentParser().print_help()
-        exit(1)
-
-    if my_config.n_parameters not in [5, 8]:
-        print('\nError: Number of parameters can currently only be either 5 or 8. Exiting.\n')
-        argparse.ArgumentParser().print_help()
-        exit(1)
-
-    if my_config.n_parameters == 5:
-        parameter_limits = sp.p5_limits
-        parameter_names_latex = sp.p5_names_latex
-
-    if my_config.n_parameters == 8:
-        parameter_limits = sp.p8_limits
-        parameter_names_latex = sp.p8_names_latex
-
-    if my_config.model not in ['MLP1', 'MLP2', 'MLP3']:
-        my_config.model = 'MLP1'
-
-    if my_config.loss_type not in ['MSE', 'DTW']:
-        my_config.model = 'MSE'
-
-    # print summary
-    print("\nUsed parameters:\n")
-    for arg in vars(my_config):
-        print("\t", arg, getattr(my_config, arg))
-
     my_config.out_dir = os.path.abspath(my_config.out_dir)
     my_config.data_dir = os.path.abspath(my_config.data_dir)
 
-    # run main program
+    my_config = mlp_input_sanity_checks(my_config)
+
+    my_config = run_set_parameter_limits(my_config)
+
+    utils_print_config_object(my_config)
+
     main(my_config)
+

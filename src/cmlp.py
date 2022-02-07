@@ -67,7 +67,8 @@ def force_stop_signal_handler(sig, frame):
 # -----------------------------------------------------------------
 #   use lstm with test or val set
 # -----------------------------------------------------------------
-def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_results=False, save_results=False, best_model=False):
+def cmlp_run_evaluation(current_epoch, data_loader, model, path, config,
+                        print_results=False, save_results=False, best_model=False):
     """
     function runs the given dataset through the lstm, returns mse_loss and dtw_loss,
     and saves the results as well as ground truth to file, if in test mode.
@@ -140,8 +141,10 @@ def cmlp_run_evaluation(current_epoch, data_loader, model, path, config, print_r
 
             if save_results:
                 # shape of profile_gen and profile_true: (num_samples, num_profiles, length_of_profiles)
-                profiles_gen = torch.stack((gen_H_II_profiles, gen_T_profiles, gen_He_II_profiles, gen_He_III_profiles), dim=1)
-                profiles_true = torch.stack((real_H_II_profiles, real_T_profiles, real_He_II_profiles, real_He_III_profiles), dim=1)
+                profiles_gen = torch.stack((gen_H_II_profiles, gen_T_profiles,
+                                            gen_He_II_profiles, gen_He_III_profiles), dim=1)
+                profiles_true = torch.stack((real_H_II_profiles, real_T_profiles,
+                                             real_He_II_profiles, real_He_III_profiles), dim=1)
                 # collate data
                 profiles_gen_all = torch.cat((profiles_gen_all, profiles_gen), 0)
                 profiles_true_all = torch.cat((profiles_true_all, profiles_true), 0)
@@ -473,29 +476,6 @@ def cmlp_input_sanity_checks(config):
         exit(1)
 
 
-def cmlp_set_parameter_limits(config):
-    """
-    Adds the global parameter limits and latex names to the config object
-
-    Args:
-        config: user config object
-
-    Returns:
-        user config object
-
-    """
-
-    if config.n_parameters == 5:
-        config.parameter_limits = ps.p5_limits
-        config.parameter_names_latex = ps.p5_names_latex
-
-    if config.n_parameters == 8:
-        config.parameter_limits = ps.p8_limits
-        config.parameter_names_latex = ps.p8_names_latex
-
-    return config
-
-
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
 # -----------------------------------------------------------------
@@ -563,7 +543,7 @@ if __name__ == "__main__":
 
     cmlp_input_sanity_checks(my_config)
 
-    cmlp_set_parameter_limits(my_config)
+    my_config = run_set_parameter_limits(my_config)
 
     utils_print_config_object(my_config)
 
