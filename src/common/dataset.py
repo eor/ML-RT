@@ -6,18 +6,18 @@ import numpy as np
 class RTdata(Dataset):
 
     def __init__(self, profile_data, parameter_data, derivative_data=None, split='train', split_frac=(0.8, 0.1, 0.1)):
+        """
+         Splits the given data into Train, Test and Validation set
 
-        # -------------------------------------------------------------------------------------------------
-        # Splits the given data into Train, Test and Validation set
-        # -------------------------------------------------------------------------------------------------
-        # Args:
-        # profile_data: numpy array of shape (num_samples, num_profiles, profile_len) or
-        #               (num_samples, profile_len) containing data for all the profiles
-        # parameter_data: numpy array of shape (num_samples, profile_len) containing parameters
-        #                 corresponding to all the profiles
-        # split: whether to return data corresponding to 'train', 'test' or 'val' dataset
-        # split_fraction: ratio's in which data needs to be split (must add upto 1)
-        # --------------------------------------------------------------------------------------------------
+        Args:
+            profile_data: numpy array of shape (num_samples, num_profiles, profile_len) or
+                          (num_samples, profile_len) containing data for all the profiles
+            parameter_data: numpy array of shape (num_samples, profile_len) containing parameters
+                           corresponding to all the profiles
+            split: whether to return data corresponding to 'train', 'test' or 'val' dataset
+            split_frac: ratio's in which data needs to be split (must add upto 1)
+        """
+
         if len(profile_data.shape) != 3:
             profile_data = profile_data[:, np.newaxis, :]
         if derivative_data is not None and len(derivative_data.shape) != 3:
@@ -65,6 +65,19 @@ class RTdata(Dataset):
 class RTdataWithDerivatives(Dataset):
 
     def __init__(self, profile_data, parameter_data, derivative_data, split='train', split_frac=(0.8, 0.1, 0.1)):
+        """
+        Splits the given data into Train, Test and Validation set (derivatives included)
+
+        Args:
+            profile_data: numpy array of shape (num_samples, num_profiles, profile_len) or
+                          (num_samples, profile_len) containing data for all the profiles
+            parameter_data: numpy array of shape (num_samples, profile_len) containing parameters
+                           corresponding to all the profiles
+            derivative_data: numpy array of shape (num_samples, num_profiles, profile_len) or
+                             (num_samples, profile_len) containing data for all the profiles
+            split: whether to return data corresponding to 'train', 'test' or 'val' dataset
+            split_frac: ratio's in which data needs to be split (must add upto 1)
+        """
 
         if len(profile_data.shape) != 3:
             profile_data = profile_data[:, np.newaxis, :]

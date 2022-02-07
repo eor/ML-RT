@@ -390,16 +390,6 @@ def main(config):
 
     print("\033[96m\033[1m\nTraining complete\033[0m\n")
 
-    # -----------------------------------------------------------------
-    # Save best model and loss functions
-    # -----------------------------------------------------------------
-    # TODO: save checkpoint for further training?
-    # checkpoint = {
-    #     'epoch': config.n_epochs,
-    #     'state_dict': best_model.state_dict(),
-    #     'bestLoss': best_loss,
-    #     'optimizer': optimizer.state_dict(),
-    #     }
 
     # -----------------------------------------------------------------
     # Save the best model and the final model
