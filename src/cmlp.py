@@ -332,7 +332,7 @@ def main(config):
     print("\033[96m\033[1m\nTraining starts now\033[0m")
     for epoch in range(1, config.n_epochs + 1):
 
-       # training
+        # training
         (train_loss,
          epoch_loss_H_II,
          epoch_loss_T,
