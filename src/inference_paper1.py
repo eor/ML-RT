@@ -324,8 +324,8 @@ if __name__ == "__main__":
     p[0] = [13.0, 6.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 2
     p[0] = [8.0, 12.5, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 3
 
-    results_123_H = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
-    results_123_T = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
+    results_123_H, _ = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
+    results_123_T, _ = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
 
     p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
     p[0] = [10.0, 7.0,  4.0, 1.0, 0.1, 0.0, 2.35, 2.0]
@@ -334,8 +334,8 @@ if __name__ == "__main__":
     p[0] = [10.0, 7.0, 16.0, 1.0, 0.1, 0.0, 2.35, 2.0]
     p[0] = [10.0, 7.0, 19.9, 1.0, 0.1, 0.0, 2.35, 2.0]
 
-    results_4_H = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
-    results_4_T = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
+    results_4_H, _ = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
+    results_4_T, _ = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
 
     results_123_H = results_123_H.cpu().numpy()
     results_123_T = results_123_T.cpu().numpy()
