@@ -343,6 +343,9 @@ if __name__ == "__main__":
     results_4_H = results_4_H.numpy()
     results_4_T = results_4_T.numpy()
 
+
+    import pdb; pdb.set_trace()
+
     np.save(file="results_123_H.npy", arr=results_123_H)
     np.save(file="results_123_T.npy", arr=results_123_T)
 
