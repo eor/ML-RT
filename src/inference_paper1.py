@@ -311,14 +311,42 @@ if __name__ == "__main__":
     p[6] = 1.5012491  # starsIMFSlope
     p[7] = 1.5323509  # starsIMFMassMinLog
 
+    # p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
+    # p[0] = [8.825165, 6.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    # p[1] = [8.825165, 8.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    # p[2] = [8.825165, 9.5, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    # p[3] = [8.825165, 11.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    # p[4] = [8.825165, 13.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+
+    p = np.zeros((3, 8))  # has to be 2D array because of BatchNorm
+
+    p[0] = [10.0, 9.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 1
+    p[0] = [13.0, 6.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 2
+    p[0] = [8.0, 12.5, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 3
+
+    results_123_H = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
+    results_123_T = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
 
     p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
-    p[0] = [8.825165, 6.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
-    p[1] = [8.825165, 8.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
-    p[2] = [8.825165, 9.5, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
-    p[3] = [8.825165, 11.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
-    p[4] = [8.825165, 13.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
+    p[0] = [10.0, 7.0,  4.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    p[0] = [10.0, 7.0,  8.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    p[0] = [10.0, 7.0, 12.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    p[0] = [10.0, 7.0, 16.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    p[0] = [10.0, 7.0, 19.9, 1.0, 0.1, 0.0, 2.35, 2.0]
 
+    results_4_H = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
+    results_4_T = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
 
-    inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
+    results_123_H = results_123_H.cpu().numpy()
+    results_123_T = results_123_T.cpu().numpy()
+
+    results_4_H = results_4_H.cpu().numpy()
+    results_4_T = results_4_T.cpu().numpy()
+
+    np.save(file="results_123_H.npy", arr=results_123_H)
+    np.save(file="results_123_T.npy", arr=results_123_T)
+
+    np.save(file="results_4_H.npy", arr=results_4_H)
+    np.save(file="results_4_T.npy", arr=results_4_T)
+
 
