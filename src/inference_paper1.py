@@ -337,11 +337,11 @@ if __name__ == "__main__":
     results_4_H, _ = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=pretrained_models_dir)
     results_4_T, _ = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=pretrained_models_dir)
 
-    results_123_H = results_123_H.numpy()
-    results_123_T = results_123_T.numpy()
-
-    results_4_H = results_4_H.numpy()
-    results_4_T = results_4_T.numpy()
+    # results_123_H = results_123_H.numpy()
+    # results_123_T = results_123_T.numpy()
+    #
+    # results_4_H = results_4_H.numpy()
+    # results_4_T = results_4_T.numpy()
 
 
     import pdb; pdb.set_trace()
