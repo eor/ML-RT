@@ -343,7 +343,7 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
 # -----------------------------------------------------------------
 #  CMLP
 # -----------------------------------------------------------------
-def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CMLP.pth.tar',
+def inference_cmlp(parameters, pretrained_models_dir, model_file_name='best_model_C_CMLP.pth.tar',
                    config_file_name='config_C_CMLP.dict', measure_time=False):
     """
     Function to use user specified parameters with the CMLP in inference mode.
@@ -407,7 +407,7 @@ def inference_cmlp(parameters, profile_type, pretrained_models_dir, model_file_n
 # -----------------------------------------------------------------
 #  CLSTM
 # -----------------------------------------------------------------
-def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_name='best_model_C_CLSTM.pth.tar',
+def inference_clstm(parameters, pretrained_models_dir, model_file_name='best_model_C_CLSTM.pth.tar',
                     config_file_name='config_C_CLSTM.dict', measure_time=False):
     """
     Function to use user specified parameters with the CLSTM in inference mode.
@@ -429,8 +429,7 @@ def inference_clstm(parameters, profile_type, pretrained_models_dir, model_file_
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(
-            limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
@@ -631,8 +630,7 @@ def inference_model_comparison(pretrained_models_dir, profile_type, actual_param
     return profiles
 
 
-def inference_main(paper_data_directory,
-                   pretrained_models_dir=None,
+def inference_main(paper_data_directory, pretrained_models_dir=None,
                    models_to_use=['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'],
                    measure_time=False):
     """
@@ -718,11 +716,11 @@ def inference_time_evolution(paper_data_directory,
 
     for i in range(8, 24, 4):
         # path of actual profiles
-        parameter_file_path = osp.join(base_path, 'run_4', 'run_4_t%d_parameters.npy' % (i))
-        H_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HII.npy' % (i))
-        T_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_T.npy' % (i))
-        He_II_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HeII.npy' % (i))
-        He_III_profile_path = osp.join(base_path, 'run_4', 'run_4_t%d_profile_HeIII.npy' % (i))
+        parameter_file_path = osp.join(base_path, 'run_4', F'run_4_t{i}_parameters.npy')
+        H_profile_path = osp.join(base_path, 'run_4', F'run_4_t{i}_profile_HII.npy')
+        T_profile_path = osp.join(base_path, 'run_4', F'run_4_t{i}_profile_T.npy')
+        He_II_profile_path = osp.join(base_path, 'run_4', F'run_4_t{i}_profile_HeII.npy')
+        He_III_profile_path = osp.join(base_path, 'run_4', F'run_4_t{i}_profile_HeIII.npy')
 
         # load the actual profiles
         print('loading profiles for time t=%d\n' % (i))
@@ -762,6 +760,9 @@ def inference_time_evolution(paper_data_directory,
         concat_profiles_gen_T = np.concatenate((concat_profiles_gen_T, profiles_gen_T), axis=0)
         concat_parameters = np.concatenate((concat_parameters, parameters[np.newaxis, np.newaxis, :]), axis=0)
 
+
+    # TODO: write data if desired, to plot elsewhere
+
     plot_inference_time_evolution(concat_profiles_gen_H, 'H', concat_parameters, output_dir='./',
                                   labels=['Simulation'] + models_to_use,
                                   file_type='pdf', prefix='run_4')
@@ -771,18 +772,16 @@ def inference_time_evolution(paper_data_directory,
                                   file_type='pdf', prefix='run_4')
 
 
-
 def inference_estimate_number_density_ranges(pretrained_models_dir,
                                              actual_parameters,
-                                             radius = [0, 250, 750, 1250, 1500],
+                                             radius=[0, 250, 750, 1250, 1500],
                                              measure_time=False):
 
     constant_n_H_0 = 1.9e-7  # cm-3
     constant_n_He_0 = 1.5e-8 # cm-3
 
     if pretrained_models_dir is None:
-        pretrained_models_dir = osp.join(
-            paper_data_directory, PRETRAINED_MODELS_DIR)
+        pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
 
     # convert input to 2D form
     p_2D = actual_parameters.copy()
@@ -791,8 +790,8 @@ def inference_estimate_number_density_ranges(pretrained_models_dir,
 
     # run inference on the parameters
     output_profiles, output_time = inference_cmlp(p_2D.copy(), 'C',
-                                                    pretrained_models_dir,
-                                                    measure_time=measure_time)
+                                                  pretrained_models_dir,
+                                                  measure_time=measure_time)
 
     # obtain inference profiles for all our parameters
     # and convert them to numpy arrays.
@@ -814,7 +813,7 @@ def inference_estimate_number_density_ranges(pretrained_models_dir,
 
     # select redshift from input parameters and recompute the shape.
     redshift = p_2D[:, 1].reshape((p_2D.shape[0], -1))
-    # compute n_H and n_He for the redhshifts
+    # compute n_H and n_He for the redshifts
     n_H = np.power((1 + redshift), 3) * constant_n_H_0
     n_He = np.power((1 + redshift), 3) * constant_n_He_0
 
@@ -824,11 +823,14 @@ def inference_estimate_number_density_ranges(pretrained_models_dir,
     n_He_I = n_He * x_He_I
     for r in radius:
         print('\nFor radius (r) = %d'%(r))
-        print ("| {:<8} | {:<15} | {:<15} |".format('redshift','avg. n_H_I','avg. n_He_I'))
+        print("| {:<8} | {:<15} | {:<15} |".format('redshift','avg. n_H_I','avg. n_He_I'))
         for i in range(len(p_2D)):
             avg_number_density_hydrogen = np.average(n_H_I[i, :r])
             avg_number_density_helium = np.average(n_He_I[i, :r])
-            print ("| {:<8} | {:<15e} | {:<15e} |".format(redshift[i, 0], avg_number_density_hydrogen, avg_number_density_helium))
+            print("| {:<8} | {:<15e} | {:<15e} |".format(redshift[i, 0],
+                                                         avg_number_density_hydrogen,
+                                                         avg_number_density_helium))
+
 
 # -----------------------------------------------------------------
 #  The following is executed when the script is run
@@ -839,38 +841,46 @@ if __name__ == "__main__":
 
     paper_data_directory = '../paper_data/'
     models_to_use = ['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
-    pretrained_models_dir = osp.join(
-        paper_data_directory, PRETRAINED_MODELS_DIR)
-#     inference_main(paper_data_directory,
-#                    pretrained_models_dir=pretrained_models_dir,
-#                    models_to_use=models_to_use,
-#                    measure_time=False)
-#     inference_test_run_cmlp()
-    # inference_time_evolution(paper_data_directory,
-    #                          pretrained_models_dir=pretrained_models_dir,
-    #                          models_to_use=models_to_use,
-    #                          measure_time=False)
+    pretrained_models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
+
+    # inference_main(
+    #     paper_data_directory=paper_data_directory,
+    #     pretrained_models_dir=pretrained_models_dir,
+    #     models_to_use=models_to_use,
+    #     measure_time=False
+    # )
+
+    # Test inference for the MLP
+    # inference_test_run_cmlp()
+
+    # inference_time_evolution(
+    #     paper_data_directory=paper_data_directory,
+    #     pretrained_models_dir=pretrained_models_dir,
+    #     models_to_use=models_to_use,
+    #     measure_time=False
+    # )
 
     # To have a custom run without knowing actual profile
-    p = np.zeros((8))  # has to be 2D array because of BatchNorm
-    p[0] = 8.825165  # M_halo
-    p[1] = 8.285341  # redshift
-    p[2] = 14.526998  # source Age
-    p[3] = 1.491899   # qsoAlpha
-    p[4] = 0.79072833   # qsoEfficiency
-    p[5] = 0.48244837  # starsEscFrac
-    p[6] = 1.5012491  # starsIMFSlope
-    p[7] = 1.5323509  # starsIMFMassMinLog
+    # p = np.zeros((8))   # has to be 2D array because of BatchNorm
+    # p[0] = 8.825165     # M_halo
+    # p[1] = 8.285341     # redshift
+    # p[2] = 14.526998    # source Age
+    # p[3] = 1.491899     # qsoAlpha
+    # p[4] = 0.79072833   # qsoEfficiency
+    # p[5] = 0.48244837   # starsEscFrac
+    # p[6] = 1.5012491    # starsIMFSlope
+    # p[7] = 1.5323509    # starsIMFMassMinLog
 
-#     inference_model_comparison(
-#                         pretrained_models_dir=pretrained_models_dir,
-#                         profile_type='H',
-#                         actual_parameters=p,
-#                         actual_profiles=None,
-#                         models_to_use=models_to_use,
-#                         measure_time=False,
-#                         plot_output_dir='./',
-#                         prefix=None)
+    # inference_model_comparison(
+    #     pretrained_models_dir=pretrained_models_dir,
+    #     profile_type='H',
+    #     actual_parameters=p,
+    #     actual_profiles=None,
+    #     models_to_use=models_to_use,
+    #     measure_time=False,
+    #     plot_output_dir='./',
+    #     prefix=None
+    # )
 
     p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
     p[0] = [8.825165, 6.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
@@ -878,6 +888,9 @@ if __name__ == "__main__":
     p[2] = [8.825165, 9.5, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
     p[3] = [8.825165, 11.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
     p[4] = [8.825165, 13.0, 14.526998, 1.491899, 0.79072833, 0.48244837, 1.5012491, 1.5323509]
-    inference_estimate_number_density_ranges(pretrained_models_dir=pretrained_models_dir,
-                                             radius = [1, 250, 750, 1250, 1500],
-                                             actual_parameters=p)
+
+    inference_estimate_number_density_ranges(
+        pretrained_models_dir=pretrained_models_dir,
+        radius=[1, 250, 750, 1250, 1500],
+        actual_parameters=p
+    )
