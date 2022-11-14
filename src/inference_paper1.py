@@ -24,14 +24,11 @@ parameter_limits = list()
 if torch.cuda.is_available():
     cuda = True
     device = torch.device("cuda")
+    FloatTensor = torch.cuda.FloatTensor
 else:
     cuda = False
     device = torch.device("cpu")
-
-# -----------------------------------------------------------------
-#  global FloatTensor instance
-# -----------------------------------------------------------------
-FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+    FloatTensor = torch.FloatTensor
 
 
 # -----------------------------------------------------------------
@@ -75,8 +72,7 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
     elif config.model == 'MLP2':
         model = MLP2(config)
     else:
-        print('Error. Check if you are using the right model. Exiting.')
-        exit(1)
+        raise Exception('Error. Check if you are using the right model. Exiting.')
 
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
@@ -98,7 +94,7 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
             output_time['avg_time'] = avg_time
             output_time['std_time'] = std_time
         else:
-            print('\nTime can only be measured when on GPU. skipping. \n')
+            print('\nTime can only be measured when using a GPU. Skipping. \n')
 
     return output, output_time
 
