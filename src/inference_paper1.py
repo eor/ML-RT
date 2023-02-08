@@ -1,3 +1,7 @@
+"""
+ About this file: This is a one-off script to generate some specific inference
+ data for hand-selected input values for the first paper.
+"""
 import torch
 # import torch.nn as nn
 import numpy as np
@@ -8,7 +12,6 @@ from models.mlp import *
 from common.utils import *
 from common.settings import *
 from common.clock import Clock
-from common.plot import plot_inference_profiles, plot_inference_time_evolution
 import common.settings_parameters as sp
 
 from torch.autograd import Variable
@@ -50,14 +53,10 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         config_file_name = F'config_{profile_type}_MLP.dict'
 
     model_path = osp.join(pretrained_models_dir, model_file_name)
-    config = utils_load_config(pretrained_models_dir, file_name=config_file_name)
+    config = utils_load_config(path=pretrained_models_dir, file_name=config_file_name)
 
     # set up parameters
-    if config.n_parameters == 5:
-        parameter_limits = sp.p5_limits
-
-    if config.n_parameters == 8:
-        parameter_limits = sp.p8_limits
+    parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
         parameters = utils_scale_parameters(limits=parameter_limits, parameters=parameters)
@@ -74,18 +73,18 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
     else:
         raise Exception('Error. Check if you are using the right model. Exiting.')
 
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(f=model_path, map_location=device))
     model.to(device)
     model.eval()
 
     output = {}
+    output_time = None
 
     # run inference
     with torch.no_grad():
         gen_profile = model(parameters)
         output[profile_type] = gen_profile
 
-    output_time = None
     if measure_time:
         if cuda:
             output_time = {}
@@ -104,30 +103,40 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
 # -----------------------------------------------------------------
 if __name__ == "__main__":
 
-    print('Let\'s run inference!')
+    print('Let\'s run inference again!')
 
     paper_data_directory = '../paper_data/'
-    models_to_use = ['MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM']
     models_dir = osp.join(paper_data_directory, PRETRAINED_MODELS_DIR)
 
-    p = np.zeros((3, 8))  # has to be 2D array because of BatchNorm
+    input_parameters = np.zeros((3, 8))
 
-    p[0] = [10.0, 9.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 1
-    p[0] = [13.0, 6.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 2
-    p[0] = [8.0, 12.5, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 3
+    input_parameters[0] = [10.0, 9.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 1
+    input_parameters[1] = [13.0, 6.0, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 2
+    input_parameters[2] = [8.0, 12.5, 10.0, 1.0, 0.1, 0.1, 2.35, 2.0]      # example 3
 
-    results_123_H, _ = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=models_dir)
-    results_123_T, _ = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=models_dir)
+    results_123_H, _ = inference_mlp(parameters=input_parameters.copy(),
+                                     profile_type="H",
+                                     pretrained_models_dir=models_dir)
 
-    p = np.zeros((5, 8))  # has to be 2D array because of BatchNorm
-    p[0] = [10.0, 7.0,  4.0, 1.0, 0.1, 0.0, 2.35, 2.0]
-    p[0] = [10.0, 7.0,  8.0, 1.0, 0.1, 0.0, 2.35, 2.0]
-    p[0] = [10.0, 7.0, 12.0, 1.0, 0.1, 0.0, 2.35, 2.0]
-    p[0] = [10.0, 7.0, 16.0, 1.0, 0.1, 0.0, 2.35, 2.0]
-    p[0] = [10.0, 7.0, 19.9, 1.0, 0.1, 0.0, 2.35, 2.0]
+    results_123_T, _ = inference_mlp(parameters=input_parameters.copy(),
+                                     profile_type="T",
+                                     pretrained_models_dir=models_dir)
 
-    results_4_H, _ = inference_mlp(parameters=p, profile_type="H", pretrained_models_dir=models_dir)
-    results_4_T, _ = inference_mlp(parameters=p, profile_type="T", pretrained_models_dir=models_dir)
+    input_parameters = np.zeros((5, 8))
+    input_parameters[0] = [10.0, 7.0,  4.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    input_parameters[1] = [10.0, 7.0,  8.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    input_parameters[2] = [10.0, 7.0, 12.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    input_parameters[3] = [10.0, 7.0, 16.0, 1.0, 0.1, 0.0, 2.35, 2.0]
+    input_parameters[4] = [10.0, 7.0, 19.9, 1.0, 0.1, 0.0, 2.35, 2.0]
+
+    results_4_H, _ = inference_mlp(parameters=input_parameters.copy(),
+                                   profile_type="H",
+                                   pretrained_models_dir=models_dir)
+
+    results_4_T, _ = inference_mlp(parameters=input_parameters.copy(),
+                                   profile_type="T",
+                                   pretrained_models_dir=models_dir
+                                   )
 
     results_123_H = results_123_H['H'].cpu().numpy()
     results_123_T = results_123_T['T'].cpu().numpy()
@@ -135,8 +144,8 @@ if __name__ == "__main__":
     results_4_H = results_4_H['H'].cpu().numpy()
     results_4_T = results_4_T['T'].cpu().numpy()
 
-    np.save(file="results_123_H.npy", arr=results_123_H)
-    np.save(file="results_123_T.npy", arr=results_123_T)
+    np.save(file="inference_123_H.npy", arr=results_123_H)
+    np.save(file="inference_123_T.npy", arr=results_123_T)
 
-    np.save(file="results_4_H.npy", arr=results_4_H)
-    np.save(file="results_4_T.npy", arr=results_4_T)
+    np.save(file="inference_4_H.npy", arr=results_4_H)
+    np.save(file="inference_4_T.npy", arr=results_4_T)

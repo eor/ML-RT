@@ -131,7 +131,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
         if np.max(profile_inferred[i]) < 1 and np.abs(np.min(profile_inferred[i])) < 1:
             ax0.set_ylim(-5, 5)
 
-        ax0.plot(profile_true[i], c='green', label='Truth')
+        ax0.plot(profile_true[i], c='green', label='Ground truth')
         ax0.plot(profile_inferred[i], c='orange', label='Inference')
 
         mse = utils_compute_mse(profile_true[i], profile_inferred[i])
@@ -295,7 +295,8 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
-def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
+def plot_inference_time_evolution(profiles, profile_type, parameters,
+                                  output_dir='./',
                                   labels=('Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'),
                                   file_type='pdf', prefix=None):
 
@@ -332,7 +333,7 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
         start = 0
         num_plots = len(labels)
     
-    # compute size of grid ie. rows and columns to fit all the plots
+    # compute size of grid i.e. rows and columns to fit all the plots
     columns = 2
     rows = int(np.ceil(num_plots / columns))
             
@@ -527,7 +528,6 @@ def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir
 
     fig.savefig(path)
     print('Saved plot to:\t%s' % path)
-
 
 
 # -----------------------------------------------------------------
@@ -730,7 +730,6 @@ def plot_error_density_mse(profiles_true, profiles_gen,
 
         f.subplots_adjust(bottom=0.2, left=0.15)
 
-        # ax.legend(loc='best', frameon=False)
         
         if config.profile_type == 'C':
             profile_prefix = profile_order[i]
@@ -746,5 +745,7 @@ def plot_error_density_mse(profiles_true, profiles_gen,
         f.savefig(path)
         print('Saved plot to:\t%s' % path)
     plt.close('all')
+
+
 
 
