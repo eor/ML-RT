@@ -287,8 +287,8 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         config_file_name = 'config_%s_MLP.dict' % profile_type
 
     model_path = osp.join(pretrained_models_dir, model_file_name)
-    config = utils_load_config(
-        pretrained_models_dir, file_name=config_file_name)
+    config = utils_load_config(path=pretrained_models_dir,
+                               file_name=config_file_name)
 
     # set up parameters
     if config.n_parameters == 5:
@@ -298,8 +298,8 @@ def inference_mlp(parameters, profile_type, pretrained_models_dir, model_file_na
         parameter_limits = sp.p8_limits
 
     if SCALE_PARAMETERS:
-        parameters = utils_scale_parameters(
-            limits=parameter_limits, parameters=parameters)
+        parameters = utils_scale_parameters(limits=parameter_limits,
+                                            parameters=parameters)
 
     # convert numpy arrays to tensors
     parameters = torch.from_numpy(parameters).to(device)
