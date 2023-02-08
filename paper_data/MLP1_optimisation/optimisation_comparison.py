@@ -20,7 +20,6 @@ mpl.rc('text', usetex=True)
 # these colours should be colour-blind friendly
 colours = ['#01332B', '#D81B60', '#1E88E5', '#FFC107']
 
-#lines = ['solid', 'dashed', 'dashdot', (0, (5, 2, 1, 2)), 'dotted']
 lines = ['solid', 'solid', 'solid', 'solid']
 
 
@@ -50,7 +49,6 @@ def compare_loss_function(lf_data, lf_labels, lf_colours, lf_lines,
 
     ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
 
-    # ax.legend(loc='upper right', frameon=False)
     ax.legend(loc='best', frameon=False)
 
     path = os.path.join(output_dir, 'loss_functions_comparison_%s_%s.%s' % (lf_type, profile_type, file_type))
@@ -177,4 +175,5 @@ compare_loss_function(lf_data_val, lf_labels_val, colours, lines, profile_type='
 lf_data_train = [lf_0_train, lf_1_train, lf_2_train, lf_3_train]
 
 lf_labels_val = ['MSE loss - MLP1', 'MSE loss - MLP1 + BN', 'MSE loss - MLP1 + DO', 'MSE loss - MLP1 + BN + DO']
+
 compare_loss_function(lf_data_train, lf_labels_val, colours, lines, profile_type='T', lf_type='MSE_training')
