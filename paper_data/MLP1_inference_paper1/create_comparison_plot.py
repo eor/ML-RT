@@ -139,13 +139,13 @@ def mlp1_compare_test_123_plot(inf_H, sim_H, inf_T, sim_T):
     ax2.legend(handles, labels, fontsize=font_size_legends)
 
     # annotations
-    ax1.text(x=0.065, y=0.30, s=r'\textbf{(2)}', transform=ax1.transAxes, fontsize=font_size_legends)
+    ax1.text(x=0.065, y=0.30, s=r'\textbf{(3)}', transform=ax1.transAxes, fontsize=font_size_legends)
     ax1.text(x=0.130, y=0.58, s=r'\textbf{(1)}', transform=ax1.transAxes, fontsize=font_size_legends)
-    ax1.text(x=0.760, y=0.87, s=r'\textbf{(3)}', transform=ax1.transAxes, fontsize=font_size_legends)
+    ax1.text(x=0.760, y=0.87, s=r'\textbf{(2)}', transform=ax1.transAxes, fontsize=font_size_legends)
 
-    ax2.text(x=0.035, y=0.06, s=r'\textbf{(2)}', transform=ax2.transAxes, fontsize=font_size_legends)
+    ax2.text(x=0.035, y=0.06, s=r'\textbf{(3)}', transform=ax2.transAxes, fontsize=font_size_legends)
     ax2.text(x=0.230, y=0.25, s=r'\textbf{(1)}', transform=ax2.transAxes, fontsize=font_size_legends)
-    ax2.text(x=0.530, y=0.54, s=r'\textbf{(3)}', transform=ax2.transAxes, fontsize=font_size_legends)
+    ax2.text(x=0.530, y=0.54, s=r'\textbf{(2)}', transform=ax2.transAxes, fontsize=font_size_legends)
 
     # save fig
     path = 'test_run_123.pdf'
@@ -213,8 +213,8 @@ def mlp1_compare_test_4_plot(inf_H, sim_H, inf_T, sim_T):
     ax2.legend(handles, labels, fontsize=font_size_legends)
 
     # annotation
-    ax1.text(x=0.05, y=0.15,
-             s=r'$\mathbf{t = (4,8,12,16,20)\; \mathrm{\textbf{Myr}}}$',
+    ax1.text(x=0.04, y=0.13,
+             s=r'$\textbf{(4)} \;\; \mathbf{t = (4,8,12,16,20)\; \mathrm{\textbf{Myr}}}$',
              transform=ax1.transAxes,
              fontsize=font_size_legends)
 
