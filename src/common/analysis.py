@@ -9,7 +9,7 @@ from common.settings import DATA_PRODUCTS_DIR, PLOT_DIR, PLOT_FILE_TYPE
 
 # -----------------------------------------------------------------
 # Purpose of the functions below is to automatically run the data
-# products through the plotting routines (after a training run) and
+# products through the plotting routines (after a training run)
 # and make sure the plots are placed in the corresponding PLOT_DIR
 # directories.
 # -----------------------------------------------------------------
@@ -117,6 +117,7 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
 
     # 4.  plot profiles for largest MSE
     print('Producing profile plot(s) for profiles with %d highest MSE' % k)
+
     for i in range(len(k_large_list)):
         index = k_large_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -137,6 +138,7 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
 
     # 5.  plot profiles for smallest MSE
     print('Producing profile plot(s) for profiles with %d lowest MSE' % k)
+
     for i in range(len(k_small_list)):
         index = k_small_list[i]
         print('{:3d} \t MSE = {:.4e} \t parameters: {}'.format(i, mse_array[index], parameters[index]))
@@ -270,7 +272,7 @@ if __name__ == '__main__':
 
     print('Hello there! Let\'s analyse some results\n')
     
-    # May be add your own array here.    
+    # Maybe add your own array here.
     production_runs_path = '../test/production/production_runs/'
     best_runs = [
         # 'production_CGAN_MSE_H',
