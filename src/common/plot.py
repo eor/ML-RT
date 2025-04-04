@@ -199,6 +199,80 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     plt.savefig(os.path.join(output_dir, file_name))
     plt.close('all')
 
+# -----------------------------------------------------------------
+# Updated plot for single profile comparison (ground truth vs inferred)
+# -----------------------------------------------------------------
+def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
+                        profile_type, prefix, sample_id, parameter_filename, file_type='pdf', parameters=None, model_id=''):
+    
+    # font settings
+    rc('font', family='serif', size=20)
+    rc('text', usetex=True)
+    
+    # Helper for y-axis label based on profile type
+    def get_label_Y(ptype):
+        if ptype == 'H':
+            return r'$\log_{10}(x_{\mathrm{H_{II}}})$'
+        elif ptype == 'T':
+            return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K})$'
+        elif ptype == 'He_II':
+            return r'$\log_{10}(x_{He_{II}})$'
+        elif ptype == 'He_III':
+            return r'$\log_{10}(x_{He_{III}})$'
+        else:
+            return r'Physical Unit'
+    
+    # Ensure profiles are 2D arrays (assume we are plotting a single profile per call)
+    if len(profile_true.shape) != 2:
+        profile_true = profile_true[np.newaxis, :]
+    if len(profile_inferred.shape) != 2:
+        profile_inferred = profile_inferred[np.newaxis, :]
+    
+    # Create a single-axes figure (absolute error subplot removed)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_position([0.14, 0.12, 0.8, 0.8])
+    
+    # Compute error metrics (round to 2 decimals)
+    mse = utils_compute_mse(profile_true[0], profile_inferred[0])
+    dtw = utils_compute_dtw(profile_true[0], profile_inferred[0])
+
+    # Plot ground truth and inferred profiles with thicker lines
+    ax.plot(profile_true[0], color='green', lw=2.5, label='Ground truth')
+    ax.plot(profile_inferred[0], color='orange', lw=2.0, label='Inference')
+    ax.plot([], [], alpha=.0, label='MSE: %0.3e \n DTW: %0.3e' % (mse, dtw))
+    
+    # Set fixed y-axis limits for specific profile types
+    if profile_type == 'H':
+        ax.set_ylim(-6, 0.5)
+    elif profile_type == 'T':
+        ax.set_ylim(0, 10)
+    # (For other types, the limits remain automatic.)
+    
+    ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=20)
+    ax.set_ylabel(get_label_Y(profile_type), fontsize=20, labelpad=10)
+    
+    # Improve legend readability (increase font size)
+    ax.legend(loc='best', frameon=False, fontsize=20)
+    
+    # Title includes the Sample ID and the error metrics
+    ax.set_title(f"Sample ID: {model_id[0]} {model_id[2]} {sample_id}", fontsize=20)
+    
+    # Construct file name and save the plot
+    file_name = f'{profile_type}_{prefix}_profile_epoch_{n_epoch}_ID_{sample_id}_new.' + file_type
+    # file_name = file_name.replace('.', '_') + file_type
+    output_path = os.path.join(output_dir, file_name)
+    fig.savefig(output_path)
+    plt.close(fig)
+    print(f'Saved plot to: {output_path}')
+    
+    # Write parameters to an ASCII file (for later table generation or appendix)
+    if parameters is not None:
+        ascii_file = os.path.join(output_dir, parameter_filename)
+        # Format parameters by rounding them to 2 decimals and separating with tabs
+        param_str = f"{sample_id}," + ",".join(str(p) for p in parameters) + "\n"
+        with open(ascii_file, 'a') as f:
+            f.write(param_str)
+
     
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
