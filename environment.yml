@@ -1,0 +1,13 @@
+name: ml-rt
+channels:
+  - pytorch
+  - conda-forge
+
+dependencies:
+  - python>=3.12
+  - pytorch
+  - numpy>=1.20.0
+  - matplotlib
+  - numba
+  - seaborn
+  - gdown
