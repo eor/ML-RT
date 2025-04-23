@@ -203,7 +203,8 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 # Updated plot for single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
 def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
-                        profile_type, prefix, sample_id, parameter_filename, file_type='pdf', parameters=None, model_id=''):
+                            profile_type, prefix, sample_id, parameter_filename,
+                            file_type='pdf', parameters=None, model_id=''):
     
     # font settings
     rc('font', family='serif', size=20)
@@ -239,7 +240,7 @@ def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
     # Plot ground truth and inferred profiles with thicker lines
     ax.plot(profile_true[0], color='green', lw=2.5, label='Ground truth')
     ax.plot(profile_inferred[0], color='orange', lw=2.0, label='Inference')
-    ax.plot([], [], alpha=.0, label='MSE: %0.3e \n DTW: %0.3e' % (mse, dtw))
+    ax.plot([], [], alpha=.0, label='MSE:\,\,  %0.3e \n DTW: %0.3e' % (mse, dtw))
     
     # Set fixed y-axis limits for specific profile types
     if profile_type == 'H':
@@ -250,7 +251,9 @@ def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
     
     ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=20)
     ax.set_ylabel(get_label_Y(profile_type), fontsize=20, labelpad=10)
-    
+
+    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+
     # Improve legend readability (increase font size)
     ax.legend(loc='best', frameon=False, fontsize=20)
     
