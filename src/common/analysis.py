@@ -139,17 +139,17 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
         tmp_profile_gen = profiles_gen[index]
 
         plot_profile_single_new(profile_true=tmp_profile_true,
-                            profile_inferred=tmp_profile_gen,
-                            n_epoch=epoch,
-                            output_dir=plot_dir_path,
-                            profile_type=config.profile_type,
-                            prefix=prefix,
-                            sample_id=index,
-                            parameter_filename=parameter_filename,
-                            parameters=tmp_parameters,
-                            file_type=PLOT_FILE_TYPE,
-                            model_id = model_id
-                            )
+                                profile_inferred=tmp_profile_gen,
+                                n_epoch=epoch,
+                                output_dir=plot_dir_path,
+                                profile_type=config.profile_type,
+                                prefix=prefix,
+                                sample_id=index,
+                                parameter_filename=parameter_filename,
+                                parameters=tmp_parameters,
+                                file_type=PLOT_FILE_TYPE,
+                                model_id = model_id
+                                )
 
     # 5.  plot profiles for smallest MSE
     print('Producing profile plot(s) for profiles with %d lowest MSE' % k)
@@ -163,17 +163,17 @@ def analysis_auto_plot_profiles(config, k=5, base_path=None, prefix='test', epoc
         tmp_profile_gen = profiles_gen[index]
 
         plot_profile_single_new(profile_true=tmp_profile_true,
-                            profile_inferred=tmp_profile_gen,
-                            n_epoch=epoch,
-                            output_dir=plot_dir_path,
-                            profile_type=config.profile_type,
-                            prefix=prefix,
-                            sample_id=index,
-                            parameter_filename=parameter_filename,
-                            parameters=tmp_parameters,
-                            file_type=PLOT_FILE_TYPE,
-                            model_id=model_id
-                            )
+                                profile_inferred=tmp_profile_gen,
+                                n_epoch=epoch,
+                                output_dir=plot_dir_path,
+                                profile_type=config.profile_type,
+                                prefix=prefix,
+                                sample_id=index,
+                                parameter_filename=parameter_filename,
+                                parameters=tmp_parameters,
+                                file_type=PLOT_FILE_TYPE,
+                                model_id=model_id
+                                )
 
 
 # -----------------------------------------------------------------
@@ -366,19 +366,19 @@ if __name__ == '__main__':
     best_runs = [
         # 'production_CGAN_MSE_H',
         # 'production_CGAN_MSE_T',
-        'production_MLP_MSE_H',
-        'production_MLP_MSE_T',
-        'production_MLP_DTW_H',
-        'production_MLP_DTW_T',
+        # 'production_MLP_MSE_H',
+        # 'production_MLP_MSE_T',
+        # 'production_MLP_DTW_H',
+        # 'production_MLP_DTW_T',
         # 'production_LSTM_MSE_H',
         # 'production_LSTM_MSE_T',
         # 'production_LSTM_DTW_H',
         # 'production_LSTM_DTW_T',
-        # 'production_CVAE_MSE_H',
-        # 'production_CVAE_MSE_T',
+        'production_CVAE_MSE_H',
+        'production_CVAE_MSE_T',
         # 'production_CVAE_DTW_H',
         # 'production_CVAE_DTW_T',
-        # 'production_CMLP_MSE_C',
+        'production_CMLP_MSE_C',
         # 'production_CMLP_DTW_C',
         # 'production_CLSTM_MSE_C',
         # 'production_CLSTM_DTW_C'
@@ -389,11 +389,11 @@ if __name__ == '__main__':
         config = utils_load_config(path)
 
         # analysis_error_density_plot(config, base_path=path, prefix='best')
-        analysis_auto_plot_profiles(config, k=10, base_path=path, prefix='best')
+        analysis_auto_plot_profiles(config, k=5, base_path=path, prefix='best')
 
         # Usage example for latex table creation
-        headers = p8_names_latex  # Example headers
-        row_filter = [3536, 2077, 560]  # List of IDs to include in the table
-        csv_to_latex_table(config, row_filter, base_path=path, prefix='best', headers=headers)
+        # headers = p8_names_latex  # Example headers
+        # row_filter = [3536, 2077, 560]  # List of IDs to include in the table
+        # csv_to_latex_table(config, row_filter, base_path=path, prefix='best', headers=headers)
 
     print('\n Completed! \n')

@@ -25,7 +25,11 @@ mpl.rc('text', usetex=True)
 # -----------------------------------------------------------------
 #  Plot loss functions (average loss for training & validation)
 # -----------------------------------------------------------------
-def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='H', file_type='png', gan=False):
+def plot_loss_function(lf1, lf2, lf3, epoch, lr,
+                       output_dir='./',
+                       profile_type='H',
+                       file_type='png',
+                       gan=False):
 
     print('Producing loss function plot:')
 
@@ -65,7 +69,7 @@ def plot_loss_function(lf1, lf2, lf3, epoch, lr, output_dir='./', profile_type='
 # -----------------------------------------------------------------
 def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
                         profile_type, prefix, profile_order=('H', 'T', 'He_II', 'He_III'),
-                        file_type='pdf', parameters=None, add_errors=True):
+                        file_type='pdf', parameters=None, add_errors=True, sample_id='', parameter_filename='', model_id=''):
 
     def get_label_Y(profile_type):
         if profile_type == 'H':
@@ -93,7 +97,7 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     fig = plt.figure(figsize=(11, 10))
     plt.subplots_adjust(top=0.82)
     
-    # compute size of grid ie. rows and columns to fit all the plots
+    # compute size of grid, i.e. rows and columns to fit all the plots
     rows = int(np.sqrt(num_plots))
     columns = int(np.ceil(num_plots / rows))
     
@@ -119,7 +123,9 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
 
     for i in range(num_plots):
 
-        inner = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[i], wspace=0.1, hspace=0.0,
+        inner = gridspec.GridSpecFromSubplotSpec(2, 1,
+                                                 subplot_spec=outer[i],
+                                                 wspace=0.1, hspace=0.0,
                                                  height_ratios=[3, 1])
 
         ax0 = fig.add_subplot(inner[0])
@@ -199,84 +205,237 @@ def plot_profile_single(profile_true, profile_inferred, n_epoch, output_dir,
     plt.savefig(os.path.join(output_dir, file_name))
     plt.close('all')
 
+
 # -----------------------------------------------------------------
 # Updated plot for single profile comparison (ground truth vs inferred)
 # -----------------------------------------------------------------
+# def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
+#                             profile_type, prefix, sample_id, parameter_filename,
+#                             file_type='pdf', parameters=None, model_id=''):
+#
+#     # font settings
+#     rc('font', family='serif', size=20)
+#     rc('text', usetex=True)
+#
+#     # Helper for y-axis label based on profile type
+#     def get_label_Y(ptype):
+#         if ptype == 'H':
+#             return r'$\log_{10}(x_{\mathrm{H_{II}}})$'
+#         elif ptype == 'T':
+#             return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K})$'
+#         elif ptype == 'He_II':
+#             return r'$\log_{10}(x_{He_{II}})$'
+#         elif ptype == 'He_III':
+#             return r'$\log_{10}(x_{He_{III}})$'
+#         else:
+#             return r'Physical Unit'
+#
+#     # Check if profiles are 2D arrays, if so, we add a dummy dimension
+#     if len(profile_true.shape) != 2:
+#         profile_true = profile_true[np.newaxis, :]
+#     if len(profile_inferred.shape) != 2:
+#         profile_inferred = profile_inferred[np.newaxis, :]
+#
+#     # Create a single-axes figure (absolute error subplot removed)
+#     fig, ax = plt.subplots(figsize=(8, 6))
+#     ax.set_position([0.14, 0.12, 0.8, 0.8])
+#
+#     # Compute error metrics (round to 2 decimals)
+#     mse = utils_compute_mse(profile_true[0], profile_inferred[0])
+#     dtw = utils_compute_dtw(profile_true[0], profile_inferred[0])
+#
+#     # Plot ground truth and inferred profiles with thicker lines
+#     ax.plot(profile_true[0], color='green', lw=2.5, label='Ground truth')
+#     ax.plot(profile_inferred[0], color='orange', lw=2.0, label='Inference')
+#     ax.plot([], [], alpha=.0, label='MSE:\,\,  %0.3e \n DTW: %0.3e' % (mse, dtw))
+#
+#     # Set fixed y-axis limits for specific profile types
+#     if profile_type == 'H':
+#         ax.set_ylim(-6, 0.5)
+#     elif profile_type == 'T':
+#         ax.set_ylim(0, 10)
+#     # (For other types, the limits remain automatic.)
+#
+#     ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=20)
+#     ax.set_ylabel(get_label_Y(profile_type), fontsize=20, labelpad=10)
+#
+#     ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+#
+#     # Improve legend readability (increase font size)
+#     ax.legend(loc='best', frameon=False, fontsize=20)
+#
+#     # Title includes the Sample ID and the error metrics
+#     ax.set_title(f"Sample ID: {model_id[0]} {model_id[2]} {sample_id}", fontsize=20)
+#
+#     # Construct file name and save the plot
+#     file_name = f'x_old_{profile_type}_{prefix}_profile_epoch_{n_epoch}_ID_{sample_id}.' + file_type
+#     # file_name = file_name.replace('.', '_') + file_type
+#     output_path = os.path.join(output_dir, file_name)
+#     fig.savefig(output_path)
+#     plt.close(fig)
+#     print(f'Saved plot to: {output_path}')
+#
+#     # Write parameters to an ASCII file (for later table generation or appendix)
+#     if parameters is not None:
+#         ascii_file = os.path.join(output_dir, parameter_filename)
+#         # Format parameters by rounding them to 2 decimals and separating with tabs
+#         param_str = f"{sample_id}," + ",".join(str(p) for p in parameters) + "\n"
+#         with open(ascii_file, 'a') as f:
+#             f.write(param_str)
+
+
+# -----------------------------------------------------------------
+#  Plot Inference profiles generated using inference.py
+# -----------------------------------------------------------------
 def plot_profile_single_new(profile_true, profile_inferred, n_epoch, output_dir,
-                            profile_type, prefix, sample_id, parameter_filename,
-                            file_type='pdf', parameters=None, model_id=''):
-    
-    # font settings
-    rc('font', family='serif', size=20)
-    rc('text', usetex=True)
-    
-    # Helper for y-axis label based on profile type
-    def get_label_Y(ptype):
-        if ptype == 'H':
+                        profile_type, prefix, profile_order=('H', 'T', 'He_II', 'He_III'),
+                        file_type='pdf', parameters=None, add_errors=True, sample_id='',
+                        parameter_filename='', model_id=''):
+
+    def get_label_Y(profile_type):
+        if profile_type == 'H':
             return r'$\log_{10}(x_{\mathrm{H_{II}}})$'
-        elif ptype == 'T':
+        elif profile_type == 'T':
             return r'$\log_{10}(T_{\mathrm{kin}}/\mathrm{K})$'
-        elif ptype == 'He_II':
-            return r'$\log_{10}(x_{He_{II}})$'
-        elif ptype == 'He_III':
-            return r'$\log_{10}(x_{He_{III}})$'
+        elif profile_type == 'He_II':
+            return r'$\log_{10}(x_{\mathrm{He_{II}}})$'
+        elif profile_type == 'He_III':
+            return r'$\log_{10}(x_{\mathrm{He_{III}}})$'
         else:
             return r'Physical Unit'
-    
-    # Ensure profiles are 2D arrays (assume we are plotting a single profile per call)
+
+    def get_ylims(ptype):
+        """Get fixed y-axis limits for consistent scaling"""
+        if ptype == 'H':
+            return (-6, 0.5)
+        elif ptype == 'T':
+            return (0, 10)
+        elif ptype == 'He_II':
+            return (-6, 0.5)
+        elif ptype == 'He_III':
+            return (-6, 0.5)
+        else:
+            return None  # Auto-scale
+
+    # Convert inputs to usable forms
     if len(profile_true.shape) != 2:
         profile_true = profile_true[np.newaxis, :]
     if len(profile_inferred.shape) != 2:
         profile_inferred = profile_inferred[np.newaxis, :]
-    
-    # Create a single-axes figure (absolute error subplot removed)
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.set_position([0.14, 0.12, 0.8, 0.8])
-    
-    # Compute error metrics (round to 2 decimals)
-    mse = utils_compute_mse(profile_true[0], profile_inferred[0])
-    dtw = utils_compute_dtw(profile_true[0], profile_inferred[0])
 
-    # Plot ground truth and inferred profiles with thicker lines
-    ax.plot(profile_true[0], color='green', lw=2.5, label='Ground truth')
-    ax.plot(profile_inferred[0], color='orange', lw=2.0, label='Inference')
-    ax.plot([], [], alpha=.0, label='MSE:\,\,  %0.3e \n DTW: %0.3e' % (mse, dtw))
-    
-    # Set fixed y-axis limits for specific profile types
-    if profile_type == 'H':
-        ax.set_ylim(-6, 0.5)
-    elif profile_type == 'T':
-        ax.set_ylim(0, 10)
-    # (For other types, the limits remain automatic.)
-    
-    ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=20)
-    ax.set_ylabel(get_label_Y(profile_type), fontsize=20, labelpad=10)
+    num_plots = profile_true.shape[0]
 
-    ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+    # Font settings - improved readability
+    rc('font', family='serif', size=20)
+    rc('text', usetex=True)
 
-    # Improve legend readability (increase font size)
-    ax.legend(loc='best', frameon=False, fontsize=20)
-    
-    # Title includes the Sample ID and the error metrics
-    ax.set_title(f"Sample ID: {model_id[0]} {model_id[2]} {sample_id}", fontsize=20)
-    
-    # Construct file name and save the plot
-    file_name = f'{profile_type}_{prefix}_profile_epoch_{n_epoch}_ID_{sample_id}_new.' + file_type
-    # file_name = file_name.replace('.', '_') + file_type
+    # Check if this is the edge case (combined profiles)
+    is_combined = profile_type == 'C'
+
+    if is_combined:
+        # Edge case: 2x2 grid for combined profiles
+        fig = plt.figure(figsize=(12, 10))
+        plt.subplots_adjust(top=0.9, wspace=0.3, hspace=0.4)
+
+        # Create 2x2 grid
+        rows, columns = 2, 2
+        outer = gridspec.GridSpec(rows, columns, wspace=0.3, hspace=0.4)
+
+        font_size_title = 22
+        font_size_ticks = 18
+        font_size_legends = 16
+        font_size_x_y = 20
+
+    else:
+        # Standard case: single plot
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.set_position([0.14, 0.12, 0.8, 0.8])
+
+        font_size_title = 22
+        font_size_ticks = 20
+        font_size_legends = 18
+        font_size_x_y = 22
+
+    for i in range(num_plots):
+
+        if is_combined:
+            # Create subplot for combined case
+            ax = fig.add_subplot(outer[i])
+            current_profile_type = profile_order[i]
+        else:
+            # Use existing axis for single plot case
+            current_profile_type = profile_type
+
+        # Plot ground truth and inferred profiles
+        ax.plot(profile_true[i], color='green', linewidth=2.5, label='Ground truth')
+        ax.plot(profile_inferred[i], color='orange', linewidth=2.0, label='Inference')
+
+        # Calculate and display error metrics
+        mse = utils_compute_mse(profile_true[i], profile_inferred[i])
+        dtw = utils_compute_dtw(profile_true[i], profile_inferred[i])
+
+        if add_errors:
+            ax.plot([], [], alpha=.0, label='MSE:\; %8.3e\nDTW: %8.3e' % (mse, dtw))
+
+        # Set consistent y-axis limits
+        ylims = get_ylims(current_profile_type)
+        if ylims is not None:
+            ax.set_ylim(ylims)
+
+        # Labels and formatting
+        ax.set_ylabel(get_label_Y(current_profile_type), fontsize=font_size_x_y, labelpad=10)
+        ax.set_xlabel(r'Radius $\mathrm{[kpc]}$', fontsize=font_size_x_y)
+
+        # Grid and ticks
+        ax.grid(which='major', color='#999999', linestyle='-', linewidth='0.4', alpha=0.4)
+        ax.tick_params(axis='both', which='both', right=True, top=True, labelsize=font_size_ticks)
+
+        # Legend
+        ax.legend(loc='best', frameon=False, fontsize=font_size_legends)
+
+        # Title with only ID information (no parameters)
+        if model_id and sample_id:
+            # Handle case where model_id might be a list or string
+            if isinstance(model_id, (list, tuple)):
+                model_str = " - ".join(str(x) for x in model_id)
+            else:
+                model_str = str(model_id)
+            title_text = f"Sample ID: {model_str} - {sample_id}"
+        elif sample_id:
+            title_text = f"Sample ID: {sample_id}"
+        else:
+            title_text = f"Epoch {n_epoch}"
+
+    if is_combined:
+        fig.suptitle(title_text, fontsize=font_size_title, y=0.95)
+    else:
+        ax.set_title(title_text, fontsize=font_size_title, pad=20)
+
+    # Generate filename
+    if is_combined:
+        mse_total = utils_compute_mse(profile_true, profile_inferred)
+        log_mse = np.log10(mse_total + 1.0e-11)
+        file_name = f'{profile_type}_{prefix}_profile_epoch_{n_epoch}_ID_{sample_id}_logMSE_{log_mse:.4e}'.replace('.',
+                                                                                                                   '_')
+    else:
+        file_name = f'{profile_type}_{prefix}_profile_epoch_{n_epoch}_ID_{sample_id}'
+
+    file_name += '.' + file_type
+
+    # Save plot
     output_path = os.path.join(output_dir, file_name)
-    fig.savefig(output_path)
-    plt.close(fig)
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close('all')
     print(f'Saved plot to: {output_path}')
-    
-    # Write parameters to an ASCII file (for later table generation or appendix)
-    if parameters is not None:
+
+    # Write parameters to ASCII file if provided
+    if parameters is not None and parameter_filename:
         ascii_file = os.path.join(output_dir, parameter_filename)
-        # Format parameters by rounding them to 2 decimals and separating with tabs
         param_str = f"{sample_id}," + ",".join(str(p) for p in parameters) + "\n"
         with open(ascii_file, 'a') as f:
             f.write(param_str)
 
-    
+
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
@@ -372,8 +531,7 @@ def plot_inference_profiles(profiles, profile_type, parameters, output_dir='./',
 # -----------------------------------------------------------------
 #  Plot Inference profiles generated using inference.py
 # -----------------------------------------------------------------
-def plot_inference_time_evolution(profiles, profile_type, parameters,
-                                  output_dir='./',
+def plot_inference_time_evolution(profiles, profile_type, parameters, output_dir='./',
                                   labels=('Simulation', 'MLP', 'CVAE', 'CGAN', 'LSTM', 'CMLP', 'CLSTM'),
                                   file_type='pdf', prefix=None):
 

@@ -8,3 +8,7 @@ tensorboard/*
 *.zip
 *.pdf
 */client_secrets.json
+.idea/
+.DS_Store
+*.aux
+*.synctex.gz
